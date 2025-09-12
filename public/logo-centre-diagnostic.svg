@@ -1,0 +1,25 @@
+<svg width="200" height="60" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Heart shape with medical cross and person -->
+  <g transform="translate(20, 12)">
+    <!-- Left half of heart (teal) - thicker stroke -->
+    <path d="M15 25 C15 15, 25 10, 35 20 C35 10, 25 5, 15 15 Z" fill="#20B2AA" stroke="#20B2AA" stroke-width="2"/>
+    
+    <!-- Right half of heart (light blue) - thicker stroke -->
+    <path d="M35 20 C35 10, 45 15, 45 25 C45 35, 35 30, 25 20 Z" fill="#87CEEB" stroke="#87CEEB" stroke-width="2"/>
+    
+    <!-- Medical cross in center of heart -->
+    <rect x="28" y="18" width="4" height="8" fill="#87CEEB"/>
+    <rect x="25" y="21" width="10" height="2" fill="#87CEEB"/>
+    
+    <!-- Person figure above heart - more detailed -->
+    <circle cx="32" cy="8" r="3" fill="#87CEEB"/>
+    <path d="M32 11 Q32 15, 35 18" stroke="#87CEEB" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Separator line -->
+  <line x1="70" y1="10" x2="70" y2="50" stroke="#999999" stroke-width="1"/>
+  
+  <!-- Text -->
+  <text x="85" y="22" font-family="Arial, sans-serif" font-size="15" font-weight="bold" fill="#666666">Centre</text>
+  <text x="85" y="38" font-family="Arial, sans-serif" font-size="13" font-style="italic" fill="#888888">Diagnostic</text>
+</svg>
