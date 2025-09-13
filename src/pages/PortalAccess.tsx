@@ -10,6 +10,7 @@ import {
   faUtensils,
   faSignInAlt
 } from '@fortawesome/free-solid-svg-icons';
+import ConnectionTest from '@/components/ConnectionTest';
 
 const PortalAccess: React.FC = () => {
   return (
@@ -132,6 +133,9 @@ const PortalAccess: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Test de connexion - temporaire */}
+        <ConnectionTest />
       </div>
     </div>
   );
