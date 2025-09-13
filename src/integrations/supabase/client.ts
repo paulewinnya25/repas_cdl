@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 
 // Configuration Supabase stable et optimisée
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://xmanlflferryarkdhupb.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0";
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhtYW5sZmxmZXJyeWFya2RodXBiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2ODM1MjYsImV4cCI6MjA3MzI1OTUyNn0.V_jnpqPT9kyx76k2HaTWirJ80vzHHMseecx7911K3lk";
 
 // Créer le client Supabase avec configuration stable
 export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
