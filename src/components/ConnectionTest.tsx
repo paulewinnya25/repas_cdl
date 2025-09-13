@@ -30,12 +30,12 @@ const ConnectionTest: React.FC = () => {
   }, []);
 
   return (
-    <div style={{ padding: '20px', border: '1px solid #ccc', margin: '20px' }}>
-      <h3>🔍 Connection Test</h3>
-      <p><strong>Status:</strong> {connectionStatus}</p>
+    <div className="p-5 border border-gray-300 m-5 bg-white rounded-lg shadow-sm">
+      <h3 className="text-lg font-semibold mb-3">🔍 Connection Test</h3>
+      <p className="mb-3"><strong>Status:</strong> {connectionStatus}</p>
       <div>
-        <h4>Environment Variables:</h4>
-        <pre>{JSON.stringify(envVars, null, 2)}</pre>
+        <h4 className="font-medium mb-2">Environment Variables:</h4>
+        <pre className="bg-gray-100 p-3 rounded text-sm overflow-auto">{JSON.stringify(envVars, null, 2)}</pre>
       </div>
     </div>
   );
