@@ -211,3 +211,4 @@ src/pages/
 *Les portails spécialisés offrent une expérience utilisateur optimisée et des fonctionnalités adaptées à chaque rôle, améliorant significativement l'efficacité et la satisfaction des utilisateurs.*
 
 
+

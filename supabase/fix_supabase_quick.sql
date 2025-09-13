@@ -30,3 +30,4 @@ ON CONFLICT DO NOTHING;
 -- 5. Vérifier le résultat
 SELECT COUNT(*) as nombre_commandes FROM public.orders;
 
+

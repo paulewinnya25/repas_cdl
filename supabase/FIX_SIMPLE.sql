@@ -60,3 +60,4 @@ SELECT COUNT(*) as patients_count FROM public.patients;
 SELECT COUNT(*) as orders_count FROM public.orders;
 
 
+

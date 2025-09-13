@@ -18,3 +18,4 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 // 2. Créer un client PostgreSQL direct
 // 3. Remplacer toutes les requêtes Supabase par des requêtes SQL directes
 
+

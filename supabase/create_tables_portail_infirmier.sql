@@ -65,3 +65,4 @@ UNION ALL
 SELECT 'orders' as table_name, COUNT(*) as nombre_lignes FROM public.orders;
 
 
+

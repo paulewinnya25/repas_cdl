@@ -89,3 +89,4 @@ L'erreur 400 dans le portail cuisinier est maintenant **complètement résolue**
 **Testez maintenant le portail cuisinier - il devrait se charger sans aucune erreur !** ✅
 
 
+

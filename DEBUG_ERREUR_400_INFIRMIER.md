@@ -101,3 +101,4 @@ L'erreur 400 dans le portail infirmier est maintenant résolue avec une gestion 
 **Testez maintenant le portail infirmier - il devrait se charger sans aucune erreur !** ✅
 
 
+

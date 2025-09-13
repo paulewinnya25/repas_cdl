@@ -102,3 +102,4 @@ UNION ALL
 SELECT 'employee_menus' as table_name, COUNT(*) as nombre_lignes FROM public.employee_menus;
 
 
+

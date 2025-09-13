@@ -239,3 +239,4 @@ Allergies: Aucune
 **Testez la nouvelle fonctionnalité dans le portail infirmier !** ✅
 
 
+

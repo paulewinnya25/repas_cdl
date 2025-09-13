@@ -23,3 +23,4 @@ SELECT * FROM public.employee_orders ORDER BY created_at DESC LIMIT 5;
 -- DELETE FROM public.employee_orders WHERE delivery_location = 'Bureau' AND total_price = 2500.00;
 
 
+

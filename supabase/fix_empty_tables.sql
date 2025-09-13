@@ -95,3 +95,4 @@ SELECT 'Employee Orders', COUNT(*) FROM public.employee_orders
 UNION ALL
 SELECT 'Profiles', COUNT(*) FROM public.profiles;
 
+

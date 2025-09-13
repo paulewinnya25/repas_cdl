@@ -72,3 +72,4 @@ SELECT 'Test insertion réussi' as result;
 SELECT COUNT(*) as total_orders FROM public.employee_orders;
 
 
+

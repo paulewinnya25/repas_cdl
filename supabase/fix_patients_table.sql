@@ -83,3 +83,4 @@ SELECT 'Test d''insertion réussi' as status;
 SELECT COUNT(*) as total_patients FROM public.patients;
 
 
+

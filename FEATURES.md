@@ -152,3 +152,4 @@ L'application Repas CDL a été considérablement améliorée avec de nombreuses
 *Cette application représente maintenant un standard moderne pour la gestion de repas hospitaliers, avec toutes les fonctionnalités attendues d'une solution professionnelle du 21ème siècle.*
 
 
+

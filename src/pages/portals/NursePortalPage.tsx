@@ -48,7 +48,6 @@ const NursePortalPage: React.FC = () => {
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [newOrder, setNewOrder] = useState({
     mealType: '',
-    menu: '',
     instructions: ''
   });
   const [newPatient, setNewPatient] = useState({
@@ -146,28 +145,69 @@ const NursePortalPage: React.FC = () => {
     setIsOrderModalOpen(true);
   };
 
+  // Fonction pour déterminer le menu automatiquement selon le régime alimentaire
+  const getMenuForDiet = (diet: string, mealType: string) => {
+    const menuMap: { [key: string]: { [key: string]: string } } = {
+      'Normal': {
+        'Petit-déjeuner': 'Petit-déjeuner complet',
+        'Déjeuner': 'Plat du jour',
+        'Dîner': 'Repas du soir'
+      },
+      'Sans sel': {
+        'Petit-déjeuner': 'Petit-déjeuner sans sel',
+        'Déjeuner': 'Plat sans sel',
+        'Dîner': 'Repas sans sel'
+      },
+      'Diabétique': {
+        'Petit-déjeuner': 'Petit-déjeuner diabétique',
+        'Déjeuner': 'Plat diabétique',
+        'Dîner': 'Repas diabétique'
+      },
+      'Hypocalorique': {
+        'Petit-déjeuner': 'Petit-déjeuner léger',
+        'Déjeuner': 'Plat hypocalorique',
+        'Dîner': 'Repas léger'
+      },
+      'Sans lactose': {
+        'Petit-déjeuner': 'Petit-déjeuner sans lactose',
+        'Déjeuner': 'Plat sans lactose',
+        'Dîner': 'Repas sans lactose'
+      },
+      'Végétarien': {
+        'Petit-déjeuner': 'Petit-déjeuner végétarien',
+        'Déjeuner': 'Plat végétarien',
+        'Dîner': 'Repas végétarien'
+      }
+    };
+
+    return menuMap[diet]?.[mealType] || `${mealType} - ${diet}`;
+  };
+
   const handlePlaceOrder = async () => {
-    if (!selectedPatient || !newOrder.mealType || !newOrder.menu) {
-      showError("Veuillez remplir tous les champs obligatoires");
+    if (!selectedPatient || !newOrder.mealType) {
+      showError("Veuillez sélectionner le type de repas");
       return;
     }
 
     try {
+      // Déterminer le menu automatiquement selon le régime alimentaire
+      const menu = getMenuForDiet(selectedPatient.diet, newOrder.mealType);
+
       const { error } = await supabase
         .from('orders')
         .insert([{
           patient_id: selectedPatient.id,
           meal_type: newOrder.mealType,
-          menu: newOrder.menu,
+          menu: menu,
           instructions: newOrder.instructions,
           status: 'En attente d\'approbation'
         }]);
 
       if (error) throw error;
 
-      showSuccess(`Commande passée pour ${selectedPatient.name}`);
+      showSuccess(`Commande créée avec succès - Menu: ${menu}`);
 
-      setNewOrder({ mealType: '', menu: '', instructions: '' });
+      setNewOrder({ mealType: '', instructions: '' });
       setIsOrderModalOpen(false);
       setSelectedPatient(null);
       fetchData();
@@ -813,15 +853,15 @@ const NursePortalPage: React.FC = () => {
                   </Select>
                 </div>
 
-                <div>
-                  <Label htmlFor="menu">Menu</Label>
-                  <Input
-                    id="menu"
-                    placeholder="Description du menu"
-                    value={newOrder.menu}
-                    onChange={(e) => setNewOrder({...newOrder, menu: e.target.value})}
-                  />
-                </div>
+                {/* Menu automatique selon le régime alimentaire */}
+                {newOrder.mealType && (
+                  <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
+                    <Label className="text-green-800 dark:text-green-200">Menu automatique</Label>
+                    <p className="text-sm text-green-700 dark:text-green-300 mt-1">
+                      {getMenuForDiet(selectedPatient.diet, newOrder.mealType)}
+                    </p>
+                  </div>
+                )}
 
                 <div>
                   <Label htmlFor="instructions">Instructions spéciales</Label>

@@ -57,10 +57,10 @@ const PortalAccess: React.FC = () => {
                 Gestion des commandes patients, création de nouvelles commandes, 
                 annulation et suppression des commandes.
               </p>
-              <Link to="/nurse-portal" className="block">
+              <Link to="/login" className="block">
                 <Button className="w-full bg-blue-600 hover:bg-blue-700">
                   <FontAwesomeIcon icon={faUserInjured} className="mr-2" />
-                  Accéder au Portail Infirmier
+                  Se connecter - Portail Infirmier
                 </Button>
               </Link>
             </CardContent>
@@ -79,10 +79,10 @@ const PortalAccess: React.FC = () => {
                 Gestion des commandes patients et employés, mise à jour des statuts, 
                 gestion des menus employés.
               </p>
-              <Link to="/cook-portal" className="block">
+              <Link to="/login" className="block">
                 <Button className="w-full bg-orange-600 hover:bg-orange-700">
                   <FontAwesomeIcon icon={faUserTie} className="mr-2" />
-                  Accéder au Portail Cuisinier
+                  Se connecter - Portail Cuisinier
                 </Button>
               </Link>
             </CardContent>

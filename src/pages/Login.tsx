@@ -8,9 +8,42 @@ const Login = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session) {
-        navigate('/');
+        // Récupérer le rôle de l'utilisateur
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .single();
+          
+          // Rediriger vers le portail approprié selon le rôle
+          if (profile?.role) {
+            switch (profile.role) {
+              case 'Infirmier':
+              case 'Infirmière':
+              case 'Cadre de santé':
+                navigate('/nurse-portal');
+                break;
+              case 'Chef Cuisinier':
+              case 'Aide Cuisinier':
+              case 'Super Admin':
+                navigate('/cook-portal');
+                break;
+              default:
+                // Pour les autres rôles, rediriger vers la page d'accueil
+                navigate('/');
+            }
+          } else {
+            // Si pas de profil, rediriger vers la page d'accueil
+            navigate('/');
+          }
+        } catch (error) {
+          console.error('Erreur lors de la récupération du profil:', error);
+          // En cas d'erreur, rediriger vers la page d'accueil
+          navigate('/');
+        }
       }
     });
 

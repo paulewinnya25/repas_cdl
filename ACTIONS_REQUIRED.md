@@ -47,3 +47,4 @@ SELECT column_name FROM information_schema.columns WHERE table_name = 'employee_
 Le portail employé est opérationnel avec ou sans les migrations. Les migrations permettent d'activer toutes les fonctionnalités avancées.
 
 
+

@@ -113,3 +113,4 @@ Mes Commandes Récentes
 **Exécutez le diagnostic complet et dites-moi ce que vous voyez dans la console Supabase !** 🔍
 
 
+

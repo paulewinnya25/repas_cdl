@@ -80,3 +80,4 @@ SELECT 'Test profil créé' as result;
 SELECT COUNT(*) as total_profiles FROM public.profiles;
 
 
+

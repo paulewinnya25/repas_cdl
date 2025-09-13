@@ -128,3 +128,4 @@ SELECT * FROM public.orders ORDER BY created_at DESC LIMIT 5;
 **Le portail cuisinier devrait maintenant fonctionner parfaitement avec toutes les fonctionnalités !** ✅
 
 
+

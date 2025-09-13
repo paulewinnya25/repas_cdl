@@ -17,30 +17,36 @@ import { Session } from "@supabase/supabase-js";
 const queryClient = new QueryClient();
 
 const App = () => {
-  // Désactiver l'authentification obligatoire pour simplifier l'utilisation
+  // Authentification obligatoire pour Infirmier et Cuisinier seulement
   const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Commenter l'authentification pour permettre l'accès direct
-  // useEffect(() => {
-  //   const getSession = async () => {
-  //     const { data: { session } } = await supabase.auth.getSession();
-  //     setSession(session);
-  //     setLoading(false);
-  //   };
+  useEffect(() => {
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+      setLoading(false);
+    };
 
-  //   getSession();
+    getSession();
 
-  //   const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-  //     setSession(session);
-  //   });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
 
-  //   return () => subscription.unsubscribe();
-  // }, []);
+    return () => subscription.unsubscribe();
+  }, []);
 
-  // if (loading) {
-  //   return <div>Chargement...</div>; // Ou un composant de chargement plus joli
-  // }
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Chargement...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -57,12 +63,26 @@ const App = () => {
             <Route path="/login" element={<Login />} />
             <Route path="/" element={<PortalAccess />} />
             <Route path="/portails" element={<PortalAccess />} />
-            <Route path="/nurse-portal" element={<NursePortalPage />} />
+            {/* Portail Employé - Accès libre */}
             <Route path="/employee-portal" element={<EmployeePortalPage />} />
-            <Route path="/cook-portal" element={<CookPortalPage />} />
-            <Route path="/portails/nurse" element={<NursePortalPage />} />
             <Route path="/portails/employee" element={<EmployeePortalPage />} />
-            <Route path="/portails/cook" element={<CookPortalPage />} />
+            {/* Portails Infirmier et Cuisinier - Authentification obligatoire */}
+            <Route 
+              path="/nurse-portal" 
+              element={session ? <NursePortalPage /> : <Navigate to="/login" replace />} 
+            />
+            <Route 
+              path="/cook-portal" 
+              element={session ? <CookPortalPage /> : <Navigate to="/login" replace />} 
+            />
+            <Route 
+              path="/portails/nurse" 
+              element={session ? <NursePortalPage /> : <Navigate to="/login" replace />} 
+            />
+            <Route 
+              path="/portails/cook" 
+              element={session ? <CookPortalPage /> : <Navigate to="/login" replace />} 
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
