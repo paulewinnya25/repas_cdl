@@ -501,39 +501,47 @@ const EmployeePortalPage: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredMenus.map((menu) => (
-                    <Card 
-                      key={menu.id} 
-                      className="cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-green-500"
-                      onClick={() => handleMenuClick(menu)}
-                    >
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-semibold text-lg">{menu.name}</h3>
-                          <Badge variant="outline" className="bg-green-100 text-green-800">
-                            {menu.price} FCFA
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                          {menu.description}
-                        </p>
-                        <div className="flex items-center justify-between text-sm text-gray-500">
-                          <span>
-                            <FontAwesomeIcon icon={faClock} className="mr-1" />
-                            {menu.preparation_time} min
-                          </span>
-                          <span>
-                            <FontAwesomeIcon icon={faCheckCircle} className="mr-1 text-green-500" />
-                            Disponible
-                          </span>
-                        </div>
-                        <Button className="w-full mt-3" size="sm">
-                          <FontAwesomeIcon icon={faShoppingCart} className="mr-2" />
-                          Commander
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  ))}
+                  {filteredMenus.map((menu) => {
+                    const unavailable = !menu.is_available;
+                    return (
+                      <Card 
+                        key={menu.id} 
+                        className={`transition-shadow border-l-4 ${unavailable ? 'opacity-60 border-l-gray-400 cursor-not-allowed' : 'cursor-pointer hover:shadow-lg border-l-green-500'}`}
+                        onClick={() => { if (!unavailable) handleMenuClick(menu); }}
+                        aria-disabled={unavailable}
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="font-semibold text-lg">{menu.name}</h3>
+                            <Badge variant="outline" className="bg-green-100 text-green-800">
+                              {menu.price} FCFA
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                            {menu.description}
+                          </p>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-500">
+                              <FontAwesomeIcon icon={faClock} className="mr-1" />
+                              {menu.preparation_time} min
+                            </span>
+                            {unavailable ? (
+                              <Badge variant="secondary" className="bg-gray-200 text-gray-700">Indisponible</Badge>
+                            ) : (
+                              <span className="text-green-600">
+                                <FontAwesomeIcon icon={faCheckCircle} className="mr-1" />
+                                Disponible
+                              </span>
+                            )}
+                          </div>
+                          <Button className="w-full mt-3" size="sm" disabled={unavailable}>
+                            <FontAwesomeIcon icon={faShoppingCart} className="mr-2" />
+                            {unavailable ? 'Indisponible' : 'Commander'}
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
                 {filteredMenus.length === 0 && (
                   <div className="text-center py-12">
