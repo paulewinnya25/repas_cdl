@@ -59,7 +59,8 @@ const EmployeePortalPage: React.FC = () => {
     specialInstructions: '',
     quantity: 1,
     accompaniments: 1,
-    perPlateAccompaniments: [1] as number[]
+    perPlateAccompaniments: [1] as number[],
+    perPlateDetails: [''] as string[]
   });
   const [currentUserRole, setCurrentUserRole] = useState<UserRole>('Employé');
   const [user, setUser] = useState<{ id: string } | null>(null);
@@ -179,6 +180,7 @@ const EmployeePortalPage: React.FC = () => {
       const ordersToInsert = Array.from({ length: newOrder.quantity }, (_, index) => {
         const accomp = newOrder.perPlateAccompaniments[index] ?? 1;
         const unitPrice = calculatePrice(selectedMenu.price, accomp);
+        const perPlateNote = newOrder.perPlateDetails[index]?.trim();
         return {
           employee_id: userId,
           employee_name: newOrder.employeeName,
@@ -188,7 +190,10 @@ const EmployeePortalPage: React.FC = () => {
           accompaniments: accomp,
           total_price: unitPrice,
           status: 'Commandé',
-          special_instructions: newOrder.specialInstructions
+          special_instructions: [
+            newOrder.specialInstructions?.trim() || '',
+            perPlateNote ? `(Plat ${index + 1}) ${perPlateNote}` : ''
+          ].filter(Boolean).join(' | ')
         };
       });
 
@@ -205,7 +210,7 @@ const EmployeePortalPage: React.FC = () => {
       const oneAcc = newOrder.quantity - twoAcc;
       showSuccess(`Commande passée pour ${selectedMenu.name}: ${oneAcc} plat(s) avec 1 accompagnement et ${twoAcc} plat(s) avec 2 accompagnements`);
 
-      setNewOrder({ employeeName: '', specialInstructions: '', quantity: 1, accompaniments: 1, perPlateAccompaniments: [1] });
+      setNewOrder({ employeeName: '', specialInstructions: '', quantity: 1, accompaniments: 1, perPlateAccompaniments: [1], perPlateDetails: [''] });
       setIsOrderModalOpen(false);
       setSelectedMenu(null);
       
@@ -275,7 +280,8 @@ const EmployeePortalPage: React.FC = () => {
       specialInstructions: order.special_instructions || '',
       quantity: order.quantity,
       accompaniments: order.accompaniments || 1,
-      perPlateAccompaniments: Array.from({ length: order.quantity }, (_, i) => i === 0 ? (order.accompaniments || 1) : 1)
+      perPlateAccompaniments: Array.from({ length: order.quantity }, (_, i) => i === 0 ? (order.accompaniments || 1) : 1),
+      perPlateDetails: Array.from({ length: order.quantity }, () => '')
     });
     setIsEditOrderModalOpen(true);
   };
@@ -312,7 +318,7 @@ const EmployeePortalPage: React.FC = () => {
       showSuccess('Commande modifiée avec succès !');
       setIsEditOrderModalOpen(false);
       setEditingOrder(null);
-      setNewOrder({ employeeName: '', specialInstructions: '', quantity: 1, accompaniments: 1, perPlateAccompaniments: [1] });
+      setNewOrder({ employeeName: '', specialInstructions: '', quantity: 1, accompaniments: 1, perPlateAccompaniments: [1], perPlateDetails: [''] });
       fetchData();
 
     } catch (error) {
@@ -798,26 +804,43 @@ const EmployeePortalPage: React.FC = () => {
                 <div className="space-y-2">
                   <Label>Nombre d'accompagnements par plat</Label>
                   {Array.from({ length: newOrder.quantity }, (_, index) => (
-                    <div key={index} className="flex items-center space-x-3">
-                      <span className="text-sm text-gray-600">Plat {index + 1}</span>
-                      <Select
-                        value={(newOrder.perPlateAccompaniments[index] ?? 1).toString()}
-                        onValueChange={(value) => {
-                          const next = [...newOrder.perPlateAccompaniments];
-                          next[index] = parseInt(value);
-                          // Ajuster la longueur si nécessaire
-                          while (next.length < newOrder.quantity) next.push(1);
-                          setNewOrder({ ...newOrder, perPlateAccompaniments: next });
-                        }}
-                      >
-                        <SelectTrigger className="w-64">
-                          <SelectValue placeholder="Choisir" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="1">1 accompagnement - {selectedMenu?.price.toLocaleString('fr-FR')} XAF</SelectItem>
-                          <SelectItem value="2">2 accompagnements - 2 000 XAF</SelectItem>
-                        </SelectContent>
-                      </Select>
+                    <div key={index} className="space-y-2 p-3 border rounded-md bg-white dark:bg-gray-900">
+                      <div className="flex items-center space-x-3">
+                        <span className="text-sm text-gray-600">Plat {index + 1}</span>
+                        <Select
+                          value={(newOrder.perPlateAccompaniments[index] ?? 1).toString()}
+                          onValueChange={(value) => {
+                            const next = [...newOrder.perPlateAccompaniments];
+                            next[index] = parseInt(value);
+                            while (next.length < newOrder.quantity) next.push(1);
+                            const nextDetails = [...newOrder.perPlateDetails];
+                            while (nextDetails.length < newOrder.quantity) nextDetails.push('');
+                            setNewOrder({ ...newOrder, perPlateAccompaniments: next, perPlateDetails: nextDetails });
+                          }}
+                        >
+                          <SelectTrigger className="w-64">
+                            <SelectValue placeholder="Choisir" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1">1 accompagnement - {selectedMenu?.price.toLocaleString('fr-FR')} XAF</SelectItem>
+                            <SelectItem value="2">2 accompagnements - 2 000 XAF</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-gray-600">Détail des accompagnements (ex: riz + plantain)</Label>
+                        <Textarea
+                          placeholder="Précisez les accompagnements souhaités pour ce plat"
+                          value={newOrder.perPlateDetails[index] ?? ''}
+                          onChange={(e) => {
+                            const next = [...newOrder.perPlateDetails];
+                            while (next.length < newOrder.quantity) next.push('');
+                            next[index] = e.target.value;
+                            setNewOrder({ ...newOrder, perPlateDetails: next });
+                          }}
+                          rows={2}
+                        />
+                      </div>
                     </div>
                   ))}
                 </div>
