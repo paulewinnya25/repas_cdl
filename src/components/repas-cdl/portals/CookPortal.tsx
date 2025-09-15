@@ -64,6 +64,20 @@ export const CookPortal = ({ userProfile }: CookPortalProps) => {
     }
   }, []);
 
+  const toggleMenuAvailability = useCallback(async (menuId: string, nextAvailable: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('employee_menus')
+        .update({ is_available: nextAvailable })
+        .eq('id', menuId);
+      if (error) throw error;
+      showSuccess(`Menu ${nextAvailable ? 'activé' : 'désactivé'}.`);
+      fetchEmployeeMenus();
+    } catch (error) {
+      showError("Impossible de mettre à jour la disponibilité du menu.");
+    }
+  }, [fetchEmployeeMenus]);
+
   useEffect(() => {
     fetchEmployeeMenus();
     fetchEmployeeOrders();
@@ -428,6 +442,13 @@ export const CookPortal = ({ userProfile }: CookPortalProps) => {
                   <FontAwesomeIcon icon={faEdit} className="mr-2" />
                   Modifier
                 </Button>
+                <Button
+                  size="sm"
+                  className={menu.is_available ? 'bg-gray-200 text-gray-800 hover:bg-gray-300 w-full' : 'bg-green-600 hover:bg-green-700 w-full'}
+                  onClick={() => toggleMenuAvailability(menu.id as unknown as string, !menu.is_available)}
+                >
+                  {menu.is_available ? 'Marquer indisponible' : 'Marquer disponible'}
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -553,11 +574,21 @@ export const CookPortal = ({ userProfile }: CookPortalProps) => {
             Annuler
           </Button>
           <Button 
-            onClick={() => {
-              // Logique de sauvegarde simplifiée
-              showSuccess(selectedMenu ? 'Menu mis à jour !' : 'Menu créé !');
-              setIsMenuModalOpen(false);
-              fetchEmployeeMenus();
+            onClick={async () => {
+              const nameInput = document.getElementById('menu-name') as HTMLInputElement | null;
+              const descInput = document.getElementById('menu-description') as HTMLTextAreaElement | null;
+              const priceInput = document.getElementById('menu-price') as HTMLInputElement | null;
+              const availableInput = document.getElementById('menu-available') as HTMLInputElement | null;
+
+              const values = {
+                name: nameInput?.value?.trim() || '',
+                description: descInput?.value?.trim() || '',
+                price: priceInput?.value ? Number(priceInput.value) : 0,
+                is_available: availableInput?.checked ?? true,
+                photo_url: selectedMenu?.photo_url || null
+              } as any;
+
+              await handleMenuSubmit(values);
             }}
             className="bg-orange-600 hover:bg-orange-700"
           >

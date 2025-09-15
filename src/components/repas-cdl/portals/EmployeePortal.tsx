@@ -30,7 +30,6 @@ export const EmployeePortal = ({ userProfile }: EmployeePortalProps) => {
       const { data, error } = await supabase
         .from('employee_menus')
         .select('*')
-        .eq('is_available', true)
         .order('created_at', { ascending: false });
       if (error) throw error;
       setMenus(data);
@@ -148,7 +147,7 @@ export const EmployeePortal = ({ userProfile }: EmployeePortalProps) => {
               <FontAwesomeIcon icon={faUtensils} className="text-green-600 mr-3" />
               <div>
                 <p className="text-sm text-gray-600">Menus disponibles</p>
-                <p className="text-2xl font-bold">{menus.length}</p>
+                <p className="text-2xl font-bold">{menus.filter(m => m.is_available).length}</p>
               </div>
             </div>
           </CardContent>
@@ -210,7 +209,7 @@ export const EmployeePortal = ({ userProfile }: EmployeePortalProps) => {
       {/* Liste des menus disponibles */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {menus.map(menu => (
-          <Card key={menu.id} className="hover:shadow-lg transition-shadow">
+          <Card key={menu.id} className={`hover:shadow-lg transition-shadow ${!menu.is_available ? 'opacity-60 grayscale' : ''}`}>
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-3">
                 {menu.photo_url && (
@@ -226,19 +225,24 @@ export const EmployeePortal = ({ userProfile }: EmployeePortalProps) => {
                   <p className="text-lg font-bold text-green-600 mt-1">
                     {menu.price.toLocaleString('fr-FR')} XAF
                   </p>
+                  {!menu.is_available && (
+                    <Badge variant="secondary" className="mt-1">Indisponible</Badge>
+                  )}
                 </div>
               </div>
               
               <Button 
                 size="sm" 
-                className="w-full bg-green-600 hover:bg-green-700"
+                className={`w-full ${menu.is_available ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-300 text-gray-600 cursor-not-allowed'}`}
+                disabled={!menu.is_available}
                 onClick={() => {
+                  if (!menu.is_available) return;
                   setSelectedMenu(menu);
                   setIsOrderModalOpen(true);
                 }}
               >
                 <FontAwesomeIcon icon={faPlus} className="mr-2" />
-                Commander
+                {menu.is_available ? 'Commander' : 'Indisponible'}
               </Button>
             </CardContent>
           </Card>
