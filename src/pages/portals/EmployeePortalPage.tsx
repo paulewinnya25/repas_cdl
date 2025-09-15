@@ -176,11 +176,28 @@ const EmployeePortalPage: React.FC = () => {
         return accompaniments === 2 ? 2000 : basePrice;
       };
 
+      // Vérifier que chaque plat a exactement le bon nombre d'accompagnements saisis
+      const parseItems = (text: string | undefined) =>
+        (text || '')
+          .split(/[,;+]/)
+          .map((t) => t.trim())
+          .filter(Boolean);
+
+      for (let i = 0; i < newOrder.quantity; i++) {
+        const required = newOrder.perPlateAccompaniments[i] ?? 1;
+        const items = parseItems(newOrder.perPlateDetails[i]);
+        if (items.length !== required) {
+          showError(`Plat ${i + 1}: vous devez préciser exactement ${required} accompagnement(s).`);
+          return;
+        }
+      }
+
       // Créer une ligne par plat avec son nombre d'accompagnements
       const ordersToInsert = Array.from({ length: newOrder.quantity }, (_, index) => {
         const accomp = newOrder.perPlateAccompaniments[index] ?? 1;
         const unitPrice = calculatePrice(selectedMenu.price, accomp);
-        const perPlateNote = newOrder.perPlateDetails[index]?.trim();
+        const items = parseItems(newOrder.perPlateDetails[index]);
+        const perPlateNote = items.join(' + ');
         return {
           employee_id: userId,
           employee_name: newOrder.employeeName,
