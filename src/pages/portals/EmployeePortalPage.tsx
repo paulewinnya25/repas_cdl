@@ -65,6 +65,9 @@ const EmployeePortalPage: React.FC = () => {
   const [currentUserRole, setCurrentUserRole] = useState<UserRole>('Employé');
   const [user, setUser] = useState<{ id: string } | null>(null);
 
+  // Options simples d'accompagnements
+  const accompanimentOptions = ['Riz', 'Plantain', 'Frites', 'Salade', 'Haricots', 'Légumes'];
+
   useEffect(() => {
     fetchData();
     checkUserRole();
@@ -832,6 +835,13 @@ const EmployeePortalPage: React.FC = () => {
                             while (next.length < newOrder.quantity) next.push(1);
                             const nextDetails = [...newOrder.perPlateDetails];
                             while (nextDetails.length < newOrder.quantity) nextDetails.push('');
+                            // Si trop d'éléments sélectionnés, tronquer pour respecter la nouvelle limite
+                            const current = (nextDetails[index] || '')
+                              .split(/[,;+]/).map(t => t.trim()).filter(Boolean);
+                            const required = parseInt(value);
+                            if (current.length > required) {
+                              nextDetails[index] = current.slice(0, required).join(' + ');
+                            }
                             setNewOrder({ ...newOrder, perPlateAccompaniments: next, perPlateDetails: nextDetails });
                           }}
                         >
@@ -845,18 +855,49 @@ const EmployeePortalPage: React.FC = () => {
                         </Select>
                       </div>
                       <div>
-                        <Label className="text-xs text-gray-600">Détail des accompagnements (ex: riz + plantain)</Label>
-                        <Textarea
-                          placeholder="Précisez les accompagnements souhaités pour ce plat"
-                          value={newOrder.perPlateDetails[index] ?? ''}
-                          onChange={(e) => {
-                            const next = [...newOrder.perPlateDetails];
-                            while (next.length < newOrder.quantity) next.push('');
-                            next[index] = e.target.value;
-                            setNewOrder({ ...newOrder, perPlateDetails: next });
-                          }}
-                          rows={2}
-                        />
+                        <div className="flex items-center justify-between">
+                          <Label className="text-xs text-gray-600">Accompagnements</Label>
+                          <span className="text-xs text-gray-500">
+                            {(() => {
+                              const current = (newOrder.perPlateDetails[index] || '')
+                                .split(/[,;+]/).map(t => t.trim()).filter(Boolean);
+                              const required = newOrder.perPlateAccompaniments[index] ?? 1;
+                              return `${current.length}/${required}`;
+                            })()}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-1">
+                          {accompanimentOptions.map((opt) => {
+                            const current = (newOrder.perPlateDetails[index] || '')
+                              .split(/[,;+]/).map(t => t.trim()).filter(Boolean);
+                            const required = newOrder.perPlateAccompaniments[index] ?? 1;
+                            const checked = current.includes(opt);
+                            const disabled = !checked && current.length >= required;
+                            return (
+                              <label key={opt} className={`flex items-center space-x-2 text-sm ${disabled ? 'opacity-60' : ''}`}>
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  disabled={disabled}
+                                  onChange={(e) => {
+                                    const next = [...current];
+                                    if (e.target.checked) {
+                                      if (!next.includes(opt) && next.length < required) next.push(opt);
+                                    } else {
+                                      const i = next.indexOf(opt);
+                                      if (i >= 0) next.splice(i, 1);
+                                    }
+                                    const all = [...newOrder.perPlateDetails];
+                                    while (all.length < newOrder.quantity) all.push('');
+                                    all[index] = next.join(' + ');
+                                    setNewOrder({ ...newOrder, perPlateDetails: all });
+                                  }}
+                                />
+                                <span>{opt}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
                   ))}
