@@ -24,31 +24,23 @@ const MultiMenuOrderModal: React.FC<MultiMenuOrderModalProps> = ({
 }) => {
   const [employeeName, setEmployeeName] = useState('');
   const [specialInstructions, setSpecialInstructions] = useState('');
-  const [selectedMenus, setSelectedMenus] = useState<Array<{menu: EmployeeMenu, accompaniments: number}>>([]);
+  const [selectedMenus, setSelectedMenus] = useState<Array<{selectionId: string, menu: EmployeeMenu, accompaniments: number}>>([]);
 
   const addMenuToOrder = (menu: EmployeeMenu) => {
-    const existingIndex = selectedMenus.findIndex(item => item.menu.id === menu.id);
-    
-    if (existingIndex >= 0) {
-      // Menu déjà sélectionné, augmenter les accompagnements
-      const updatedMenus = [...selectedMenus];
-      updatedMenus[existingIndex].accompaniments += 1;
-      setSelectedMenus(updatedMenus);
-    } else {
-      // Nouveau menu
-      setSelectedMenus([...selectedMenus, {menu, accompaniments: 1}]);
-    }
+    // Autoriser plusieurs fois le même menu avec des accompagnements différents
+    const selectionId = `${menu.id}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    setSelectedMenus(prev => [...prev, { selectionId, menu, accompaniments: 1 }]);
   };
 
-  const removeMenuFromOrder = (menuId: string) => {
-    setSelectedMenus(selectedMenus.filter(item => item.menu.id !== menuId));
+  const removeMenuFromOrder = (selectionId: string) => {
+    setSelectedMenus(selectedMenus.filter(item => item.selectionId !== selectionId));
   };
 
-  const updateAccompaniments = (menuId: string, accompaniments: number) => {
+  const updateAccompaniments = (selectionId: string, accompaniments: number) => {
     if (accompaniments < 1) return;
     
     const updatedMenus = selectedMenus.map(item => 
-      item.menu.id === menuId ? {...item, accompaniments} : item
+      item.selectionId === selectionId ? {...item, accompaniments} : item
     );
     setSelectedMenus(updatedMenus);
   };
@@ -157,7 +149,7 @@ const MultiMenuOrderModal: React.FC<MultiMenuOrderModalProps> = ({
               <h3 className="text-lg font-semibold mb-4">Panier de commande</h3>
               <div className="space-y-3">
                 {selectedMenus.map(item => (
-                  <div key={item.menu.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div key={item.selectionId} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div className="flex items-center space-x-3">
                       <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                         <FontAwesomeIcon icon={faUtensils} className="text-green-600" />
@@ -173,7 +165,7 @@ const MultiMenuOrderModal: React.FC<MultiMenuOrderModalProps> = ({
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => updateAccompaniments(item.menu.id, item.accompaniments - 1)}
+                          onClick={() => updateAccompaniments(item.selectionId, item.accompaniments - 1)}
                           disabled={item.accompaniments <= 1}
                         >
                           <FontAwesomeIcon icon={faMinus} />
@@ -182,7 +174,7 @@ const MultiMenuOrderModal: React.FC<MultiMenuOrderModalProps> = ({
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => updateAccompaniments(item.menu.id, item.accompaniments + 1)}
+                          onClick={() => updateAccompaniments(item.selectionId, item.accompaniments + 1)}
                         >
                           <FontAwesomeIcon icon={faPlus} />
                         </Button>
@@ -195,7 +187,7 @@ const MultiMenuOrderModal: React.FC<MultiMenuOrderModalProps> = ({
                       <Button
                         size="sm"
                         variant="destructive"
-                        onClick={() => removeMenuFromOrder(item.menu.id)}
+                        onClick={() => removeMenuFromOrder(item.selectionId)}
                       >
                         <FontAwesomeIcon icon={faTrash} />
                       </Button>
