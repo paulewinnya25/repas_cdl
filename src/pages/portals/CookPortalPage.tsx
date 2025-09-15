@@ -40,7 +40,6 @@ export default function CookPortalPage() {
   // Form states for patient menus
   const [patientMenuName, setPatientMenuName] = useState('');
   const [patientMenuDescription, setPatientMenuDescription] = useState('');
-  const [patientMenuPrice, setPatientMenuPrice] = useState('');
   const [patientMenuPhotoUrl, setPatientMenuPhotoUrl] = useState('');
   const [patientMenuDietaryRestriction, setPatientMenuDietaryRestriction] = useState<DietaryRestriction>('Normal');
   const [patientMenuMealType, setPatientMenuMealType] = useState<PatientMealType>('Déjeuner');
@@ -272,7 +271,7 @@ export default function CookPortalPage() {
 
   // Fonctions pour les menus patients
   const handlePatientMenuSubmit = async () => {
-    if (!patientMenuName || !patientMenuDescription || !patientMenuPrice) {
+    if (!patientMenuName || !patientMenuDescription) {
       showError('Veuillez remplir tous les champs obligatoires');
       return;
     }
@@ -283,7 +282,7 @@ export default function CookPortalPage() {
         .insert([{
           name: patientMenuName,
           description: patientMenuDescription,
-          price: parseFloat(patientMenuPrice || '0'),
+          price: 0,
           photo_url: patientMenuPhotoUrl,
           dietary_restriction: patientMenuDietaryRestriction,
           meal_type: patientMenuMealType,
@@ -309,7 +308,7 @@ export default function CookPortalPage() {
   };
 
   const handlePatientMenuUpdate = async () => {
-    if (!editingPatientMenu || !patientMenuName || !patientMenuDescription || !patientMenuPrice) {
+    if (!editingPatientMenu || !patientMenuName || !patientMenuDescription) {
       showError('Veuillez remplir tous les champs obligatoires');
       return;
     }
@@ -320,7 +319,7 @@ export default function CookPortalPage() {
         .update({
           name: patientMenuName,
           description: patientMenuDescription,
-          price: parseFloat(patientMenuPrice || '0'),
+          price: 0,
           photo_url: patientMenuPhotoUrl,
           dietary_restriction: patientMenuDietaryRestriction,
           meal_type: patientMenuMealType,
@@ -385,7 +384,7 @@ export default function CookPortalPage() {
     setEditingPatientMenu(menu);
     setPatientMenuName(menu.name);
     setPatientMenuDescription(menu.description);
-    setPatientMenuPrice((menu.price ?? 0).toString());
+    // Prix non utilisé (menus patients gratuits)
     setPatientMenuPhotoUrl(menu.photo_url || '');
     setPatientMenuDietaryRestriction(menu.dietary_restriction);
     setPatientMenuMealType(menu.meal_type);
@@ -850,7 +849,7 @@ export default function CookPortalPage() {
                                   <span className="font-medium text-blue-600">{menu.dietary_restriction}</span>
                                   <span className="font-medium text-green-600">{menu.meal_type}</span>
                                 </div>
-                                <p className="text-sm font-bold text-green-600">{menu.price} FCFA</p>
+                                {/* Prix supprimé car menus patients gratuits */}
                                 {menu.calories && (
                                   <div className="text-xs text-gray-500">
                                     {menu.calories} cal • {menu.protein_g}g protéines • {menu.carbs_g}g glucides
