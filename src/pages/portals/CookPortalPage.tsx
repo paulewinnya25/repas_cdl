@@ -282,7 +282,7 @@ export default function CookPortalPage() {
         .insert([{
           name: patientMenuName,
           description: patientMenuDescription,
-          price: parseFloat(patientMenuPrice),
+          price: parseFloat(patientMenuPrice || '0'),
           photo_url: patientMenuPhotoUrl,
           dietary_restriction: patientMenuDietaryRestriction,
           meal_type: patientMenuMealType,
@@ -319,7 +319,7 @@ export default function CookPortalPage() {
         .update({
           name: patientMenuName,
           description: patientMenuDescription,
-          price: parseFloat(patientMenuPrice),
+          price: parseFloat(patientMenuPrice || '0'),
           photo_url: patientMenuPhotoUrl,
           dietary_restriction: patientMenuDietaryRestriction,
           meal_type: patientMenuMealType,
@@ -384,7 +384,7 @@ export default function CookPortalPage() {
     setEditingPatientMenu(menu);
     setPatientMenuName(menu.name);
     setPatientMenuDescription(menu.description);
-    setPatientMenuPrice(menu.price.toString());
+    setPatientMenuPrice((menu.price ?? 0).toString());
     setPatientMenuPhotoUrl(menu.photo_url || '');
     setPatientMenuDietaryRestriction(menu.dietary_restriction);
     setPatientMenuMealType(menu.meal_type);
