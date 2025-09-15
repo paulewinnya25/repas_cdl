@@ -40,6 +40,7 @@ export default function CookPortalPage() {
   // Form states for patient menus
   const [patientMenuName, setPatientMenuName] = useState('');
   const [patientMenuDescription, setPatientMenuDescription] = useState('');
+  const [patientMenuPrice, setPatientMenuPrice] = useState('');
   const [patientMenuPhotoUrl, setPatientMenuPhotoUrl] = useState('');
   const [patientMenuDietaryRestriction, setPatientMenuDietaryRestriction] = useState<DietaryRestriction>('Normal');
   const [patientMenuMealType, setPatientMenuMealType] = useState<PatientMealType>('Déjeuner');
