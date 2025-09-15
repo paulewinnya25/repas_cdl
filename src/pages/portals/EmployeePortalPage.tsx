@@ -109,7 +109,6 @@ const EmployeePortalPage: React.FC = () => {
       const { data: menusData, error: menusError } = await supabase
         .from('employee_menus')
         .select('*')
-        .eq('is_available', true)
         .order('name', { ascending: true });
       
       if (menusError) {
