@@ -179,7 +179,67 @@ const EmployeePortalPage: React.FC = () => {
     });
   };
 
-  const handlePlaceOrder = async (employeeName: string, specialInstructions: string, selectedMenus: Array<{menu: EmployeeMenu, accompaniments: number}>) => {
+  const handlePlaceOrder = async () => {
+    if (!selectedMenu || !newOrder.employeeName) {
+      showError("Veuillez remplir le nom de l'employé");
+      return;
+    }
+
+    try {
+      // Utiliser l'utilisateur simulé ou l'utilisateur connecté
+      const userId = user?.id || '550e8400-e29b-41d4-a716-446655440012';
+
+      // Calculer le prix selon le nombre d'accompagnements
+      const calculatePrice = (basePrice: number, accompaniments: number) => {
+        return accompaniments === 2 ? 2000 : basePrice;
+      };
+
+      const unitPrice = calculatePrice(selectedMenu.price, newOrder.accompaniments);
+      const totalPrice = unitPrice * newOrder.quantity;
+
+      // Insérer la commande avec toutes les colonnes nécessaires (v2.0)
+      const insertData = {
+        employee_id: userId,
+        employee_name: newOrder.employeeName,
+        menu_id: selectedMenu.id,
+        delivery_location: 'Cuisine',
+        quantity: newOrder.quantity,
+        accompaniments: newOrder.accompaniments,
+        total_price: totalPrice,
+        status: 'Commandé',
+        special_instructions: newOrder.specialInstructions
+      };
+
+      const { error } = await supabase
+        .from('employee_orders')
+        .insert([insertData]);
+
+      if (error) {
+        console.error('Erreur lors de l\'insertion:', error);
+        throw error;
+      }
+
+      showSuccess(`Commande passée pour ${selectedMenu.name} (${newOrder.quantity} plat${newOrder.quantity > 1 ? 's' : ''}, ${newOrder.accompaniments} accompagnement${newOrder.accompaniments > 1 ? 's' : ''})`);
+
+      setNewOrder({ 
+        employeeName: '', 
+        specialInstructions: '', 
+        quantity: 1, 
+        accompaniments: 1,
+        selectedMenus: []
+      });
+      setIsOrderModalOpen(false);
+      setSelectedMenu(null);
+      
+      // Rafraîchir les données pour afficher la nouvelle commande
+      await fetchData();
+    } catch (error) {
+      console.error('Erreur lors de la commande:', error);
+      showError("Impossible de passer la commande");
+    }
+  };
+
+  const handlePlaceOrderFromModal = async (employeeName: string, specialInstructions: string, selectedMenus: Array<{menu: EmployeeMenu, accompaniments: number}>) => {
     try {
       // Utiliser l'utilisateur simulé ou l'utilisateur connecté
       const userId = user?.id || '550e8400-e29b-41d4-a716-446655440012';
@@ -239,7 +299,8 @@ const EmployeePortalPage: React.FC = () => {
       employeeName: order.employee_name || '',
       specialInstructions: order.special_instructions || '',
       quantity: order.quantity,
-      accompaniments: order.accompaniments || 1
+      accompaniments: order.accompaniments || 1,
+      selectedMenus: []
     });
     setIsEditOrderModalOpen(true);
   };
@@ -276,7 +337,7 @@ const EmployeePortalPage: React.FC = () => {
       showSuccess('Commande modifiée avec succès !');
       setIsEditOrderModalOpen(false);
       setEditingOrder(null);
-      setNewOrder({ employeeName: '', specialInstructions: '', quantity: 1, accompaniments: 1 });
+      setNewOrder({ employeeName: '', specialInstructions: '', quantity: 1, accompaniments: 1, selectedMenus: [] });
       fetchData();
 
     } catch (error) {
@@ -1069,7 +1130,7 @@ const EmployeePortalPage: React.FC = () => {
         isOpen={isMultiMenuModalOpen}
         onClose={() => setIsMultiMenuModalOpen(false)}
         menus={menus}
-        onPlaceOrder={handlePlaceOrder}
+        onPlaceOrder={handlePlaceOrderFromModal}
       />
     </div>
   );

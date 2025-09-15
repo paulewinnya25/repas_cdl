@@ -906,6 +906,7 @@ const NursePortalPage: React.FC = () => {
                       checked={newOrder.companionMeal}
                       onChange={(e) => setNewOrder({...newOrder, companionMeal: e.target.checked})}
                       className="rounded"
+                      aria-label="Commande pour accompagnateur"
                     />
                     <Label htmlFor="companion-meal" className="text-sm font-medium">
                       Commande pour accompagnateur
