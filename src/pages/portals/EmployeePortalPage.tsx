@@ -749,7 +749,11 @@ const EmployeePortalPage: React.FC = () => {
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => setNewOrder({...newOrder, quantity: Math.max(1, newOrder.quantity - 1)})}
+                      onClick={() => {
+                        const nextQty = Math.max(1, newOrder.quantity - 1);
+                        const nextPerPlate = newOrder.perPlateAccompaniments.slice(0, nextQty);
+                        setNewOrder({ ...newOrder, quantity: nextQty, perPlateAccompaniments: nextPerPlate });
+                      }}
                       disabled={newOrder.quantity <= 1}
                       className="w-10 h-10"
                     >
@@ -766,7 +770,12 @@ const EmployeePortalPage: React.FC = () => {
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => setNewOrder({...newOrder, quantity: Math.min(10, newOrder.quantity + 1)})}
+                      onClick={() => {
+                        const nextQty = Math.min(10, newOrder.quantity + 1);
+                        const nextPerPlate = [...newOrder.perPlateAccompaniments];
+                        while (nextPerPlate.length < nextQty) nextPerPlate.push(1);
+                        setNewOrder({ ...newOrder, quantity: nextQty, perPlateAccompaniments: nextPerPlate });
+                      }}
                       disabled={newOrder.quantity >= 10}
                       className="w-10 h-10"
                     >
@@ -841,36 +850,33 @@ const EmployeePortalPage: React.FC = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center space-x-2">
-                        <span>{selectedMenu.name}</span>
-                        <span className="text-sm text-gray-600 dark:text-gray-400">x {newOrder.quantity}</span>
-                        <span className="text-sm text-gray-600 dark:text-gray-400">
-                          ({newOrder.accompaniments} accompagnement{newOrder.accompaniments > 1 ? 's' : ''})
-                        </span>
-                      </div>
-                      <span className="font-bold">
-                        {newOrder.accompaniments === 2 ? '2 000' : selectedMenu.price.toLocaleString('fr-FR')} XAF
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Sous-total</span>
-                      <span className="font-bold">
-                        {newOrder.accompaniments === 2 ? (2000 * newOrder.quantity).toLocaleString('fr-FR') : (selectedMenu.price * newOrder.quantity).toLocaleString('fr-FR')} XAF
-                      </span>
-                    </div>
-                    {newOrder.accompaniments === 2 && (
-                      <div className="flex justify-between items-center text-sm text-green-600">
-                        <span>✓ Supplément pour 2 accompagnements</span>
-                        <span>+{((2000 - selectedMenu.price) * newOrder.quantity).toLocaleString('fr-FR')} XAF</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between items-center mt-2 pt-2 border-t">
-                      <span className="font-semibold">Total</span>
-                      <span className="font-bold text-lg text-green-600">
-                        {newOrder.accompaniments === 2 ? (2000 * newOrder.quantity).toLocaleString('fr-FR') : (selectedMenu.price * newOrder.quantity).toLocaleString('fr-FR')} XAF
-                      </span>
-                    </div>
+                    {(() => {
+                      const base = selectedMenu.price;
+                      const twoAcc = newOrder.perPlateAccompaniments.filter(a => a === 2).length;
+                      const oneAcc = newOrder.quantity - twoAcc;
+                      const subtotal = oneAcc * base + twoAcc * 2000;
+                      return (
+                        <>
+                          <div className="flex justify-between items-center">
+                            <div className="flex items-center space-x-2">
+                              <span>{selectedMenu.name}</span>
+                              <span className="text-sm text-gray-600 dark:text-gray-400">x {newOrder.quantity}</span>
+                              <span className="text-sm text-gray-600 dark:text-gray-400">
+                                ({oneAcc} plat(s) à 1 accompagnement, {twoAcc} plat(s) à 2 accompagnements)
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-600">Sous-total</span>
+                            <span className="font-bold">{subtotal.toLocaleString('fr-FR')} XAF</span>
+                          </div>
+                          <div className="flex justify-between items-center mt-2 pt-2 border-t">
+                            <span className="font-semibold">Total</span>
+                            <span className="font-bold text-lg text-green-600">{subtotal.toLocaleString('fr-FR')} XAF</span>
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
