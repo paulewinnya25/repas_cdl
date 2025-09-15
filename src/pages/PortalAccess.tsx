@@ -10,7 +10,6 @@ import {
   faUtensils,
   faSignInAlt
 } from '@fortawesome/free-solid-svg-icons';
-import ConnectionTest from '@/components/ConnectionTest';
 
 const PortalAccess: React.FC = () => {
   return (
@@ -58,10 +57,10 @@ const PortalAccess: React.FC = () => {
                 Gestion des commandes patients, création de nouvelles commandes, 
                 annulation et suppression des commandes.
               </p>
-              <Link to="/login" className="block">
+              <Link to="/nurse-portal" className="block">
                 <Button className="w-full bg-blue-600 hover:bg-blue-700">
                   <FontAwesomeIcon icon={faUserInjured} className="mr-2" />
-                  Se connecter - Portail Infirmier
+                  Accéder au Portail Infirmier
                 </Button>
               </Link>
             </CardContent>
@@ -80,10 +79,10 @@ const PortalAccess: React.FC = () => {
                 Gestion des commandes patients et employés, mise à jour des statuts, 
                 gestion des menus employés.
               </p>
-              <Link to="/login" className="block">
+              <Link to="/cook-portal" className="block">
                 <Button className="w-full bg-orange-600 hover:bg-orange-700">
                   <FontAwesomeIcon icon={faUserTie} className="mr-2" />
-                  Se connecter - Portail Cuisinier
+                  Accéder au Portail Cuisinier
                 </Button>
               </Link>
             </CardContent>
@@ -112,30 +111,7 @@ const PortalAccess: React.FC = () => {
           </Card>
         </div>
 
-        {/* Informations de connexion */}
-        <div className="mt-12 bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">Informations de Connexion</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h4 className="font-semibold text-blue-800 mb-2">Infirmier</h4>
-              <p><strong>Email:</strong> paule.winnya@centre-diagnostic.com</p>
-              <p><strong>Mot de passe:</strong> password123</p>
-            </div>
-            <div className="bg-orange-50 p-4 rounded-lg">
-              <h4 className="font-semibold text-orange-800 mb-2">Cuisinier</h4>
-              <p><strong>Email:</strong> chef@centre-diagnostic.com</p>
-              <p><strong>Mot de passe:</strong> password123</p>
-            </div>
-            <div className="bg-green-50 p-4 rounded-lg">
-              <h4 className="font-semibold text-green-800 mb-2">Employé</h4>
-              <p><strong>Email:</strong> employe@centre-diagnostic.com</p>
-              <p><strong>Mot de passe:</strong> password123</p>
-            </div>
-          </div>
-        </div>
 
-        {/* Test de connexion - temporaire */}
-        <ConnectionTest />
       </div>
     </div>
   );
