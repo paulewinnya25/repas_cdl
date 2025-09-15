@@ -41,7 +41,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Textarea } from '../../components/ui/textarea';
 import { Header } from '../../components/ui/Header';
 import { showSuccess, showError } from '../../utils/toast';
-import MultiMenuOrderModal from '../../components/MultiMenuOrderModal';
+// MultiMenuOrderModal retiré selon demande
 
 const EmployeePortalPage: React.FC = () => {
   const [menus, setMenus] = useState<EmployeeMenu[]>([]);
@@ -50,7 +50,7 @@ const EmployeePortalPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMenu, setSelectedMenu] = useState<EmployeeMenu | null>(null);
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
-  const [isMultiMenuModalOpen, setIsMultiMenuModalOpen] = useState(false);
+  // Plus de modal multi-menus
   const [isEditOrderModalOpen, setIsEditOrderModalOpen] = useState(false);
   const [isCancelOrderModalOpen, setIsCancelOrderModalOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<EmployeeOrderWithProfile | null>(null);
@@ -59,7 +59,7 @@ const EmployeePortalPage: React.FC = () => {
     specialInstructions: '',
     quantity: 1,
     accompaniments: 1,
-    selectedMenus: [] as Array<{menu: EmployeeMenu, accompaniments: number}>
+    perPlateAccompaniments: [1] as number[]
   });
   const [currentUserRole, setCurrentUserRole] = useState<UserRole>('Employé');
   const [user, setUser] = useState<{ id: string } | null>(null);
@@ -155,29 +155,10 @@ const EmployeePortalPage: React.FC = () => {
     setIsOrderModalOpen(true);
   };
 
-  const addMenuToOrder = (menu: EmployeeMenu, accompaniments: number) => {
-    const existingIndex = newOrder.selectedMenus.findIndex(item => item.menu.id === menu.id);
-    
-    if (existingIndex >= 0) {
-      // Mettre à jour les accompagnements pour ce menu
-      const updatedMenus = [...newOrder.selectedMenus];
-      updatedMenus[existingIndex].accompaniments = accompaniments;
-      setNewOrder({...newOrder, selectedMenus: updatedMenus});
-    } else {
-      // Ajouter un nouveau menu
-      setNewOrder({
-        ...newOrder, 
-        selectedMenus: [...newOrder.selectedMenus, {menu, accompaniments}]
-      });
-    }
-  };
+  // plus utilisé (multi-menus retiré)
+  const addMenuToOrder = (_menu: EmployeeMenu, _accompaniments: number) => {};
 
-  const removeMenuFromOrder = (menuId: string) => {
-    setNewOrder({
-      ...newOrder,
-      selectedMenus: newOrder.selectedMenus.filter(item => item.menu.id !== menuId)
-    });
-  };
+  const removeMenuFromOrder = (_menuId: string) => {};
 
   const handlePlaceOrder = async () => {
     if (!selectedMenu || !newOrder.employeeName) {
@@ -194,40 +175,37 @@ const EmployeePortalPage: React.FC = () => {
         return accompaniments === 2 ? 2000 : basePrice;
       };
 
-      const unitPrice = calculatePrice(selectedMenu.price, newOrder.accompaniments);
-      const totalPrice = unitPrice * newOrder.quantity;
-
-      // Insérer la commande avec toutes les colonnes nécessaires (v2.0)
-      const insertData = {
-        employee_id: userId,
-        employee_name: newOrder.employeeName,
-        menu_id: selectedMenu.id,
-        delivery_location: 'Cuisine',
-        quantity: newOrder.quantity,
-        accompaniments: newOrder.accompaniments,
-        total_price: totalPrice,
-        status: 'Commandé',
-        special_instructions: newOrder.specialInstructions
-      };
+      // Créer une ligne par plat avec son nombre d'accompagnements
+      const ordersToInsert = Array.from({ length: newOrder.quantity }, (_, index) => {
+        const accomp = newOrder.perPlateAccompaniments[index] ?? 1;
+        const unitPrice = calculatePrice(selectedMenu.price, accomp);
+        return {
+          employee_id: userId,
+          employee_name: newOrder.employeeName,
+          menu_id: selectedMenu.id,
+          delivery_location: 'Cuisine',
+          quantity: 1,
+          accompaniments: accomp,
+          total_price: unitPrice,
+          status: 'Commandé',
+          special_instructions: newOrder.specialInstructions
+        };
+      });
 
       const { error } = await supabase
         .from('employee_orders')
-        .insert([insertData]);
+        .insert(ordersToInsert);
 
       if (error) {
         console.error('Erreur lors de l\'insertion:', error);
         throw error;
       }
 
-      showSuccess(`Commande passée pour ${selectedMenu.name} (${newOrder.quantity} plat${newOrder.quantity > 1 ? 's' : ''}, ${newOrder.accompaniments} accompagnement${newOrder.accompaniments > 1 ? 's' : ''})`);
+      const twoAcc = newOrder.perPlateAccompaniments.filter(a => a === 2).length;
+      const oneAcc = newOrder.quantity - twoAcc;
+      showSuccess(`Commande passée pour ${selectedMenu.name}: ${oneAcc} plat(s) avec 1 accompagnement et ${twoAcc} plat(s) avec 2 accompagnements`);
 
-      setNewOrder({ 
-        employeeName: '', 
-        specialInstructions: '', 
-        quantity: 1, 
-        accompaniments: 1,
-        selectedMenus: []
-      });
+      setNewOrder({ employeeName: '', specialInstructions: '', quantity: 1, accompaniments: 1, perPlateAccompaniments: [1] });
       setIsOrderModalOpen(false);
       setSelectedMenu(null);
       
@@ -278,12 +256,9 @@ const EmployeePortalPage: React.FC = () => {
         throw error;
       }
 
-      const totalMenus = selectedMenus.length;
-      const totalAccompaniments = selectedMenus.reduce((sum, item) => sum + item.accompaniments, 0);
-      
+      const totalMenus = ordersToInsert.length;
+      const totalAccompaniments = ordersToInsert.reduce((sum, item) => sum + (item.accompaniments || 1), 0);
       showSuccess(`Commande passée pour ${totalMenus} plat${totalMenus > 1 ? 's' : ''} avec ${totalAccompaniments} accompagnement${totalAccompaniments > 1 ? 's' : ''}`);
-
-      setIsMultiMenuModalOpen(false);
       
       // Rafraîchir les données pour afficher la nouvelle commande
       await fetchData();
@@ -300,7 +275,7 @@ const EmployeePortalPage: React.FC = () => {
       specialInstructions: order.special_instructions || '',
       quantity: order.quantity,
       accompaniments: order.accompaniments || 1,
-      selectedMenus: []
+      perPlateAccompaniments: Array.from({ length: order.quantity }, (_, i) => i === 0 ? (order.accompaniments || 1) : 1)
     });
     setIsEditOrderModalOpen(true);
   };
@@ -337,7 +312,7 @@ const EmployeePortalPage: React.FC = () => {
       showSuccess('Commande modifiée avec succès !');
       setIsEditOrderModalOpen(false);
       setEditingOrder(null);
-      setNewOrder({ employeeName: '', specialInstructions: '', quantity: 1, accompaniments: 1, selectedMenus: [] });
+      setNewOrder({ employeeName: '', specialInstructions: '', quantity: 1, accompaniments: 1, perPlateAccompaniments: [1] });
       fetchData();
 
     } catch (error) {
@@ -495,13 +470,7 @@ const EmployeePortalPage: React.FC = () => {
                       className="pl-10"
                     />
                   </div>
-                  <Button 
-                    onClick={() => setIsMultiMenuModalOpen(true)}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    <FontAwesomeIcon icon={faShoppingCart} className="mr-2" />
-                    Commande Multi-Menus
-                  </Button>
+                  {/* Bouton multi-menus retiré */}
                 </div>
               </CardHeader>
               <CardContent>
@@ -816,21 +785,32 @@ const EmployeePortalPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Sélecteur d'accompagnements */}
-                <div>
-                  <Label htmlFor="accompaniments">Nombre d'accompagnements</Label>
-                  <Select 
-                    value={newOrder.accompaniments.toString()} 
-                    onValueChange={(value) => setNewOrder({...newOrder, accompaniments: parseInt(value)})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choisir le nombre d'accompagnements" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1">1 accompagnement - {selectedMenu?.price.toLocaleString('fr-FR')} XAF</SelectItem>
-                      <SelectItem value="2">2 accompagnements - 2 000 XAF</SelectItem>
-                    </SelectContent>
-                  </Select>
+                {/* Sélecteur d'accompagnements par plat */}
+                <div className="space-y-2">
+                  <Label>Nombre d'accompagnements par plat</Label>
+                  {Array.from({ length: newOrder.quantity }, (_, index) => (
+                    <div key={index} className="flex items-center space-x-3">
+                      <span className="text-sm text-gray-600">Plat {index + 1}</span>
+                      <Select
+                        value={(newOrder.perPlateAccompaniments[index] ?? 1).toString()}
+                        onValueChange={(value) => {
+                          const next = [...newOrder.perPlateAccompaniments];
+                          next[index] = parseInt(value);
+                          // Ajuster la longueur si nécessaire
+                          while (next.length < newOrder.quantity) next.push(1);
+                          setNewOrder({ ...newOrder, perPlateAccompaniments: next });
+                        }}
+                      >
+                        <SelectTrigger className="w-64">
+                          <SelectValue placeholder="Choisir" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">1 accompagnement - {selectedMenu?.price.toLocaleString('fr-FR')} XAF</SelectItem>
+                          <SelectItem value="2">2 accompagnements - 2 000 XAF</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ))}
                 </div>
 
                 <div>
@@ -1125,13 +1105,7 @@ const EmployeePortalPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Modal Multi-Menus */}
-      <MultiMenuOrderModal
-        isOpen={isMultiMenuModalOpen}
-        onClose={() => setIsMultiMenuModalOpen(false)}
-        menus={menus}
-        onPlaceOrder={handlePlaceOrderFromModal}
-      />
+      {/* Modal Multi-Menus retiré */}
     </div>
   );
 };
