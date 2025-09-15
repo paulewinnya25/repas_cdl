@@ -41,6 +41,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Textarea } from '../../components/ui/textarea';
 import { Header } from '../../components/ui/Header';
 import { showSuccess, showError } from '../../utils/toast';
+import MultiMenuOrderModal from '../../components/MultiMenuOrderModal';
 
 const EmployeePortalPage: React.FC = () => {
   const [menus, setMenus] = useState<EmployeeMenu[]>([]);
@@ -49,6 +50,7 @@ const EmployeePortalPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMenu, setSelectedMenu] = useState<EmployeeMenu | null>(null);
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
+  const [isMultiMenuModalOpen, setIsMultiMenuModalOpen] = useState(false);
   const [isEditOrderModalOpen, setIsEditOrderModalOpen] = useState(false);
   const [isCancelOrderModalOpen, setIsCancelOrderModalOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<EmployeeOrderWithProfile | null>(null);
@@ -56,7 +58,8 @@ const EmployeePortalPage: React.FC = () => {
     employeeName: '',
     specialInstructions: '',
     quantity: 1,
-    accompaniments: 1
+    accompaniments: 1,
+    selectedMenus: [] as Array<{menu: EmployeeMenu, accompaniments: number}>
   });
   const [currentUserRole, setCurrentUserRole] = useState<UserRole>('Employé');
   const [user, setUser] = useState<{ id: string } | null>(null);
@@ -152,51 +155,75 @@ const EmployeePortalPage: React.FC = () => {
     setIsOrderModalOpen(true);
   };
 
-  const handlePlaceOrder = async () => {
-    if (!selectedMenu || !newOrder.employeeName) {
-      showError("Veuillez remplir le nom de l'employé");
-      return;
+  const addMenuToOrder = (menu: EmployeeMenu, accompaniments: number) => {
+    const existingIndex = newOrder.selectedMenus.findIndex(item => item.menu.id === menu.id);
+    
+    if (existingIndex >= 0) {
+      // Mettre à jour les accompagnements pour ce menu
+      const updatedMenus = [...newOrder.selectedMenus];
+      updatedMenus[existingIndex].accompaniments = accompaniments;
+      setNewOrder({...newOrder, selectedMenus: updatedMenus});
+    } else {
+      // Ajouter un nouveau menu
+      setNewOrder({
+        ...newOrder, 
+        selectedMenus: [...newOrder.selectedMenus, {menu, accompaniments}]
+      });
     }
+  };
 
+  const removeMenuFromOrder = (menuId: string) => {
+    setNewOrder({
+      ...newOrder,
+      selectedMenus: newOrder.selectedMenus.filter(item => item.menu.id !== menuId)
+    });
+  };
+
+  const handlePlaceOrder = async (employeeName: string, specialInstructions: string, selectedMenus: Array<{menu: EmployeeMenu, accompaniments: number}>) => {
     try {
       // Utiliser l'utilisateur simulé ou l'utilisateur connecté
       const userId = user?.id || '550e8400-e29b-41d4-a716-446655440012';
 
-      // Calculer le prix selon le nombre d'accompagnements
-      const calculatePrice = (basePrice: number, accompaniments: number) => {
-        return accompaniments === 2 ? 2000 : basePrice;
-      };
+      // Créer une commande pour chaque menu sélectionné
+      const ordersToInsert = selectedMenus.map(selectedItem => {
+        const { menu, accompaniments } = selectedItem;
+        
+        // Calculer le prix selon le nombre d'accompagnements
+        const calculatePrice = (basePrice: number, accompaniments: number) => {
+          return accompaniments === 2 ? 2000 : basePrice;
+        };
 
-      const unitPrice = calculatePrice(selectedMenu.price, newOrder.accompaniments);
-      const totalPrice = unitPrice * newOrder.quantity;
+        const unitPrice = calculatePrice(menu.price, accompaniments);
+        const totalPrice = unitPrice; // 1 plat par menu sélectionné
 
-      // Insérer la commande avec toutes les colonnes nécessaires (v2.0)
-      const insertData = {
-        employee_id: userId,
-        employee_name: newOrder.employeeName,
-        menu_id: selectedMenu.id,
-        delivery_location: 'Cuisine',
-        quantity: newOrder.quantity,
-        accompaniments: newOrder.accompaniments,
-        total_price: totalPrice,
-        status: 'Commandé',
-        special_instructions: newOrder.specialInstructions
-      };
+        return {
+          employee_id: userId,
+          employee_name: employeeName,
+          menu_id: menu.id,
+          delivery_location: 'Cuisine',
+          quantity: 1, // 1 plat par menu
+          accompaniments: accompaniments,
+          total_price: totalPrice,
+          status: 'Commandé',
+          special_instructions: specialInstructions
+        };
+      });
 
       const { error } = await supabase
         .from('employee_orders')
-        .insert([insertData]);
+        .insert(ordersToInsert);
 
       if (error) {
         console.error('Erreur lors de l\'insertion:', error);
         throw error;
       }
 
-      showSuccess(`Commande passée pour ${selectedMenu.name} (${newOrder.quantity} plat${newOrder.quantity > 1 ? 's' : ''}, ${newOrder.accompaniments} accompagnement${newOrder.accompaniments > 1 ? 's' : ''})`);
+      const totalMenus = selectedMenus.length;
+      const totalAccompaniments = selectedMenus.reduce((sum, item) => sum + item.accompaniments, 0);
+      
+      showSuccess(`Commande passée pour ${totalMenus} plat${totalMenus > 1 ? 's' : ''} avec ${totalAccompaniments} accompagnement${totalAccompaniments > 1 ? 's' : ''}`);
 
-      setNewOrder({ employeeName: '', specialInstructions: '', quantity: 1, accompaniments: 1 });
-      setIsOrderModalOpen(false);
-      setSelectedMenu(null);
+      setIsMultiMenuModalOpen(false);
       
       // Rafraîchir les données pour afficher la nouvelle commande
       await fetchData();
@@ -407,6 +434,13 @@ const EmployeePortalPage: React.FC = () => {
                       className="pl-10"
                     />
                   </div>
+                  <Button 
+                    onClick={() => setIsMultiMenuModalOpen(true)}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    <FontAwesomeIcon icon={faShoppingCart} className="mr-2" />
+                    Commande Multi-Menus
+                  </Button>
                 </div>
               </CardHeader>
               <CardContent>
@@ -1029,6 +1063,14 @@ const EmployeePortalPage: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Modal Multi-Menus */}
+      <MultiMenuOrderModal
+        isOpen={isMultiMenuModalOpen}
+        onClose={() => setIsMultiMenuModalOpen(false)}
+        menus={menus}
+        onPlaceOrder={handlePlaceOrder}
+      />
     </div>
   );
 };

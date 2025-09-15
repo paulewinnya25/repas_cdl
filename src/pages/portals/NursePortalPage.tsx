@@ -48,7 +48,9 @@ const NursePortalPage: React.FC = () => {
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [newOrder, setNewOrder] = useState({
     mealType: '',
-    instructions: ''
+    instructions: '',
+    companionMeal: false,
+    companionInstructions: ''
   });
   const [newPatient, setNewPatient] = useState({
     name: '',
@@ -193,21 +195,43 @@ const NursePortalPage: React.FC = () => {
       // Déterminer le menu automatiquement selon le régime alimentaire
       const menu = getMenuForDiet(selectedPatient.diet, newOrder.mealType);
 
+      // Créer la commande principale du patient
+      const orderData = {
+        patient_id: selectedPatient.id,
+        meal_type: newOrder.mealType,
+        menu: menu,
+        instructions: newOrder.instructions,
+        status: 'En attente d\'approbation'
+      };
+
       const { error } = await supabase
         .from('orders')
-        .insert([{
+        .insert([orderData]);
+
+      // Si un accompagnateur est demandé, créer une commande séparée
+      if (newOrder.companionMeal && newOrder.companionInstructions) {
+        const companionOrderData = {
           patient_id: selectedPatient.id,
           meal_type: newOrder.mealType,
-          menu: menu,
-          instructions: newOrder.instructions,
+          menu: `${menu} (Accompagnateur)`,
+          instructions: newOrder.companionInstructions,
           status: 'En attente d\'approbation'
-        }]);
+        };
+
+        const { error: companionError } = await supabase
+          .from('orders')
+          .insert([companionOrderData]);
+
+        if (companionError) {
+          console.error('Erreur lors de la commande accompagnateur:', companionError);
+        }
+      }
 
       if (error) throw error;
 
       showSuccess(`Commande créée avec succès - Menu: ${menu}`);
 
-      setNewOrder({ mealType: '', instructions: '' });
+      setNewOrder({ mealType: '', instructions: '', companionMeal: false, companionInstructions: '' });
       setIsOrderModalOpen(false);
       setSelectedPatient(null);
       fetchData();
@@ -871,6 +895,35 @@ const NursePortalPage: React.FC = () => {
                     value={newOrder.instructions}
                     onChange={(e) => setNewOrder({...newOrder, instructions: e.target.value})}
                   />
+                </div>
+
+                {/* Commande pour accompagnateur */}
+                <div className="border-t pt-4">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <input
+                      type="checkbox"
+                      id="companion-meal"
+                      checked={newOrder.companionMeal}
+                      onChange={(e) => setNewOrder({...newOrder, companionMeal: e.target.checked})}
+                      className="rounded"
+                    />
+                    <Label htmlFor="companion-meal" className="text-sm font-medium">
+                      Commande pour accompagnateur
+                    </Label>
+                  </div>
+                  
+                  {newOrder.companionMeal && (
+                    <div>
+                      <Label htmlFor="companion-instructions">Instructions pour l'accompagnateur</Label>
+                      <Textarea
+                        id="companion-instructions"
+                        placeholder="Instructions particulières pour l'accompagnateur..."
+                        value={newOrder.companionInstructions}
+                        onChange={(e) => setNewOrder({...newOrder, companionInstructions: e.target.value})}
+                        className="mt-1"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
 
