@@ -39,6 +39,7 @@ export default function CookPortalPage() {
   const [menuPrice, setMenuPrice] = useState('');
   const [menuPhotoUrl, setMenuPhotoUrl] = useState('');
   const [menuAvailable, setMenuAvailable] = useState(true);
+  const [menuAccompaniments, setMenuAccompaniments] = useState('');
 
   // Form states for patient menus
   const [patientMenuName, setPatientMenuName] = useState('');
@@ -162,11 +163,14 @@ export default function CookPortalPage() {
     }
 
     try {
+      const descriptionCombined = menuAccompaniments
+        ? `${menuDescription}\nAccompagnements: ${menuAccompaniments}`
+        : menuDescription;
       const { error } = await supabase
         .from('employee_menus')
         .insert([{
           name: menuName,
-          description: menuDescription,
+          description: descriptionCombined,
           price: parseFloat(menuPrice),
           photo_url: menuPhotoUrl,
           is_available: menuAvailable
@@ -192,11 +196,14 @@ export default function CookPortalPage() {
     }
 
     try {
+      const descriptionCombined = menuAccompaniments
+        ? `${menuDescription}\nAccompagnements: ${menuAccompaniments}`
+        : menuDescription;
       const { error } = await supabase
         .from('employee_menus')
         .update({
           name: menuName,
-          description: menuDescription,
+          description: descriptionCombined,
           price: parseFloat(menuPrice),
           photo_url: menuPhotoUrl,
           is_available: menuAvailable
@@ -259,6 +266,7 @@ export default function CookPortalPage() {
   const resetForm = () => {
     setMenuName('');
     setMenuDescription('');
+    setMenuAccompaniments('');
     setMenuPrice('');
     setMenuPhotoUrl('');
     setMenuAvailable(true);
@@ -268,6 +276,7 @@ export default function CookPortalPage() {
     setEditingMenu(menu);
     setMenuName(menu.name);
     setMenuDescription(menu.description);
+    setMenuAccompaniments('');
     setMenuPrice(menu.price.toString());
     setMenuPhotoUrl(menu.photo_url || '');
     setMenuAvailable(menu.is_available);
@@ -1021,6 +1030,16 @@ export default function CookPortalPage() {
               />
             </div>
             <div>
+              <Label htmlFor="menu-accompaniments">Accompagnements (optionnel)</Label>
+              <Textarea
+                id="menu-accompaniments"
+                placeholder="Ex: Riz, Plantain, Frites..."
+                value={menuAccompaniments}
+                onChange={(e) => setMenuAccompaniments(e.target.value)}
+                rows={2}
+              />
+            </div>
+            <div>
               <Label htmlFor="menu-price">Prix (XAF)</Label>
               <Input
                 id="menu-price"
@@ -1089,6 +1108,16 @@ export default function CookPortalPage() {
                 value={menuDescription}
                 onChange={(e) => setMenuDescription(e.target.value)}
                 rows={3}
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-menu-accompaniments">Accompagnements (optionnel)</Label>
+              <Textarea
+                id="edit-menu-accompaniments"
+                placeholder="Ex: Riz, Plantain, Frites..."
+                value={menuAccompaniments}
+                onChange={(e) => setMenuAccompaniments(e.target.value)}
+                rows={2}
               />
             </div>
             <div>
