@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../integrations/supabase/client';
-import { Patient, Order, UserRole, PatientMenu } from '../../types/repas-cdl';
+import { Patient, Order, UserRole, PatientMenu, EmployeeMenu } from '../../types/repas-cdl';
 import { gabonCities } from '../../data/gabon-locations';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -36,6 +36,7 @@ const NursePortalPage: React.FC = () => {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [patientMenus, setPatientMenus] = useState<PatientMenu[]>([]);
+  const [employeeMenus, setEmployeeMenus] = useState<EmployeeMenu[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -51,7 +52,10 @@ const NursePortalPage: React.FC = () => {
     mealType: '',
     instructions: '',
     companionMeal: false,
-    companionInstructions: ''
+    companionInstructions: '',
+    companionSelectedMenu: null as EmployeeMenu | null,
+    companionAccompaniments: 1,
+    companionSelectedOptions: [] as string[]
   });
   const [newPatient, setNewPatient] = useState({
     name: '',
@@ -158,6 +162,23 @@ const NursePortalPage: React.FC = () => {
         setPatientMenus([]);
       }
 
+      // Récupérer les menus employés disponibles pour l'accompagnateur
+      try {
+        const { data: empMenus, error: empMenusErr } = await supabase
+          .from('employee_menus')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (empMenusErr) {
+          console.warn('Table employee_menus non disponible:', empMenusErr);
+          setEmployeeMenus([]);
+        } else {
+          setEmployeeMenus((empMenus || []) as EmployeeMenu[]);
+        }
+      } catch (error) {
+        console.warn('Erreur chargement employee_menus:', error);
+        setEmployeeMenus([]);
+      }
+
     } catch (error) {
       console.error('Erreur lors du chargement des données:', error);
       showError("Impossible de charger les données");
@@ -213,22 +234,39 @@ const NursePortalPage: React.FC = () => {
         .from('orders')
         .insert([orderData]);
 
-      // Si un accompagnateur est demandé, créer une commande séparée
-      if (newOrder.companionMeal && newOrder.companionInstructions) {
-        const companionOrderData = {
-          patient_id: selectedPatient.id,
-          meal_type: newOrder.mealType,
-          menu: `${menu} (Accompagnateur)`,
-          instructions: newOrder.companionInstructions,
-          status: 'En attente d\'approbation'
-        };
+      // Si un accompagnateur est demandé, créer une commande employé avec menu choisi
+      if (newOrder.companionMeal) {
+        if (!newOrder.companionSelectedMenu) {
+          showError('Sélectionnez un menu employé pour l\'accompagnateur.');
+          return;
+        }
+        // Validation des accompagnements
+        const required = newOrder.companionAccompaniments;
+        if ((newOrder.companionSelectedOptions || []).length < required) {
+          showError(`Choisissez ${required} accompagnement(s) pour l\'accompagnateur.`);
+          return;
+        }
+        const accompText = newOrder.companionSelectedOptions.join(' + ');
+        const mergedInstr = [
+          (newOrder.companionInstructions || '').trim(),
+          accompText ? `Accompagnements: ${accompText}` : ''
+        ].filter(Boolean).join(' | ');
 
-        const { error: companionError } = await supabase
-          .from('orders')
-          .insert([companionOrderData]);
-
-        if (companionError) {
-          console.error('Erreur lors de la commande accompagnateur:', companionError);
+        const { error: empOrderErr } = await supabase
+          .from('employee_orders')
+          .insert([{
+            employee_id: selectedPatient.id, // rattacher à l'ID du patient (UUID)
+            employee_name: `Accompagnateur de ${selectedPatient.name}`,
+            menu_id: newOrder.companionSelectedMenu.id,
+            delivery_location: `Chambre ${selectedPatient.room}`,
+            special_instructions: mergedInstr,
+            quantity: 1,
+            accompaniments: newOrder.companionAccompaniments,
+            total_price: newOrder.companionAccompaniments === 2 ? 2000 : newOrder.companionSelectedMenu.price,
+            status: 'Commandé'
+          }]);
+        if (empOrderErr) {
+          console.error('Erreur commande employé pour accompagnateur:', empOrderErr);
         }
       }
 
@@ -236,7 +274,7 @@ const NursePortalPage: React.FC = () => {
 
       showSuccess(`Commande créée avec succès - Menu: ${menu}`);
 
-      setNewOrder({ mealType: '', instructions: '', companionMeal: false, companionInstructions: '' });
+      setNewOrder({ mealType: '', instructions: '', companionMeal: false, companionInstructions: '', companionSelectedMenu: null, companionAccompaniments: 1, companionSelectedOptions: [] });
       setIsOrderModalOpen(false);
       setSelectedPatient(null);
       fetchData();
@@ -951,7 +989,7 @@ const NursePortalPage: React.FC = () => {
                   </div>
                   
                   {newOrder.companionMeal && (
-                    <div>
+                    <div className="space-y-4">
                       <Label htmlFor="companion-instructions">Instructions pour l'accompagnateur</Label>
                       <Textarea
                         id="companion-instructions"
@@ -960,6 +998,93 @@ const NursePortalPage: React.FC = () => {
                         onChange={(e) => setNewOrder({...newOrder, companionInstructions: e.target.value})}
                         className="mt-1"
                       />
+
+                      {/* Sélection du menu employé */}
+                      <div>
+                        <Label>Choisir un menu employé</Label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2 max-h-72 overflow-y-auto">
+                          {employeeMenus.map((m) => {
+                            const unavailable = !m.is_available;
+                            const selected = newOrder.companionSelectedMenu?.id === m.id;
+                            return (
+                              <div
+                                key={m.id}
+                                className={`p-3 border rounded-lg cursor-pointer ${unavailable ? 'opacity-60 cursor-not-allowed' : selected ? 'border-green-600 ring-1 ring-green-300' : 'hover:shadow'}`}
+                                onClick={() => { if (!unavailable) setNewOrder({ ...newOrder, companionSelectedMenu: m }); }}
+                              >
+                                <div className="flex items-center">
+                                  {m.photo_url ? (
+                                    <img src={m.photo_url} alt={m.name} className="w-16 h-16 object-cover rounded-lg mr-3" />
+                                  ) : (
+                                    <div className="w-16 h-16 bg-green-100 rounded-lg mr-3" />
+                                  )}
+                                  <div className="flex-1">
+                                    <div className="flex items-center justify-between">
+                                      <span className="font-medium">{m.name}</span>
+                                      <Badge variant="outline">{m.price} FCFA</Badge>
+                                    </div>
+                                    <p className="text-xs text-gray-600 line-clamp-2">{m.description}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Nombre d'accompagnements */}
+                      <div>
+                        <Label>Nombre d'accompagnements</Label>
+                        <Select
+                          value={newOrder.companionAccompaniments.toString()}
+                          onValueChange={(value) => setNewOrder({ ...newOrder, companionAccompaniments: parseInt(value), companionSelectedOptions: [] })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Choisir" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1">1 accompagnement - {newOrder.companionSelectedMenu?.price?.toLocaleString('fr-FR') || '1 500'} XAF</SelectItem>
+                            <SelectItem value="2">2 accompagnements - 2 000 XAF</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Choix des accompagnements depuis les options du menu sélectionné */}
+                      <div>
+                        <Label>Choisissez les accompagnements</Label>
+                        <div className="grid grid-cols-2 gap-2 mt-2">
+                          {(newOrder.companionSelectedMenu?.accompaniment_options || '')
+                            .split(/[,;+]/)
+                            .map(t => t.trim())
+                            .filter(Boolean)
+                            .map((opt) => {
+                              const checked = newOrder.companionSelectedOptions.includes(opt);
+                              const disabled = !checked && newOrder.companionSelectedOptions.length >= newOrder.companionAccompaniments;
+                              return (
+                                <label key={opt} className={`flex items-center space-x-2 text-sm ${disabled ? 'opacity-60' : ''}`}>
+                                  <input
+                                    type="checkbox"
+                                    checked={checked}
+                                    disabled={disabled}
+                                    onChange={(e) => {
+                                      setNewOrder(prev => {
+                                        const next = [...prev.companionSelectedOptions];
+                                        if (e.target.checked) {
+                                          if (!next.includes(opt) && next.length < prev.companionAccompaniments) next.push(opt);
+                                        } else {
+                                          const i = next.indexOf(opt);
+                                          if (i >= 0) next.splice(i, 1);
+                                        }
+                                        return { ...prev, companionSelectedOptions: next };
+                                      });
+                                    }}
+                                  />
+                                  <span>{opt}</span>
+                                </label>
+                              );
+                            })}
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
