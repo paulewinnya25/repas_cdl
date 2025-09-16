@@ -519,15 +519,30 @@ const EmployeePortalPage: React.FC = () => {
                         aria-disabled={unavailable}
                       >
                         <CardContent className="p-4">
-                          <div className="flex items-center justify-between mb-2">
-                            <h3 className="font-semibold text-lg">{menu.name}</h3>
-                            <Badge variant="outline" className="bg-green-100 text-green-800">
-                              {menu.price} FCFA
-                            </Badge>
+                          <div className="flex items-center mb-3">
+                            {menu.photo_url ? (
+                              <img 
+                                src={menu.photo_url}
+                                alt={menu.name}
+                                className="w-20 h-20 object-cover rounded-lg mr-3"
+                              />
+                            ) : (
+                              <div className="w-20 h-20 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                                <FontAwesomeIcon icon={faUtensils} className="text-green-600 text-2xl" />
+                              </div>
+                            )}
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between">
+                                <h3 className="font-semibold text-lg">{menu.name}</h3>
+                                <Badge variant="outline" className="bg-green-100 text-green-800">
+                                  {menu.price} FCFA
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                                {menu.description}
+                              </p>
+                            </div>
                           </div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                            {menu.description}
-                          </p>
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-gray-500">
                               <FontAwesomeIcon icon={faClock} className="mr-1" />
