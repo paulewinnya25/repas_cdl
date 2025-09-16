@@ -7,8 +7,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faUserInjured, 
   faUserTie, 
-  faUtensils,
-  faSignInAlt
+  faUtensils
 } from '@fortawesome/free-solid-svg-icons';
 
 const PortalAccess: React.FC = () => {
@@ -21,17 +20,7 @@ const PortalAccess: React.FC = () => {
         showLogo={true}
       />
       
-      {/* Login Button */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="flex justify-end">
-          <Link to="/login">
-            <Button variant="outline">
-              <FontAwesomeIcon icon={faSignInAlt} className="mr-2" />
-              Connexion
-            </Button>
-          </Link>
-        </div>
-      </div>
+      {/* Bouton de connexion supprimé (auth désactivée) */}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center mb-8">
