@@ -906,7 +906,7 @@ const NursePortalPage: React.FC = () => {
 
       {/* Modal de commande */}
       <Dialog open={isOrderModalOpen} onOpenChange={setIsOrderModalOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               Nouvelle commande {selectedPatient && `pour ${selectedPatient.name}`}
