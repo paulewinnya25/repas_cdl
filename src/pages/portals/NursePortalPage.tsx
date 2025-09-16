@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../integrations/supabase/client';
-import { Patient, Order, UserRole } from '../../types/repas-cdl';
+import { Patient, Order, UserRole, PatientMenu } from '../../types/repas-cdl';
 import { gabonCities } from '../../data/gabon-locations';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -35,6 +35,7 @@ import { showSuccess, showError } from '../../utils/toast';
 const NursePortalPage: React.FC = () => {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [patientMenus, setPatientMenus] = useState<PatientMenu[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -134,6 +135,24 @@ const NursePortalPage: React.FC = () => {
         setOrders([]);
       }
 
+      // Récupérer les menus patients (jour/régime/type)
+      try {
+        const { data: patientMenusData, error: patientMenusError } = await supabase
+          .from('patient_menus')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (patientMenusError) {
+          console.warn('Table patient_menus non disponible:', patientMenusError);
+          setPatientMenus([]);
+        } else {
+          console.log('Menus patients chargés:', patientMenusData);
+          setPatientMenus((patientMenusData || []) as PatientMenu[]);
+        }
+      } catch (error) {
+        console.warn('Erreur lors du chargement des menus patients:', error);
+        setPatientMenus([]);
+      }
+
     } catch (error) {
       console.error('Erreur lors du chargement des données:', error);
       showError("Impossible de charger les données");
@@ -147,42 +166,23 @@ const NursePortalPage: React.FC = () => {
     setIsOrderModalOpen(true);
   };
 
-  // Fonction pour déterminer le menu automatiquement selon le régime alimentaire
-  const getMenuForDiet = (diet: string, mealType: string) => {
-    const menuMap: { [key: string]: { [key: string]: string } } = {
-      'Normal': {
-        'Petit-déjeuner': 'Petit-déjeuner complet',
-        'Déjeuner': 'Plat du jour',
-        'Dîner': 'Repas du soir'
-      },
-      'Sans sel': {
-        'Petit-déjeuner': 'Petit-déjeuner sans sel',
-        'Déjeuner': 'Plat sans sel',
-        'Dîner': 'Repas sans sel'
-      },
-      'Diabétique': {
-        'Petit-déjeuner': 'Petit-déjeuner diabétique',
-        'Déjeuner': 'Plat diabétique',
-        'Dîner': 'Repas diabétique'
-      },
-      'Hypocalorique': {
-        'Petit-déjeuner': 'Petit-déjeuner léger',
-        'Déjeuner': 'Plat hypocalorique',
-        'Dîner': 'Repas léger'
-      },
-      'Sans lactose': {
-        'Petit-déjeuner': 'Petit-déjeuner sans lactose',
-        'Déjeuner': 'Plat sans lactose',
-        'Dîner': 'Repas sans lactose'
-      },
-      'Végétarien': {
-        'Petit-déjeuner': 'Petit-déjeuner végétarien',
-        'Déjeuner': 'Plat végétarien',
-        'Dîner': 'Repas végétarien'
-      }
-    };
+  // Déterminer automatiquement le menu du jour depuis patient_menus selon régime et type de repas
+  const getTodayName = () => {
+    const days = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+    return days[new Date().getDay()];
+  };
 
-    return menuMap[diet]?.[mealType] || `${mealType} - ${diet}`;
+  const getMenuForDiet = (diet: string, mealType: string) => {
+    const today = getTodayName();
+    const found = patientMenus.find(m => 
+      m.dietary_restriction === diet &&
+      m.meal_type === mealType &&
+      m.day_of_week === today &&
+      m.is_available
+    );
+    if (found) return found.name;
+    // fallback si non défini en base
+    return `${mealType} - ${diet}`;
   };
 
   const handlePlaceOrder = async () => {
