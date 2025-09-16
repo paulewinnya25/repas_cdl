@@ -31,3 +31,6 @@ ON CONFLICT DO NOTHING;
 SELECT COUNT(*) as nombre_commandes FROM public.orders;
 
 
+
+
+

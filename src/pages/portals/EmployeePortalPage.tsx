@@ -66,7 +66,16 @@ const EmployeePortalPage: React.FC = () => {
   const [user, setUser] = useState<{ id: string } | null>(null);
 
   // Options simples d'accompagnements
-  const accompanimentOptions = ['Riz', 'Plantain', 'Frites', 'Salade', 'Haricots', 'Légumes'];
+  const parseAccompanimentOptions = (description: string | undefined): string[] => {
+    if (!description) return [];
+    const match = description.match(/Accompagnements:\s*(.*)$/m);
+    const list = match ? match[1] : '';
+    return list
+      .split(/[,;+]/)
+      .map(t => t.trim())
+      .filter(Boolean);
+  };
+  const accompanimentOptions = parseAccompanimentOptions(selectedMenu?.description);
 
   useEffect(() => {
     fetchData();
@@ -863,7 +872,7 @@ const EmployeePortalPage: React.FC = () => {
                       </div>
                       <div>
                         <div className="flex items-center justify-between">
-                          <Label className="text-xs text-gray-600">Accompagnements</Label>
+                          <Label className="text-xs text-gray-600">Accompagnements *</Label>
                           <span className="text-xs text-gray-500">
                             {(() => {
                               const current = (newOrder.perPlateDetails[index] || '')

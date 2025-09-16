@@ -139,3 +139,6 @@ SELECT 'SUCCÈS - Correction terminée' as etape;
 SELECT COUNT(*) as nombre_commandes FROM public.orders;
 
 
+
+
+

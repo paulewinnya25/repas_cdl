@@ -110,3 +110,6 @@ WHERE table_name = 'orders' AND table_schema = 'public'
 ORDER BY ordinal_position;
 
 
+
+
+

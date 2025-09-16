@@ -23,6 +23,7 @@ export const EmployeePortal = ({ userProfile }: EmployeePortalProps) => {
   const [selectedMenu, setSelectedMenu] = useState<EmployeeMenu | null>(null);
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [accompaniments, setAccompaniments] = useState(1);
+  const [selectedAccompaniments, setSelectedAccompaniments] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fetchMenus = useCallback(async () => {
@@ -60,6 +61,15 @@ export const EmployeePortal = ({ userProfile }: EmployeePortalProps) => {
     fetchMyOrders();
   }, [fetchMenus, fetchMyOrders]);
 
+  // Réinitialiser les accompagnements sélectionnés quand le menu ou le nombre change
+  useEffect(() => {
+    setSelectedAccompaniments(prev => prev.slice(0, accompaniments));
+  }, [accompaniments]);
+  useEffect(() => {
+    setSelectedAccompaniments([]);
+    setAccompaniments(1);
+  }, [selectedMenu?.id]);
+
   const handleOrderSubmit = async () => {
     if (!selectedMenu) return;
 
@@ -74,13 +84,25 @@ export const EmployeePortal = ({ userProfile }: EmployeePortalProps) => {
 
       const totalPrice = calculatePrice(selectedMenu.price, accompaniments);
 
+      // Validation: forcer le choix d'accompagnements
+      if (selectedAccompaniments.length < accompaniments) {
+        showError(`Veuillez choisir ${accompaniments} accompagnement(s).`);
+        setIsSubmitting(false);
+        return;
+      }
+
+      const accompText = selectedAccompaniments.join(' + ');
+      const mergedInstructions = [specialInstructions?.trim(), accompText ? `Accompagnements: ${accompText}` : '']
+        .filter(Boolean)
+        .join(' | ');
+
       const { error } = await supabase
         .from('employee_orders')
         .insert([{
           employee_id: user.id,
           menu_id: selectedMenu.id,
           delivery_location: 'Cuisine',
-          special_instructions: specialInstructions,
+          special_instructions: mergedInstructions,
           quantity: 1,
           accompaniments: accompaniments,
           total_price: totalPrice,
@@ -94,6 +116,7 @@ export const EmployeePortal = ({ userProfile }: EmployeePortalProps) => {
       setSelectedMenu(null);
       setSpecialInstructions('');
       setAccompaniments(1);
+      setSelectedAccompaniments([]);
       fetchMyOrders();
     } catch (error) {
       showError("Erreur lors de la commande.");
@@ -346,6 +369,43 @@ export const EmployeePortal = ({ userProfile }: EmployeePortalProps) => {
               </Select>
             </div>
 
+            {/* Choix des accompagnements (obligatoire) */}
+            <div>
+              <Label>Choisissez vos accompagnements</Label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+                {(selectedMenu?.accompaniment_options || '')
+                  .split(/[,;+]/)
+                  .map(t => t.trim())
+                  .filter(Boolean)
+                  .map((opt) => {
+                    const checked = selectedAccompaniments.includes(opt);
+                    const disabled = !checked && selectedAccompaniments.length >= accompaniments;
+                    return (
+                      <label key={opt} className={`flex items-center space-x-2 text-sm ${disabled ? 'opacity-60' : ''}`}>
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          disabled={disabled}
+                          onChange={(e) => {
+                            setSelectedAccompaniments(prev => {
+                              const next = [...prev];
+                              if (e.target.checked) {
+                                if (!next.includes(opt) && next.length < accompaniments) next.push(opt);
+                              } else {
+                                const i = next.indexOf(opt);
+                                if (i >= 0) next.splice(i, 1);
+                              }
+                              return next;
+                            });
+                          }}
+                        />
+                        <span>{opt}</span>
+                      </label>
+                    );
+                  })}
+              </div>
+            </div>
+
             {/* Prix total */}
             <div className="bg-blue-50 p-4 rounded-lg">
               <h4 className="font-semibold text-blue-800">Prix total</h4>
@@ -378,7 +438,7 @@ export const EmployeePortal = ({ userProfile }: EmployeePortalProps) => {
               </Button>
               <Button 
                 onClick={handleOrderSubmit}
-                disabled={!selectedMenu || isSubmitting}
+                disabled={!selectedMenu || isSubmitting || selectedAccompaniments.length < accompaniments}
                 className="bg-green-600 hover:bg-green-700"
               >
                 {isSubmitting ? 'En cours...' : 'Passer la commande'}

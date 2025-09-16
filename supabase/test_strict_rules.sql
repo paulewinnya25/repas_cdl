@@ -67,3 +67,6 @@ FROM public.orders
 WHERE status IN ('En attente d\'approbation', 'Livré', 'Annulé');
 
 
+
+
+

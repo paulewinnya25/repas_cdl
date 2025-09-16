@@ -96,3 +96,6 @@ UNION ALL
 SELECT 'Profiles', COUNT(*) FROM public.profiles;
 
 
+
+
+

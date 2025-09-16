@@ -157,20 +157,20 @@ export default function CookPortalPage() {
   };
 
   const handleMenuSubmit = async () => {
-    if (!menuName || !menuDescription || !menuPrice) {
-      showError('Veuillez remplir tous les champs obligatoires');
+    if (!menuName || !menuPrice || !menuAccompaniments.trim()) {
+      showError('Veuillez remplir le nom, le prix et les accompagnements');
       return;
     }
 
     try {
       const descriptionCombined = menuAccompaniments
-        ? `${menuDescription}\nAccompagnements: ${menuAccompaniments}`
+        ? (menuDescription ? `${menuDescription}\nAccompagnements: ${menuAccompaniments}` : `Accompagnements: ${menuAccompaniments}`)
         : menuDescription;
       const { error } = await supabase
         .from('employee_menus')
         .insert([{
           name: menuName,
-          description: descriptionCombined,
+          description: descriptionCombined || '',
           price: parseFloat(menuPrice),
           photo_url: menuPhotoUrl,
           is_available: menuAvailable
@@ -190,20 +190,20 @@ export default function CookPortalPage() {
   };
 
   const handleMenuUpdate = async () => {
-    if (!editingMenu || !menuName || !menuDescription || !menuPrice) {
-      showError('Veuillez remplir tous les champs obligatoires');
+    if (!editingMenu || !menuName || !menuPrice || !menuAccompaniments.trim()) {
+      showError('Veuillez remplir le nom, le prix et les accompagnements');
       return;
     }
 
     try {
       const descriptionCombined = menuAccompaniments
-        ? `${menuDescription}\nAccompagnements: ${menuAccompaniments}`
+        ? (menuDescription ? `${menuDescription}\nAccompagnements: ${menuAccompaniments}` : `Accompagnements: ${menuAccompaniments}`)
         : menuDescription;
       const { error } = await supabase
         .from('employee_menus')
         .update({
           name: menuName,
-          description: descriptionCombined,
+          description: descriptionCombined || '',
           price: parseFloat(menuPrice),
           photo_url: menuPhotoUrl,
           is_available: menuAvailable
@@ -274,9 +274,15 @@ export default function CookPortalPage() {
 
   const openEditModal = (menu: EmployeeMenu) => {
     setEditingMenu(menu);
+    // Extraire les accompagnements depuis la description existante si présents
+    const desc = menu.description || '';
+    const match = desc.match(/Accompagnements:\s*(.*)$/m);
+    const accomp = match ? match[1].trim() : '';
+    const baseDesc = match ? desc.replace(/\n?Accompagnements:\s*.*$/m, '').trim() : desc;
+
     setMenuName(menu.name);
-    setMenuDescription(menu.description);
-    setMenuAccompaniments('');
+    setMenuDescription(baseDesc);
+    setMenuAccompaniments(accomp);
     setMenuPrice(menu.price.toString());
     setMenuPhotoUrl(menu.photo_url || '');
     setMenuAvailable(menu.is_available);
@@ -1020,7 +1026,7 @@ export default function CookPortalPage() {
               />
             </div>
             <div>
-              <Label htmlFor="menu-description">Description</Label>
+              <Label htmlFor="menu-description">Description (optionnel)</Label>
               <Textarea
                 id="menu-description"
                 placeholder="Description détaillée du menu..."
@@ -1030,7 +1036,7 @@ export default function CookPortalPage() {
               />
             </div>
             <div>
-              <Label htmlFor="menu-accompaniments">Accompagnements (optionnel)</Label>
+              <Label htmlFor="menu-accompaniments">Accompagnements (obligatoire)</Label>
               <Textarea
                 id="menu-accompaniments"
                 placeholder="Ex: Riz, Plantain, Frites..."
@@ -1101,7 +1107,7 @@ export default function CookPortalPage() {
               />
             </div>
             <div>
-              <Label htmlFor="edit-menu-description">Description</Label>
+              <Label htmlFor="edit-menu-description">Description (optionnel)</Label>
               <Textarea
                 id="edit-menu-description"
                 placeholder="Description détaillée du menu..."
@@ -1111,7 +1117,7 @@ export default function CookPortalPage() {
               />
             </div>
             <div>
-              <Label htmlFor="edit-menu-accompaniments">Accompagnements (optionnel)</Label>
+              <Label htmlFor="edit-menu-accompaniments">Accompagnements (obligatoire)</Label>
               <Textarea
                 id="edit-menu-accompaniments"
                 placeholder="Ex: Riz, Plantain, Frites..."

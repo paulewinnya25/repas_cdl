@@ -59,3 +59,4 @@ WHERE pm.dietary_restriction = 'Normal'
 -- SELECT dietary_restriction, day_of_week, meal_type, count(*) FROM patient_menus GROUP BY 1,2,3 ORDER BY 1,2,3;
 
 
+

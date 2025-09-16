@@ -72,3 +72,6 @@ SELECT 'Test des permissions RLS' as test;
 SELECT COUNT(*) as commandes_visibles FROM public.orders;
 
 
+
+
+

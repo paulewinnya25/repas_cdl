@@ -73,3 +73,4 @@ VALUES
   ('Dîner Dimanche', 'Frites + steak hachés + fruits', 0, 'Normal', 'Dîner', 'Dimanche', true);
 
 
+

@@ -100,10 +100,11 @@ export const CookPortal = ({ userProfile }: CookPortalProps) => {
 
       const dataToSubmit = {
         name: values.name,
-        description: values.description,
+        description: values.description || null,
         price: values.price,
         is_available: values.is_available,
         photo_url: mediaUrl,
+        accompaniment_options: values.accompaniment_options || null,
       };
 
       if (selectedMenu) {
@@ -545,6 +546,17 @@ export const CookPortal = ({ userProfile }: CookPortalProps) => {
         </div>
 
         <div>
+          <Label htmlFor="menu-accompaniments">Accompagnements disponibles (séparés par virgules)</Label>
+          <input
+            id="menu-accompaniments"
+            type="text"
+            placeholder="Ex: Riz, Plantain, Frites, Salade"
+            defaultValue={selectedMenu?.accompaniment_options || ''}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+          />
+        </div>
+
+        <div>
           <Label htmlFor="menu-price">Prix (XAF)</Label>
           <input
             id="menu-price"
@@ -579,13 +591,15 @@ export const CookPortal = ({ userProfile }: CookPortalProps) => {
               const descInput = document.getElementById('menu-description') as HTMLTextAreaElement | null;
               const priceInput = document.getElementById('menu-price') as HTMLInputElement | null;
               const availableInput = document.getElementById('menu-available') as HTMLInputElement | null;
+              const accompInput = document.getElementById('menu-accompaniments') as HTMLInputElement | null;
 
               const values = {
                 name: nameInput?.value?.trim() || '',
                 description: descInput?.value?.trim() || '',
                 price: priceInput?.value ? Number(priceInput.value) : 0,
                 is_available: availableInput?.checked ?? true,
-                photo_url: selectedMenu?.photo_url || null
+                photo_url: selectedMenu?.photo_url || null,
+                accompaniment_options: accompInput?.value?.trim() || ''
               } as any;
 
               await handleMenuSubmit(values);

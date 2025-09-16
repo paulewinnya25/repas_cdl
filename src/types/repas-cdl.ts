@@ -55,12 +55,13 @@ export interface Menus {
 export interface EmployeeMenu {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   photo_url: string;
   price: number;
   preparation_time: number;
   is_available: boolean;
   created_at: string;
+  accompaniment_options?: string; // CSV: "Riz, Plantain, Frites"
 }
 
 export type EmployeeOrderStatus = 'Commandé' | 'En préparation' | 'Prêt pour livraison' | 'Livré' | 'Annulé';
