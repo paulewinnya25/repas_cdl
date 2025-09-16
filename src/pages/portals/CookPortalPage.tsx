@@ -29,6 +29,9 @@ export default function CookPortalPage() {
   const [editingPatientMenu, setEditingPatientMenu] = useState<PatientMenu | null>(null);
   const [deletingOrder, setDeletingOrder] = useState<{type: 'patient' | 'employee', order: Order | EmployeeOrder} | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasAccess, setHasAccess] = useState<boolean>(false);
+  const [accessCode, setAccessCode] = useState<string>('');
+  const requiredCode = (import.meta as any).env?.VITE_COOK_ACCESS_CODE || 'CUISIN_2025';
 
   // Form states for employee menus
   const [menuName, setMenuName] = useState('');
@@ -53,6 +56,10 @@ export default function CookPortalPage() {
 
   useEffect(() => {
     fetchData();
+    try {
+      const stored = localStorage.getItem('cook_portal_access');
+      setHasAccess(stored === 'true');
+    } catch {}
   }, []);
 
   const fetchData = async () => {
@@ -449,6 +456,38 @@ export default function CookPortalPage() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Chargement du portail cuisinier...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!hasAccess) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-100 flex items-center justify-center px-4">
+        <div className="max-w-md w-full bg-white shadow-lg rounded-xl p-6">
+          <h1 className="text-2xl font-bold text-orange-700 mb-2">Portail Cuisinier</h1>
+          <p className="text-sm text-gray-600 mb-4">Saisissez le code d'accès pour continuer.</p>
+          <input
+            type="password"
+            value={accessCode}
+            onChange={(e) => setAccessCode(e.target.value)}
+            placeholder="Code d'accès"
+            className="w-full border rounded-md px-3 py-2 mb-4"
+            aria-label="Code d'accès cuisinier"
+          />
+          <button
+            className="w-full bg-orange-600 hover:bg-orange-700 text-white rounded-md py-2"
+            onClick={() => {
+              if (accessCode === requiredCode) {
+                try { localStorage.setItem('cook_portal_access', 'true'); } catch {}
+                setHasAccess(true);
+              } else {
+                alert('Code invalide');
+              }
+            }}
+          >
+            Valider
+          </button>
         </div>
       </div>
     );

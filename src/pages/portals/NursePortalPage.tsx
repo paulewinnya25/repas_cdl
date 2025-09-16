@@ -61,10 +61,18 @@ const NursePortalPage: React.FC = () => {
     allergies: ''
   });
   const [currentUserRole, setCurrentUserRole] = useState<UserRole>('Infirmier');
+  const [hasAccess, setHasAccess] = useState<boolean>(false);
+  const [accessCode, setAccessCode] = useState<string>('');
+  const requiredCode = (import.meta as any).env?.VITE_NURSE_ACCESS_CODE || 'INFIRM_2025';
 
   useEffect(() => {
     fetchData();
     checkUserRole();
+    // Contrôle d'accès local
+    try {
+      const stored = localStorage.getItem('nurse_portal_access');
+      setHasAccess(stored === 'true');
+    } catch {}
   }, []);
 
   const checkUserRole = async () => {
@@ -463,6 +471,39 @@ const NursePortalPage: React.FC = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-lg text-gray-600">Chargement des données...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Écran de contrôle d'accès
+  if (!hasAccess) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">
+        <div className="max-w-md w-full bg-white shadow-lg rounded-xl p-6">
+          <h1 className="text-2xl font-bold text-blue-700 mb-2">Portail Infirmier</h1>
+          <p className="text-sm text-gray-600 mb-4">Saisissez le code d'accès pour continuer.</p>
+          <input
+            type="password"
+            value={accessCode}
+            onChange={(e) => setAccessCode(e.target.value)}
+            placeholder="Code d'accès"
+            className="w-full border rounded-md px-3 py-2 mb-4"
+            aria-label="Code d'accès infirmier"
+          />
+          <button
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-md py-2"
+            onClick={() => {
+              if (accessCode === requiredCode) {
+                try { localStorage.setItem('nurse_portal_access', 'true'); } catch {}
+                setHasAccess(true);
+              } else {
+                alert('Code invalide');
+              }
+            }}
+          >
+            Valider
+          </button>
         </div>
       </div>
     );
