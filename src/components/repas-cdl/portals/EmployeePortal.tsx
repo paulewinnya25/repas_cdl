@@ -235,12 +235,16 @@ export const EmployeePortal = ({ userProfile }: EmployeePortalProps) => {
           <Card key={menu.id} className={`hover:shadow-lg transition-shadow ${!menu.is_available ? 'opacity-60 grayscale' : ''}`}>
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-3">
-                {menu.photo_url && (
+                {menu.photo_url ? (
                   <img 
                     src={menu.photo_url} 
                     alt={menu.name} 
                     className="w-16 h-16 object-cover rounded-lg"
                   />
+                ) : (
+                  <div className="w-16 h-16 bg-green-100 rounded-lg flex items-center justify-center">
+                    <FontAwesomeIcon icon={faUtensils} className="text-green-600 text-xl" />
+                  </div>
                 )}
                 <div className="flex-1 ml-3">
                   <h3 className="font-semibold">{menu.name}</h3>
