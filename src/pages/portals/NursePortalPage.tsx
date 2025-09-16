@@ -57,6 +57,18 @@ const NursePortalPage: React.FC = () => {
     companionAccompaniments: 1,
     companionSelectedOptions: [] as string[]
   });
+
+  const parseAccompanimentOptions = (menu: EmployeeMenu | null): string[] => {
+    if (!menu) return [];
+    const explicit = (menu.accompaniment_options || '').trim();
+    if (explicit) {
+      return explicit.split(/[,;+]/).map(t => t.trim()).filter(Boolean);
+    }
+    const text = (menu.description || '').toString();
+    const match = text.match(/Accompagnements\s*:\s*(.*)$/im);
+    const list = match ? match[1] : '';
+    return list.split(/[,;+]/).map(t => t.trim()).filter(Boolean);
+  };
   const [newPatient, setNewPatient] = useState({
     name: '',
     room: '',
@@ -1010,7 +1022,7 @@ const NursePortalPage: React.FC = () => {
                               <div
                                 key={m.id}
                                 className={`p-3 border rounded-lg cursor-pointer ${unavailable ? 'opacity-60 cursor-not-allowed' : selected ? 'border-green-600 ring-1 ring-green-300' : 'hover:shadow'}`}
-                                onClick={() => { if (!unavailable) setNewOrder({ ...newOrder, companionSelectedMenu: m }); }}
+                                onClick={() => { if (!unavailable) setNewOrder({ ...newOrder, companionSelectedMenu: m, companionSelectedOptions: [] }); }}
                               >
                                 <div className="flex items-center">
                                   {m.photo_url ? (
@@ -1053,11 +1065,7 @@ const NursePortalPage: React.FC = () => {
                       <div>
                         <Label>Choisissez les accompagnements</Label>
                         <div className="grid grid-cols-2 gap-2 mt-2">
-                          {(newOrder.companionSelectedMenu?.accompaniment_options || '')
-                            .split(/[,;+]/)
-                            .map(t => t.trim())
-                            .filter(Boolean)
-                            .map((opt) => {
+                          {parseAccompanimentOptions(newOrder.companionSelectedMenu).map((opt) => {
                               const checked = newOrder.companionSelectedOptions.includes(opt);
                               const disabled = !checked && newOrder.companionSelectedOptions.length >= newOrder.companionAccompaniments;
                               return (
@@ -1083,6 +1091,9 @@ const NursePortalPage: React.FC = () => {
                                 </label>
                               );
                             })}
+                          {parseAccompanimentOptions(newOrder.companionSelectedMenu).length === 0 && (
+                            <div className="col-span-2 text-sm text-gray-500">Aucune option d'accompagnement définie pour ce menu.</div>
+                          )}
                         </div>
                       </div>
                     </div>
