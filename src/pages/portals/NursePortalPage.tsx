@@ -68,11 +68,8 @@ const NursePortalPage: React.FC = () => {
   useEffect(() => {
     fetchData();
     checkUserRole();
-    // Contrôle d'accès local
-    try {
-      const stored = localStorage.getItem('nurse_portal_access');
-      setHasAccess(stored === 'true');
-    } catch {}
+    // Le code sera demandé à chaque accès (pas de persistance)
+    setHasAccess(false);
   }, []);
 
   const checkUserRole = async () => {
@@ -495,7 +492,6 @@ const NursePortalPage: React.FC = () => {
             className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-md py-2"
             onClick={() => {
               if (accessCode === requiredCode) {
-                try { localStorage.setItem('nurse_portal_access', 'true'); } catch {}
                 setHasAccess(true);
               } else {
                 alert('Code invalide');

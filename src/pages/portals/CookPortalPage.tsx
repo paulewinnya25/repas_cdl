@@ -56,10 +56,8 @@ export default function CookPortalPage() {
 
   useEffect(() => {
     fetchData();
-    try {
-      const stored = localStorage.getItem('cook_portal_access');
-      setHasAccess(stored === 'true');
-    } catch {}
+    // Demander le code à chaque accès (pas de persistance)
+    setHasAccess(false);
   }, []);
 
   const fetchData = async () => {
@@ -479,7 +477,6 @@ export default function CookPortalPage() {
             className="w-full bg-orange-600 hover:bg-orange-700 text-white rounded-md py-2"
             onClick={() => {
               if (accessCode === requiredCode) {
-                try { localStorage.setItem('cook_portal_access', 'true'); } catch {}
                 setHasAccess(true);
               } else {
                 alert('Code invalide');
