@@ -367,7 +367,6 @@ export default function CookPortalPage() {
   const resetPatientMenuForm = () => {
     setPatientMenuName('');
     setPatientMenuDescription('');
-    setPatientMenuPrice('');
     setPatientMenuPhotoUrl('');
     setPatientMenuDietaryRestriction('Normal');
     setPatientMenuMealType('Déjeuner');
@@ -1118,16 +1117,6 @@ export default function CookPortalPage() {
                   onChange={(e) => setPatientMenuName(e.target.value)}
                 />
               </div>
-              <div>
-                <Label htmlFor="patient-menu-price">Prix (FCFA)</Label>
-                <Input
-                  id="patient-menu-price"
-                  type="number"
-                  placeholder="2500"
-                  value={patientMenuPrice}
-                  onChange={(e) => setPatientMenuPrice(e.target.value)}
-                />
-              </div>
             </div>
             
             <div>
@@ -1307,16 +1296,6 @@ export default function CookPortalPage() {
                   placeholder="Ex: Poulet rôti"
                   value={patientMenuName}
                   onChange={(e) => setPatientMenuName(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-patient-menu-price">Prix (FCFA)</Label>
-                <Input
-                  id="edit-patient-menu-price"
-                  type="number"
-                  placeholder="2500"
-                  value={patientMenuPrice}
-                  onChange={(e) => setPatientMenuPrice(e.target.value)}
                 />
               </div>
             </div>
