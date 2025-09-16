@@ -333,6 +333,19 @@ export const EmployeePortal = ({ userProfile }: EmployeePortalProps) => {
           </DialogHeader>
           
           <div className="space-y-4">
+            {/* Image d'aperçu du menu */}
+            {selectedMenu?.photo_url ? (
+              <img
+                src={selectedMenu.photo_url}
+                alt={selectedMenu.name}
+                className="w-full h-56 object-cover rounded-xl"
+              />
+            ) : (
+              <div className="w-full h-56 bg-green-100 rounded-xl flex items-center justify-center">
+                <FontAwesomeIcon icon={faUtensils} className="text-green-600 text-3xl" />
+              </div>
+            )}
+
             {/* Menu sélectionné */}
             {selectedMenu && (
               <div className="bg-green-50 p-4 rounded-lg">
