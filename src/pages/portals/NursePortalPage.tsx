@@ -31,6 +31,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Textarea } from '../../components/ui/textarea';
 import { Header } from '../../components/ui/Header';
 import { showSuccess, showError } from '../../utils/toast';
+import { isSameDay } from 'date-fns';
 
 const NursePortalPage: React.FC = () => {
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -53,10 +54,9 @@ const NursePortalPage: React.FC = () => {
   };
 
   const exportDailyReportCSV = () => {
-    const today = new Date().toDateString();
     const patientRows = orders
-      .filter(o => new Date(o.created_at || o.date).toDateString() === today)
-      .map(o => ['Patient', o.patients?.name || '', o.patients?.room || '', o.meal_type, o.menu, o.status, (o.created_at || o.date) || '']);
+      .filter(o => isSameDay(new Date((o as any).date || o.created_at || ''), new Date()))
+      .map(o => ['Patient', o.patients?.name || '', o.patients?.room || '', o.meal_type, o.menu, o.status, (o.created_at || (o as any).date) || '']);
     const employeeRows = employeeOrdersToday
       .map(o => ['Employé', o.employee_name || '', '', 'Employé', o.employee_menus?.name || '', o.status, o.created_at || '']);
     const header = ['Type', 'Nom', 'Chambre', 'Repas', 'Menu', 'Statut', 'Date'];
@@ -67,7 +67,7 @@ const NursePortalPage: React.FC = () => {
     const todayStr = new Date().toLocaleDateString('fr-FR');
     const win = window.open('', '_blank');
     if (!win) return;
-    const patientRows = orders.filter(o => new Date(o.created_at || o.date).toDateString() === new Date().toDateString());
+    const patientRows = orders.filter(o => isSameDay(new Date((o as any).date || o.created_at || ''), new Date()));
     win.document.write(`
       <html><head><title>Rapport journalier ${todayStr}</title>
       <style>body{font-family:Arial;padding:16px} table{width:100%;border-collapse:collapse;margin-top:12px} th,td{border:1px solid #ddd;padding:6px;font-size:12px} h2{margin:0 0 8px}</style>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { isSameDay } from 'date-fns';
 import { supabase } from '../../integrations/supabase/client';
 import { EmployeeMenu, EmployeeOrder, UserRole } from '../../types/repas-cdl';
 
@@ -407,7 +408,7 @@ const EmployeePortalPage: React.FC = () => {
 
   const pendingOrders = orders.filter(order => order.status === 'Commandé');
   const todayOrders = orders.filter(order => 
-    new Date(order.created_at).toDateString() === new Date().toDateString()
+    isSameDay(new Date(order.created_at || ''), new Date())
   );
 
   if (isLoading) {
