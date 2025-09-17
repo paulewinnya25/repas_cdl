@@ -10,6 +10,8 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { DashboardWidgets } from '../widgets/DashboardWidgets';
 import { QuickActions } from '../QuickActions';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 ChartJS.register(ArcElement, Tooltip, Legend, ChartDataLabels);
 
@@ -98,11 +100,138 @@ export const DashboardTab = ({ patients, orders, setActiveTab }: DashboardTabPro
     },
   };
 
+  const fetchImageAsDataUrl = async (url: string): Promise<string | null> => {
+    try {
+      const response = await fetch(url);
+      const svgText = await response.text();
+      const svgBlob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
+      const urlCreator = URL.createObjectURL(svgBlob);
+      const img = new Image();
+      const dataUrl: string = await new Promise((resolve, reject) => {
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const scale = 2; // better quality
+          canvas.width = img.width * scale;
+          canvas.height = img.height * scale;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Canvas context not available'));
+            return;
+          }
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const pngDataUrl = canvas.toDataURL('image/png');
+          URL.revokeObjectURL(urlCreator);
+          resolve(pngDataUrl);
+        };
+        img.onerror = (e) => reject(e);
+        img.src = urlCreator;
+      });
+      return dataUrl;
+    } catch (e) {
+      console.warn('Impossible de charger le logo pour le PDF:', e);
+      return null;
+    }
+  };
+
+  const generateDailyPdf = async () => {
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+
+    // Header with logo and title
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let y = 40;
+
+    const logoUrl = '/logo-centre-diagnostic-official.svg';
+    const logoDataUrl = await fetchImageAsDataUrl(logoUrl);
+    if (logoDataUrl) {
+      const logoWidth = 120;
+      const logoHeight = 40;
+      doc.addImage(logoDataUrl, 'PNG', 40, y - 20, logoWidth, logoHeight);
+    }
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    const title = 'Rapport journalier des commandes';
+    const titleWidth = doc.getTextWidth(title);
+    doc.text(title, (pageWidth - titleWidth) / 2, y);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(11);
+    const dateStr = new Date().toLocaleDateString('fr-FR');
+    doc.text(`Date: ${dateStr}`, pageWidth - 40, y, { align: 'right' });
+
+    y += 20;
+    doc.setDrawColor(220);
+    doc.line(40, y, pageWidth - 40, y);
+    y += 16;
+
+    // Summary stats
+    const summaryLines = [
+      `Patients actifs: ${activePatients.length}`,
+      `Commandes en attente: ${pendingOrders}`,
+      `Repas livrés aujourd'hui: ${deliveredMealsToday}`,
+      `Total commandes du jour: ${todayMeals.length}`,
+    ];
+    doc.setFontSize(12);
+    summaryLines.forEach((line, idx) => {
+      doc.text(line, 40, y + idx * 16);
+    });
+
+    y += summaryLines.length * 16 + 10;
+
+    // Table for today's orders
+    const tableRows = todayMeals.map((order) => {
+      const patient = patients.find((p) => p.id === order.patient_id);
+      return [
+        patient?.name || '',
+        patient?.room || '',
+        order.meal_type,
+        order.menu || '',
+        order.status,
+        (order.created_at || order.date || '').toString().replace('T', ' ').substring(0, 16),
+      ];
+    });
+
+    autoTable(doc, {
+      startY: y,
+      head: [[
+        'Patient',
+        'Chambre',
+        'Repas',
+        'Menu',
+        'Statut',
+        'Heure',
+      ]],
+      body: tableRows.length > 0 ? tableRows : [['Aucune donnée', '', '', '', '', '']],
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: [59, 130, 246] },
+      columnStyles: {
+        0: { cellWidth: 140 },
+        1: { cellWidth: 70 },
+        2: { cellWidth: 90 },
+        3: { cellWidth: 140 },
+        4: { cellWidth: 90 },
+        5: { cellWidth: 80 },
+      },
+      margin: { left: 40, right: 40 },
+    });
+
+    // Footer
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i += 1) {
+      doc.setPage(i);
+      const footerText = `Centre Diagnostic - Généré le ${dateStr}`;
+      doc.setFontSize(9);
+      doc.text(footerText, pageWidth / 2, doc.internal.pageSize.getHeight() - 24, { align: 'center' });
+    }
+
+    doc.save(`rapport-quotidien-${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Aperçu du jour</h2>
-        <Button>
+        <Button onClick={generateDailyPdf}>
           <FontAwesomeIcon icon={faDownload} className="mr-2" />
           Générer le rapport du jour
         </Button>

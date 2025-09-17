@@ -34,3 +34,4 @@ SELECT 'Menus employés' as type, COUNT(*) as nombre FROM public.employee_menus;
 
 
 
+
