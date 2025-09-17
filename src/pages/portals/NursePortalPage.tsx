@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../integrations/supabase/client';
-import { Patient, Order, UserRole, PatientMenu, EmployeeMenu } from '../../types/repas-cdl';
+import { Patient, Order, UserRole, PatientMenu, EmployeeMenu, EmployeeOrder } from '../../types/repas-cdl';
 import { gabonCities } from '../../data/gabon-locations';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -37,6 +37,7 @@ const NursePortalPage: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [patientMenus, setPatientMenus] = useState<PatientMenu[]>([]);
   const [employeeMenus, setEmployeeMenus] = useState<EmployeeMenu[]>([]);
+  const [employeeOrdersToday, setEmployeeOrdersToday] = useState<EmployeeOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -189,6 +190,28 @@ const NursePortalPage: React.FC = () => {
       } catch (error) {
         console.warn('Erreur chargement employee_menus:', error);
         setEmployeeMenus([]);
+      }
+
+      // Récupérer les commandes employés du jour (pour rapport)
+      try {
+        const start = new Date();
+        start.setHours(0,0,0,0);
+        const end = new Date();
+        end.setHours(23,59,59,999);
+        const { data: empOrders, error: empOrdersErr } = await supabase
+          .from('employee_orders')
+          .select('*')
+          .gte('created_at', start.toISOString())
+          .lt('created_at', end.toISOString());
+        if (empOrdersErr) {
+          console.warn('Chargement employee_orders (rapport) échoué:', empOrdersErr);
+          setEmployeeOrdersToday([]);
+        } else {
+          setEmployeeOrdersToday((empOrders || []) as EmployeeOrder[]);
+        }
+      } catch (error) {
+        console.warn('Erreur chargement employee_orders (rapport):', error);
+        setEmployeeOrdersToday([]);
       }
 
     } catch (error) {
@@ -872,42 +895,38 @@ const NursePortalPage: React.FC = () => {
                 <CardContent>
                   <div className="space-y-4">
                     <div className="flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                      <span>Commandes aujourd'hui</span>
+                      <span>Commandes patients aujourd'hui</span>
                       <span className="font-bold text-green-600">{todayOrders.length}</span>
                     </div>
-                    <div className="flex justify-between items-center p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
-                      <span>En attente d'approbation</span>
-                      <span className="font-bold text-orange-600">{pendingOrders.length}</span>
-                    </div>
                     <div className="flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                      <span>Total patients</span>
-                      <span className="font-bold text-blue-600">{patients.length}</span>
+                      <span>Commandes employés aujourd'hui</span>
+                      <span className="font-bold text-blue-600">{employeeOrdersToday.length}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                      <span>Total recettes employés (aujourd'hui)</span>
+                      <span className="font-bold text-purple-600">{employeeOrdersToday.reduce((sum, o) => sum + (o.total_price || 0), 0).toLocaleString('fr-FR')} XAF</span>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
+              {/* Rapport journalier détaillé */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
-                    <FontAwesomeIcon icon={faBell} className="text-purple-600" />
-                    <span>Actions Rapides</span>
+                    <FontAwesomeIcon icon={faClipboardList} className="text-blue-600" />
+                    <span>Rapport journalier</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    <Button className="w-full justify-start" variant="outline">
-                      <FontAwesomeIcon icon={faClipboardList} className="mr-2" />
-                      Voir toutes les commandes
-                    </Button>
-                    <Button className="w-full justify-start" variant="outline">
-                      <FontAwesomeIcon icon={faUsers} className="mr-2" />
-                      Gérer les patients
-                    </Button>
-                    <Button className="w-full justify-start" variant="outline">
-                      <FontAwesomeIcon icon={faChartLine} className="mr-2" />
-                      Rapports quotidiens
-                    </Button>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between"><span>Patients - En attente</span><span className="font-medium">{orders.filter(o => new Date(o.created_at || o.date).toDateString() === new Date().toDateString() && o.status === "En attente d'approbation").length}</span></div>
+                    <div className="flex justify-between"><span>Patients - En préparation</span><span className="font-medium">{orders.filter(o => new Date(o.created_at || o.date).toDateString() === new Date().toDateString() && o.status === 'En préparation').length}</span></div>
+                    <div className="flex justify-between"><span>Patients - Livrés</span><span className="font-medium">{orders.filter(o => new Date(o.created_at || o.date).toDateString() === new Date().toDateString() && o.status === 'Livré').length}</span></div>
+                    <hr className="my-2" />
+                    <div className="flex justify-between"><span>Employés - Commandés</span><span className="font-medium">{employeeOrdersToday.filter(o => o.status === 'Commandé').length}</span></div>
+                    <div className="flex justify-between"><span>Employés - En préparation</span><span className="font-medium">{employeeOrdersToday.filter(o => o.status === 'En préparation').length}</span></div>
+                    <div className="flex justify-between"><span>Employés - Livrés</span><span className="font-medium">{employeeOrdersToday.filter(o => o.status === 'Livré').length}</span></div>
                   </div>
                 </CardContent>
               </Card>

@@ -726,27 +726,19 @@ const EmployeePortalPage: React.FC = () => {
                 </CardContent>
               </Card>
 
+              {/* Rapport journalier simple */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
-                    <FontAwesomeIcon icon={faBell} className="text-purple-600" />
-                    <span>Actions Rapides</span>
+                    <FontAwesomeIcon icon={faShoppingCart} className="text-blue-600" />
+                    <span>Mon rapport du jour</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    <Button className="w-full justify-start" variant="outline">
-                      <FontAwesomeIcon icon={faUtensils} className="mr-2" />
-                      Voir tous les menus
-                    </Button>
-                    <Button className="w-full justify-start" variant="outline">
-                      <FontAwesomeIcon icon={faShoppingCart} className="mr-2" />
-                      Mes commandes
-                    </Button>
-                    <Button className="w-full justify-start" variant="outline">
-                      <FontAwesomeIcon icon={faChartLine} className="mr-2" />
-                      Historique des commandes
-                    </Button>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between"><span>Commandées</span><span className="font-medium">{orders.filter(o => new Date(o.created_at).toDateString() === new Date().toDateString() && o.status === 'Commandé').length}</span></div>
+                    <div className="flex justify-between"><span>En préparation</span><span className="font-medium">{orders.filter(o => new Date(o.created_at).toDateString() === new Date().toDateString() && o.status === 'En préparation').length}</span></div>
+                    <div className="flex justify-between"><span>Livrées</span><span className="font-medium">{orders.filter(o => new Date(o.created_at).toDateString() === new Date().toDateString() && o.status === 'Livré').length}</span></div>
                   </div>
                 </CardContent>
               </Card>
