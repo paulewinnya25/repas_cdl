@@ -10,10 +10,13 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Header } from '@/components/ui/Header';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUserTie, faUtensils, faClock, faCheckCircle, faPlus, faEdit, faTrash, faUsers, faClipboardList, faChartLine, faBell } from '@fortawesome/free-solid-svg-icons';
+import { faUserTie, faUtensils, faClock, faCheckCircle, faPlus, faEdit, faTrash, faUsers, faClipboardList, faChartLine, faBell, faDownload } from '@fortawesome/free-solid-svg-icons';
 import { supabase } from '@/integrations/supabase/client';
 import { showSuccess, showError } from '@/utils/toast';
 import type { Patient, Order, EmployeeMenu, EmployeeOrder, PatientMenu, DietaryRestriction, PatientMealType, DayOfWeek } from '@/types/repas-cdl';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts';
 
 export default function CookPortalPage() {
   const [patientOrders, setPatientOrders] = useState<Order[]>([]);
@@ -486,6 +489,121 @@ export default function CookPortalPage() {
   const todayEmployeeOrders = employeeOrders.filter(order => 
     new Date(order.created_at).toDateString() === new Date().toDateString()
   );
+
+  // Données pour les graphiques (section visuelle)
+  const statusCounts = [
+    { name: 'En attente', value: patientOrders.filter(o => o.status === "En attente d'approbation").length + employeeOrders.filter(o => o.status === 'Commandé').length },
+    { name: 'En préparation', value: patientOrders.filter(o => o.status === 'En préparation').length + employeeOrders.filter(o => o.status === 'En préparation').length },
+    { name: 'Livré', value: patientOrders.filter(o => o.status === 'Livré').length + employeeOrders.filter(o => o.status === 'Livré').length },
+  ];
+  const todaySplit = [
+    { name: 'Patients', value: todayPatientOrders.length },
+    { name: 'Employés', value: todayEmployeeOrders.length },
+  ];
+  const COLORS = ['#f97316', '#10b981', '#3b82f6'];
+
+  // Export PDF cuisine (avec logo et tableau patients + employés)
+  const fetchImageAsDataUrl = async (url: string): Promise<string | null> => {
+    try {
+      const response = await fetch(url);
+      const svgText = await response.text();
+      const svgBlob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
+      const urlCreator = URL.createObjectURL(svgBlob);
+      const img = new Image();
+      const dataUrl: string = await new Promise((resolve, reject) => {
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const scale = 2;
+          canvas.width = img.width * scale;
+          canvas.height = img.height * scale;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) { reject(new Error('Canvas context not available')); return; }
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const pngDataUrl = canvas.toDataURL('image/png');
+          URL.revokeObjectURL(urlCreator);
+          resolve(pngDataUrl);
+        };
+        img.onerror = (e) => reject(e);
+        img.src = urlCreator;
+      });
+      return dataUrl;
+    } catch (e) {
+      console.warn('Logo non chargé pour PDF:', e);
+      return null;
+    }
+  };
+
+  const exportDailyReportPDF = async () => {
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let y = 40;
+
+    const logoUrl = '/logo-centre-diagnostic-official.svg';
+    const logoDataUrl = await fetchImageAsDataUrl(logoUrl);
+    if (logoDataUrl) { doc.addImage(logoDataUrl, 'PNG', 40, y - 20, 120, 40); }
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    const title = 'Rapport journalier - Cuisine';
+    doc.text(title, pageWidth / 2, y, { align: 'center' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(11);
+    const dateStr = new Date().toLocaleDateString('fr-FR');
+    doc.text(`Date: ${dateStr}`, pageWidth - 40, y, { align: 'right' });
+    y += 20; doc.setDrawColor(220); doc.line(40, y, pageWidth - 40, y); y += 14;
+
+    // Résumé
+    const totalPending = pendingPatientOrders.length + pendingEmployeeOrders.length;
+    const totalToday = todayPatientOrders.length + todayEmployeeOrders.length;
+    const totalRevenue = employeeOrders
+      .filter(o => new Date(o.created_at).toDateString() === new Date().toDateString())
+      .reduce((s, o) => s + (o.total_price || 0), 0);
+    const summary = [
+      `En attente: ${totalPending}`,
+      `Commandes aujourd'hui: ${totalToday}`,
+      `Recettes employés aujourd'hui: ${totalRevenue.toLocaleString('fr-FR')} XAF`,
+    ];
+    summary.forEach((line, idx) => doc.text(line, 40, y + idx * 16));
+    y += summary.length * 16 + 10;
+
+    // Tableau Patients (aujourd'hui)
+    const patientRows = todayPatientOrders.map(o => [
+      o.patients?.name || '', o.patients?.room || '', o.meal_type, o.menu || '', o.status,
+      (o.created_at || o.date || '').toString().replace('T', ' ').substring(0, 16),
+    ]);
+    autoTable(doc, {
+      startY: y,
+      head: [['Patients', 'Chambre', 'Repas', 'Menu', 'Statut', 'Heure']],
+      body: patientRows.length ? patientRows : [['Aucune donnée', '', '', '', '', '']],
+      styles: { fontSize: 10 }, headStyles: { fillColor: [16, 185, 129] },
+      margin: { left: 40, right: 40 },
+    });
+    y = (doc as any).lastAutoTable.finalY + 12;
+
+    // Tableau Employés (aujourd'hui)
+    const employeeRows = todayEmployeeOrders.map(o => [
+      o.employee_name || '', o.employee_menus?.name || '', o.status,
+      (o.created_at || '').toString().replace('T', ' ').substring(0, 16),
+      (o.total_price || 0).toLocaleString('fr-FR') + ' XAF'
+    ]);
+    autoTable(doc, {
+      startY: y,
+      head: [['Employé', 'Menu', 'Statut', 'Heure', 'Total']],
+      body: employeeRows.length ? employeeRows : [['Aucune donnée', '', '', '', '']],
+      styles: { fontSize: 10 }, headStyles: { fillColor: [59, 130, 246] },
+      margin: { left: 40, right: 40 },
+    });
+
+    // Footer
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(9);
+      doc.text(`Centre Diagnostic - Généré le ${dateStr}`, pageWidth / 2, doc.internal.pageSize.getHeight() - 24, { align: 'center' });
+    }
+
+    doc.save(`rapport-cuisine-${new Date().toISOString().slice(0,10)}.pdf`);
+  };
 
   if (isLoading) {
     return (
@@ -981,10 +1099,16 @@ export default function CookPortalPage() {
                   <CardTitle>Commandes par Statut</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex justify-between"><span>En attente</span><Badge variant="outline">{pendingPatientOrders.length + pendingEmployeeOrders.length}</Badge></div>
-                    <div className="flex justify-between"><span>En préparation</span><Badge variant="secondary">{patientOrders.filter(o => o.status === 'En préparation').length + employeeOrders.filter(o => o.status === 'En préparation').length}</Badge></div>
-                    <div className="flex justify-between"><span>Livrées</span><Badge variant="default">{patientOrders.filter(o => o.status === 'Livré').length + employeeOrders.filter(o => o.status === 'Livré').length}</Badge></div>
+                  <div className="h-56">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={statusCounts}>
+                        <XAxis dataKey="name" />
+                        <YAxis allowDecimals={false} />
+                        <Tooltip />
+                        <Legend />
+                        <Bar dataKey="value" fill="#f97316" name="Commandes" />
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
                 </CardContent>
               </Card>
@@ -1000,8 +1124,29 @@ export default function CookPortalPage() {
                     <div className="flex justify-between"><span>Total (aujourd'hui)</span><Badge variant="default">{todayPatientOrders.length + todayEmployeeOrders.length}</Badge></div>
                     <div className="flex justify-between"><span>Recettes employés (aujourd'hui)</span><span className="font-semibold">{employeeOrders.filter(o => new Date(o.created_at).toDateString() === new Date().toDateString()).reduce((s, o) => s + (o.total_price || 0), 0).toLocaleString('fr-FR')} XAF</span></div>
                   </div>
-                  <div className="flex gap-2 mt-4">
-                    <Button size="sm" variant="outline" onClick={exportDailyReportCSV}>Exporter CSV</Button>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div className="h-40">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie data={todaySplit} dataKey="value" nameKey="name" outerRadius={60} label>
+                            {todaySplit.map((entry, index) => (
+                              <Cell key={`slice-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                          <Legend />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Button size="sm" variant="outline" onClick={exportDailyReportCSV}>
+                        Exporter CSV
+                      </Button>
+                      <Button size="sm" onClick={exportDailyReportPDF}>
+                        <FontAwesomeIcon icon={faDownload} className="mr-2" />
+                        Exporter PDF
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
