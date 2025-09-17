@@ -38,6 +38,55 @@ const NursePortalPage: React.FC = () => {
   const [patientMenus, setPatientMenus] = useState<PatientMenu[]>([]);
   const [employeeMenus, setEmployeeMenus] = useState<EmployeeMenu[]>([]);
   const [employeeOrdersToday, setEmployeeOrdersToday] = useState<EmployeeOrder[]>([]);
+
+  const downloadCSV = (filename: string, rows: string[][]) => {
+    const csvContent = rows.map(r => r.map(c => `"${(c ?? '').toString().replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const exportDailyReportCSV = () => {
+    const today = new Date().toDateString();
+    const patientRows = orders
+      .filter(o => new Date(o.created_at || o.date).toDateString() === today)
+      .map(o => ['Patient', o.patients?.name || '', o.patients?.room || '', o.meal_type, o.menu, o.status, (o.created_at || o.date) || '']);
+    const employeeRows = employeeOrdersToday
+      .map(o => ['Employé', o.employee_name || '', '', 'Employé', o.employee_menus?.name || '', o.status, o.created_at || '']);
+    const header = ['Type', 'Nom', 'Chambre', 'Repas', 'Menu', 'Statut', 'Date'];
+    downloadCSV(`rapport_journalier_${new Date().toISOString().slice(0,10)}.csv`, [header, ...patientRows, ...employeeRows]);
+  };
+
+  const printDailyReport = () => {
+    const todayStr = new Date().toLocaleDateString('fr-FR');
+    const win = window.open('', '_blank');
+    if (!win) return;
+    const patientRows = orders.filter(o => new Date(o.created_at || o.date).toDateString() === new Date().toDateString());
+    win.document.write(`
+      <html><head><title>Rapport journalier ${todayStr}</title>
+      <style>body{font-family:Arial;padding:16px} table{width:100%;border-collapse:collapse;margin-top:12px} th,td{border:1px solid #ddd;padding:6px;font-size:12px} h2{margin:0 0 8px}</style>
+      </head><body>
+      <h2>Rapport journalier - ${todayStr}</h2>
+      <h3>Patients</h3>
+      <table><thead><tr><th>Nom</th><th>Chambre</th><th>Repas</th><th>Menu</th><th>Statut</th><th>Date</th></tr></thead><tbody>
+      ${patientRows.map(o => `<tr><td>${o.patients?.name || ''}</td><td>${o.patients?.room || ''}</td><td>${o.meal_type}</td><td>${o.menu}</td><td>${o.status}</td><td>${(o.created_at || o.date) ?? ''}</td></tr>`).join('')}
+      </tbody></table>
+      <h3>Employés</h3>
+      <table><thead><tr><th>Employé</th><th>Menu</th><th>Statut</th><th>Date</th><th>Total (XAF)</th></tr></thead><tbody>
+      ${employeeOrdersToday.map(o => `<tr><td>${o.employee_name || ''}</td><td>${o.employee_menus?.name || ''}</td><td>${o.status}</td><td>${o.created_at || ''}</td><td>${(o.total_price || 0).toLocaleString('fr-FR')}</td></tr>`).join('')}
+      </tbody></table>
+      </body></html>
+    `);
+    win.document.close();
+    win.focus();
+    win.print();
+  };
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -927,6 +976,10 @@ const NursePortalPage: React.FC = () => {
                     <div className="flex justify-between"><span>Employés - Commandés</span><span className="font-medium">{employeeOrdersToday.filter(o => o.status === 'Commandé').length}</span></div>
                     <div className="flex justify-between"><span>Employés - En préparation</span><span className="font-medium">{employeeOrdersToday.filter(o => o.status === 'En préparation').length}</span></div>
                     <div className="flex justify-between"><span>Employés - Livrés</span><span className="font-medium">{employeeOrdersToday.filter(o => o.status === 'Livré').length}</span></div>
+                  </div>
+                  <div className="flex gap-2 mt-4">
+                    <Button size="sm" variant="outline" onClick={exportDailyReportCSV}>Exporter CSV</Button>
+                    <Button size="sm" onClick={printDailyReport}>Imprimer / PDF</Button>
                   </div>
                 </CardContent>
               </Card>

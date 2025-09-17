@@ -25,6 +25,30 @@ export default function CookPortalPage() {
   const [isPatientMenuModalOpen, setIsPatientMenuModalOpen] = useState(false);
   const [isEditPatientMenuModalOpen, setIsEditPatientMenuModalOpen] = useState(false);
   const [isDeleteOrderModalOpen, setIsDeleteOrderModalOpen] = useState(false);
+  const downloadCSV = (filename: string, rows: string[][]) => {
+    const csvContent = rows.map(r => r.map(c => `"${(c ?? '').toString().replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const exportDailyReportCSV = () => {
+    const today = new Date().toDateString();
+    const header = ['Type', 'Nom', 'Chambre/Employé', 'Menu', 'Statut', 'Date', 'Total (XAF)'];
+    const patientRows = patientOrders
+      .filter(o => new Date(o.created_at || o.date).toDateString() === today)
+      .map(o => ['Patient', o.patients?.name || '', o.patients?.room || '', `${o.meal_type} - ${o.menu}`, o.status, (o.created_at || o.date) || '', '']);
+    const employeeRows = employeeOrders
+      .filter(o => new Date(o.created_at).toDateString() === today)
+      .map(o => ['Employé', o.employee_name || '', '', o.employee_menus?.name || '', o.status, o.created_at || '', String(o.total_price || 0)]);
+    downloadCSV(`rapport_cuisine_${new Date().toISOString().slice(0,10)}.csv`, [header, ...patientRows, ...employeeRows]);
+  };
   const [editingMenu, setEditingMenu] = useState<EmployeeMenu | null>(null);
   const [editingPatientMenu, setEditingPatientMenu] = useState<PatientMenu | null>(null);
   const [deletingOrder, setDeletingOrder] = useState<{type: 'patient' | 'employee', order: Order | EmployeeOrder} | null>(null);
@@ -975,6 +999,9 @@ export default function CookPortalPage() {
                     <div className="flex justify-between"><span>Employés (aujourd'hui)</span><Badge variant="outline">{todayEmployeeOrders.length}</Badge></div>
                     <div className="flex justify-between"><span>Total (aujourd'hui)</span><Badge variant="default">{todayPatientOrders.length + todayEmployeeOrders.length}</Badge></div>
                     <div className="flex justify-between"><span>Recettes employés (aujourd'hui)</span><span className="font-semibold">{employeeOrders.filter(o => new Date(o.created_at).toDateString() === new Date().toDateString()).reduce((s, o) => s + (o.total_price || 0), 0).toLocaleString('fr-FR')} XAF</span></div>
+                  </div>
+                  <div className="flex gap-2 mt-4">
+                    <Button size="sm" variant="outline" onClick={exportDailyReportCSV}>Exporter CSV</Button>
                   </div>
                 </CardContent>
               </Card>

@@ -301,6 +301,24 @@ const EmployeePortalPage: React.FC = () => {
     }
   };
 
+  const exportMyDailyReportCSV = () => {
+    const today = new Date().toDateString();
+    const header = ['Menu', 'Statut', 'Prix (XAF)', 'Date'];
+    const rows = orders
+      .filter(o => new Date(o.created_at).toDateString() === today)
+      .map(o => [o.employee_menus?.name || '', o.status, String(o.total_price || 0), o.created_at || '']);
+    const csv = [header, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `rapport_employe_${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   const handleEditOrder = (order: EmployeeOrderWithProfile) => {
     setEditingOrder(order);
     setNewOrder({
@@ -739,6 +757,9 @@ const EmployeePortalPage: React.FC = () => {
                     <div className="flex justify-between"><span>Commandées</span><span className="font-medium">{orders.filter(o => new Date(o.created_at).toDateString() === new Date().toDateString() && o.status === 'Commandé').length}</span></div>
                     <div className="flex justify-between"><span>En préparation</span><span className="font-medium">{orders.filter(o => new Date(o.created_at).toDateString() === new Date().toDateString() && o.status === 'En préparation').length}</span></div>
                     <div className="flex justify-between"><span>Livrées</span><span className="font-medium">{orders.filter(o => new Date(o.created_at).toDateString() === new Date().toDateString() && o.status === 'Livré').length}</span></div>
+                  </div>
+                  <div className="flex gap-2 mt-4">
+                    <Button size="sm" variant="outline" onClick={exportMyDailyReportCSV}>Exporter CSV</Button>
                   </div>
                 </CardContent>
               </Card>
