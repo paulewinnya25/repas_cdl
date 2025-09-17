@@ -17,6 +17,7 @@ import type { Patient, Order, EmployeeMenu, EmployeeOrder, PatientMenu, DietaryR
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts';
+import { isSameDay } from 'date-fns';
 
 export default function CookPortalPage() {
   const [patientOrders, setPatientOrders] = useState<Order[]>([]);
@@ -42,13 +43,12 @@ export default function CookPortalPage() {
   };
 
   const exportDailyReportCSV = () => {
-    const today = new Date().toDateString();
     const header = ['Type', 'Nom', 'Chambre/Employé', 'Menu', 'Statut', 'Date', 'Total (XAF)'];
     const patientRows = patientOrders
-      .filter(o => new Date(o.created_at || o.date).toDateString() === today)
+      .filter(o => isSameDay(new Date(o.created_at || o.date || ''), new Date()))
       .map(o => ['Patient', o.patients?.name || '', o.patients?.room || '', `${o.meal_type} - ${o.menu}`, o.status, (o.created_at || o.date) || '', '']);
     const employeeRows = employeeOrders
-      .filter(o => new Date(o.created_at).toDateString() === today)
+      .filter(o => isSameDay(new Date(o.created_at || ''), new Date()))
       .map(o => ['Employé', o.employee_name || '', '', o.employee_menus?.name || '', o.status, o.created_at || '', String(o.total_price || 0)]);
     downloadCSV(`rapport_cuisine_${new Date().toISOString().slice(0,10)}.csv`, [header, ...patientRows, ...employeeRows]);
   };
@@ -484,10 +484,10 @@ export default function CookPortalPage() {
   const pendingPatientOrders = patientOrders.filter(order => order.status === 'En attente d\'approbation');
   const pendingEmployeeOrders = employeeOrders.filter(order => order.status === 'Commandé');
   const todayPatientOrders = patientOrders.filter(order => 
-    new Date(order.created_at || order.date).toDateString() === new Date().toDateString()
+    isSameDay(new Date(order.created_at || order.date || ''), new Date())
   );
   const todayEmployeeOrders = employeeOrders.filter(order => 
-    new Date(order.created_at).toDateString() === new Date().toDateString()
+    isSameDay(new Date(order.created_at || ''), new Date())
   );
 
   // Données pour les graphiques (section visuelle)
@@ -556,7 +556,7 @@ export default function CookPortalPage() {
     const totalPending = pendingPatientOrders.length + pendingEmployeeOrders.length;
     const totalToday = todayPatientOrders.length + todayEmployeeOrders.length;
     const totalRevenue = employeeOrders
-      .filter(o => new Date(o.created_at).toDateString() === new Date().toDateString())
+      .filter(o => isSameDay(new Date(o.created_at || ''), new Date()))
       .reduce((s, o) => s + (o.total_price || 0), 0);
     const summary = [
       `En attente: ${totalPending}`,

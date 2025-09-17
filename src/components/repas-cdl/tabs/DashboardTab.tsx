@@ -10,6 +10,7 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { DashboardWidgets } from '../widgets/DashboardWidgets';
 import { QuickActions } from '../QuickActions';
+import { isSameDay } from 'date-fns';
 
 ChartJS.register(ArcElement, Tooltip, Legend, ChartDataLabels);
 
@@ -51,8 +52,8 @@ export const DashboardTab = ({ patients, orders, setActiveTab }: DashboardTabPro
 
   const activePatients = patients.filter(p => !p.exit_date);
   const pendingOrders = orders.filter(o => o.status !== 'Livré').length;
-  const deliveredMealsToday = orders.filter(o => o.status === 'Livré' && new Date(o.date).toDateString() === todayStr).length;
-  const todayMeals = orders.filter(o => new Date(o.date).toDateString() === todayStr);
+  const deliveredMealsToday = orders.filter(o => o.status === 'Livré' && isSameDay(new Date(o.date || ''), new Date())).length;
+  const todayMeals = orders.filter(o => isSameDay(new Date(o.date || ''), new Date()));
 
   const dietCounts = activePatients.reduce((acc, patient) => {
     acc[patient.diet] = (acc[patient.diet] || 0) + 1;
