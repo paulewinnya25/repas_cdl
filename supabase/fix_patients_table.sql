@@ -88,3 +88,5 @@ SELECT COUNT(*) as total_patients FROM public.patients;
 
 
 
+
+

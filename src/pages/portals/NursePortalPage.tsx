@@ -947,14 +947,7 @@ const NursePortalPage: React.FC = () => {
                       <span>Commandes patients aujourd'hui</span>
                       <span className="font-bold text-green-600">{todayOrders.length}</span>
                     </div>
-                    <div className="flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                      <span>Commandes employés aujourd'hui</span>
-                      <span className="font-bold text-blue-600">{employeeOrdersToday.length}</span>
-                    </div>
-                    <div className="flex justify-between items-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                      <span>Total recettes employés (aujourd'hui)</span>
-                      <span className="font-bold text-purple-600">{employeeOrdersToday.reduce((sum, o) => sum + (o.total_price || 0), 0).toLocaleString('fr-FR')} XAF</span>
-                    </div>
+                    
                   </div>
                 </CardContent>
               </Card>
@@ -973,10 +966,7 @@ const NursePortalPage: React.FC = () => {
                     <div className="flex justify-between"><span>Patients - En préparation</span><span className="font-medium">{orders.filter(o => new Date(o.created_at || o.date).toDateString() === new Date().toDateString() && o.status === 'En préparation').length}</span></div>
                     <div className="flex justify-between"><span>Patients - Livrés</span><span className="font-medium">{orders.filter(o => new Date(o.created_at || o.date).toDateString() === new Date().toDateString() && o.status === 'Livré').length}</span></div>
                     <hr className="my-2" />
-                    <div className="flex justify-between"><span>Employés - Commandés</span><span className="font-medium">{employeeOrdersToday.filter(o => o.status === 'Commandé').length}</span></div>
-                    <div className="flex justify-between"><span>Employés - En préparation</span><span className="font-medium">{employeeOrdersToday.filter(o => o.status === 'En préparation').length}</span></div>
-                    <div className="flex justify-between"><span>Employés - Livrés</span><span className="font-medium">{employeeOrdersToday.filter(o => o.status === 'Livré').length}</span></div>
-                  </div>
+                    </div>
                   <div className="flex gap-2 mt-4">
                     <Button size="sm" variant="outline" onClick={exportDailyReportCSV}>Exporter CSV</Button>
                     <Button size="sm" onClick={printDailyReport}>Imprimer / PDF</Button>

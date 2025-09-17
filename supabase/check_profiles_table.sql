@@ -85,3 +85,5 @@ SELECT COUNT(*) as total_profiles FROM public.profiles;
 
 
 
+
+
