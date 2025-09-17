@@ -958,46 +958,23 @@ export default function CookPortalPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span>En attente</span>
-                      <Badge variant="outline">{pendingPatientOrders.length + pendingEmployeeOrders.length}</Badge>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>En préparation</span>
-                      <Badge variant="secondary">
-                        {patientOrders.filter(o => o.status === 'En préparation').length + 
-                         employeeOrders.filter(o => o.status === 'En préparation').length}
-                      </Badge>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Livrées</span>
-                      <Badge variant="default">
-                        {patientOrders.filter(o => o.status === 'Livré').length + 
-                         employeeOrders.filter(o => o.status === 'Livré').length}
-                      </Badge>
-                    </div>
+                    <div className="flex justify-between"><span>En attente</span><Badge variant="outline">{pendingPatientOrders.length + pendingEmployeeOrders.length}</Badge></div>
+                    <div className="flex justify-between"><span>En préparation</span><Badge variant="secondary">{patientOrders.filter(o => o.status === 'En préparation').length + employeeOrders.filter(o => o.status === 'En préparation').length}</Badge></div>
+                    <div className="flex justify-between"><span>Livrées</span><Badge variant="default">{patientOrders.filter(o => o.status === 'Livré').length + employeeOrders.filter(o => o.status === 'Livré').length}</Badge></div>
                   </div>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Activité Aujourd'hui</CardTitle>
+                  <CardTitle>Rapport Journalier</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span>Commandes patients</span>
-                      <Badge variant="outline">{todayPatientOrders.length}</Badge>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Commandes employés</span>
-                      <Badge variant="outline">{todayEmployeeOrders.length}</Badge>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Total</span>
-                      <Badge variant="default">{todayPatientOrders.length + todayEmployeeOrders.length}</Badge>
-                    </div>
+                  <div className="space-y-3 text-sm">
+                    <div className="flex justify-between"><span>Patients (aujourd'hui)</span><Badge variant="outline">{todayPatientOrders.length}</Badge></div>
+                    <div className="flex justify-between"><span>Employés (aujourd'hui)</span><Badge variant="outline">{todayEmployeeOrders.length}</Badge></div>
+                    <div className="flex justify-between"><span>Total (aujourd'hui)</span><Badge variant="default">{todayPatientOrders.length + todayEmployeeOrders.length}</Badge></div>
+                    <div className="flex justify-between"><span>Recettes employés (aujourd'hui)</span><span className="font-semibold">{employeeOrders.filter(o => new Date(o.created_at).toDateString() === new Date().toDateString()).reduce((s, o) => s + (o.total_price || 0), 0).toLocaleString('fr-FR')} XAF</span></div>
                   </div>
                 </CardContent>
               </Card>
