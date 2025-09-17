@@ -45,7 +45,7 @@ export default function CookPortalPage() {
   const exportDailyReportCSV = () => {
     const header = ['Type', 'Nom', 'Chambre/Employé', 'Menu', 'Statut', 'Date', 'Total (XAF)'];
     const patientRows = patientOrders
-      .filter(o => isSameDay(new Date(o.created_at || o.date || ''), new Date()))
+      .filter(o => isSameDay(new Date((o as any).date || o.created_at || ''), new Date()))
       .map(o => ['Patient', o.patients?.name || '', o.patients?.room || '', `${o.meal_type} - ${o.menu}`, o.status, (o.created_at || o.date) || '', '']);
     const employeeRows = employeeOrders
       .filter(o => isSameDay(new Date(o.created_at || ''), new Date()))
@@ -484,7 +484,7 @@ export default function CookPortalPage() {
   const pendingPatientOrders = patientOrders.filter(order => order.status === 'En attente d\'approbation');
   const pendingEmployeeOrders = employeeOrders.filter(order => order.status === 'Commandé');
   const todayPatientOrders = patientOrders.filter(order => 
-    isSameDay(new Date(order.created_at || order.date || ''), new Date())
+    isSameDay(new Date((order as any).date || order.created_at || ''), new Date())
   );
   const todayEmployeeOrders = employeeOrders.filter(order => 
     isSameDay(new Date(order.created_at || ''), new Date())
