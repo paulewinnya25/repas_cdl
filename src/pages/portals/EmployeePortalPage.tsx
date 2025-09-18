@@ -184,7 +184,7 @@ const EmployeePortalPage: React.FC = () => {
       case 'my-orders':
         return orders;
       case 'pending':
-        return orders.filter(order => order.status === 'En attente d\'approbation' || order.status === 'En préparation');
+        return orders.filter(order => order.status === "Commandé" || order.status === "En préparation");
       case 'delivered':
         return orders.filter(order => order.status === 'Prêt pour livraison' && isSameDay(new Date(order.created_at), new Date()));
       default:
@@ -744,6 +744,7 @@ const EmployeePortalPage: React.FC = () => {
                   </div>
                 </CardContent>
               </Card>
+              )}
 
               <Card>
                 <CardHeader>
@@ -793,7 +794,6 @@ const EmployeePortalPage: React.FC = () => {
                   </div>
                 </CardContent>
               </Card>
-              )}
             </div>
           </TabsContent>
 

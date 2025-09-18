@@ -47,9 +47,3 @@
   from = "/*"
   to = "/index.html"
   status = 200
-
-# Redirection pour les fonctions Netlify (si utilisées)
-[[redirects]]
-  from = "/.netlify/functions/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
