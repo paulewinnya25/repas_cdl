@@ -19,9 +19,10 @@ import {
   faEdit,
   faTrash,
   faTimes,
-  faSignOutAlt
+  faSignOutAlt,
+  faUtensils
 } from '@fortawesome/free-solid-svg-icons';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -312,6 +313,17 @@ const NursePortalPage: React.FC = () => {
     return `${mealType} - ${diet}`;
   };
 
+  // Fonction pour obtenir le menu complet selon le régime et le jour
+  const getAvailableMenusForPatient = (patient: Patient, mealType: string) => {
+    const today = getTodayName();
+    return patientMenus.filter(m => 
+      m.dietary_restriction === patient.diet &&
+      m.meal_type === mealType &&
+      m.day_of_week === today &&
+      m.is_available
+    );
+  };
+
   // Fonctions de filtrage
   const getFilteredPatients = () => {
     switch (activeFilter) {
@@ -352,15 +364,18 @@ const NursePortalPage: React.FC = () => {
       return;
     }
 
-    try {
-      // Déterminer le menu automatiquement selon le régime alimentaire
-      const menu = getMenuForDiet(selectedPatient.diet, newOrder.mealType);
+    // Vérifier qu'un menu a été sélectionné
+    if (!newOrder.menu) {
+      showError("Veuillez sélectionner un menu pour le patient");
+      return;
+    }
 
-      // Créer la commande principale du patient
+    try {
+      // Créer la commande principale du patient avec le menu sélectionné
       const orderData = {
         patient_id: selectedPatient.id,
         meal_type: newOrder.mealType,
-        menu: menu,
+        menu: newOrder.menu,
         instructions: newOrder.instructions,
         status: 'En attente d\'approbation'
       };
@@ -407,7 +422,7 @@ const NursePortalPage: React.FC = () => {
 
       if (error) throw error;
 
-      showSuccess(`Commande créée avec succès - Menu: ${menu}`);
+      showSuccess(`Commande créée avec succès - Menu: ${newOrder.menu}`);
 
       setNewOrder({ mealType: '', menu: '', instructions: '', companionMeal: false, companionInstructions: '', companionSelectedMenu: null, companionAccompaniments: 1, companionSelectedOptions: [] });
       setIsOrderModalOpen(false);
@@ -979,7 +994,7 @@ const NursePortalPage: React.FC = () => {
                         <CardContent className="p-4">
                           <div className="flex items-start justify-between mb-3">
                             <div className="flex-1">
-                              <h3 className="font-semibold text-lg mb-1">{menu.dish_name}</h3>
+                              <h3 className="font-semibold text-lg mb-1">{menu.name}</h3>
                               <p className="text-sm text-gray-600 mb-2">{menu.description}</p>
                               
                               <div className="flex flex-wrap gap-1 mb-2">
@@ -1001,7 +1016,7 @@ const NursePortalPage: React.FC = () => {
                             {menu.photo_url && (
                               <img 
                                 src={menu.photo_url}
-                                alt={menu.dish_name}
+                                alt={menu.name}
                                 className="w-16 h-16 object-cover rounded-lg ml-3"
                                 onError={(e) => {
                                   e.currentTarget.style.display = 'none';
@@ -1292,13 +1307,84 @@ const NursePortalPage: React.FC = () => {
                   </Select>
                 </div>
 
-                {/* Menu automatique selon le régime alimentaire */}
+                {/* Sélection du menu selon le régime alimentaire */}
                 {newOrder.mealType && (
-                  <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
-                    <Label className="text-green-800 dark:text-green-200">Menu automatique</Label>
-                    <p className="text-sm text-green-700 dark:text-green-300 mt-1">
-                      {getMenuForDiet(selectedPatient.diet, newOrder.mealType)}
-                    </p>
+                  <div>
+                    <Label className="text-green-800 dark:text-green-200 font-semibold">
+                      Menus disponibles pour {selectedPatient.diet} - {newOrder.mealType}
+                    </Label>
+                    <div className="mt-2 space-y-2">
+                      {getAvailableMenusForPatient(selectedPatient, newOrder.mealType).length > 0 ? (
+                        getAvailableMenusForPatient(selectedPatient, newOrder.mealType).map((menu) => (
+                          <div 
+                            key={menu.id}
+                            className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                              newOrder.menu === menu.name 
+                                ? 'border-green-500 bg-green-50 dark:bg-green-900/20' 
+                                : 'border-gray-200 hover:border-green-300 hover:bg-green-50/50'
+                            }`}
+                            onClick={() => setNewOrder({...newOrder, menu: menu.name})}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <h4 className="font-medium text-gray-900 dark:text-gray-100">
+                                  {menu.name}
+                                </h4>
+                                {menu.description && (
+                                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                    {menu.description}
+                                  </p>
+                                )}
+                                <div className="flex items-center space-x-2 mt-2">
+                                  <Badge variant="outline" className="text-xs">
+                                    {menu.day_of_week}
+                                  </Badge>
+                                  <Badge variant="secondary" className="text-xs">
+                                    {menu.dietary_restriction}
+                                  </Badge>
+                                </div>
+                              </div>
+                              {menu.photo_url && (
+                                <img 
+                                  src={menu.photo_url}
+                                  alt={menu.name}
+                                  className="w-12 h-12 object-cover rounded-lg ml-3"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                  }}
+                                />
+                              )}
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="p-4 border border-orange-200 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                          <div className="flex items-center space-x-2">
+                            <FontAwesomeIcon icon={faExclamationTriangle} className="text-orange-600" />
+                            <p className="text-orange-800 dark:text-orange-200 text-sm">
+                              Aucun menu disponible pour le régime "{selectedPatient.diet}" en {newOrder.mealType} aujourd'hui ({getTodayName()})
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Affichage du menu sélectionné */}
+                {newOrder.menu && (
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200">
+                    <div className="flex items-center space-x-2">
+                      <FontAwesomeIcon icon={faCheckCircle} className="text-blue-600" />
+                      <div>
+                        <p className="font-medium text-blue-800 dark:text-blue-200">
+                          Menu sélectionné : {newOrder.menu}
+                        </p>
+                        <p className="text-sm text-blue-600 dark:text-blue-300">
+                          Régime {selectedPatient.diet} - {newOrder.mealType}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 )}
 
