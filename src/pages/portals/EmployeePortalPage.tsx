@@ -55,6 +55,7 @@ const EmployeePortalPage: React.FC = () => {
   const [isEditOrderModalOpen, setIsEditOrderModalOpen] = useState(false);
   const [isCancelOrderModalOpen, setIsCancelOrderModalOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<EmployeeOrderWithProfile | null>(null);
+  const [activeFilter, setActiveFilter] = useState<'all' | 'menus' | 'my-orders' | 'pending' | 'delivered'>('all');
   const [newOrder, setNewOrder] = useState({
     employeeName: '',
     specialInstructions: '',
@@ -166,6 +167,33 @@ const EmployeePortalPage: React.FC = () => {
   const handleMenuClick = (menu: EmployeeMenu) => {
     setSelectedMenu(menu);
     setIsOrderModalOpen(true);
+  };
+
+  // Fonctions de filtrage
+  const getFilteredMenus = () => {
+    switch (activeFilter) {
+      case 'menus':
+        return menus;
+      default:
+        return menus;
+    }
+  };
+
+  const getFilteredOrders = () => {
+    switch (activeFilter) {
+      case 'my-orders':
+        return orders;
+      case 'pending':
+        return orders.filter(order => order.status === 'En attente d\'approbation' || order.status === 'En préparation');
+      case 'delivered':
+        return orders.filter(order => order.status === 'Prêt pour livraison' && isSameDay(new Date(order.created_at), new Date()));
+      default:
+        return orders;
+    }
+  };
+
+  const handleFilterChange = (filter: 'all' | 'menus' | 'my-orders' | 'pending' | 'delivered') => {
+    setActiveFilter(filter);
   };
 
   // plus utilisé (multi-menus retiré)
@@ -448,7 +476,10 @@ const EmployeePortalPage: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Statistiques */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white">
+          <Card 
+            className={`bg-gradient-to-r from-green-500 to-green-600 text-white cursor-pointer hover:shadow-lg transition-shadow ${activeFilter === 'menus' ? 'ring-4 ring-green-300' : ''}`}
+            onClick={() => handleFilterChange('menus')}
+          >
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -460,7 +491,10 @@ const EmployeePortalPage: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+          <Card 
+            className={`bg-gradient-to-r from-blue-500 to-blue-600 text-white cursor-pointer hover:shadow-lg transition-shadow ${activeFilter === 'my-orders' ? 'ring-4 ring-blue-300' : ''}`}
+            onClick={() => handleFilterChange('my-orders')}
+          >
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -472,7 +506,10 @@ const EmployeePortalPage: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
+          <Card 
+            className={`bg-gradient-to-r from-orange-500 to-orange-600 text-white cursor-pointer hover:shadow-lg transition-shadow ${activeFilter === 'pending' ? 'ring-4 ring-orange-300' : ''}`}
+            onClick={() => handleFilterChange('pending')}
+          >
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -484,7 +521,10 @@ const EmployeePortalPage: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
+          <Card 
+            className={`bg-gradient-to-r from-purple-500 to-purple-600 text-white cursor-pointer hover:shadow-lg transition-shadow ${activeFilter === 'delivered' ? 'ring-4 ring-purple-300' : ''}`}
+            onClick={() => handleFilterChange('delivered')}
+          >
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -497,6 +537,31 @@ const EmployeePortalPage: React.FC = () => {
           </Card>
         </div>
 
+        {/* Indicateur de filtre actif */}
+        {activeFilter !== 'all' && (
+          <div className="mb-6 flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <Badge variant="secondary" className="text-lg px-4 py-2">
+                Filtre actif: {
+                  activeFilter === 'menus' ? 'Menus Disponibles' :
+                  activeFilter === 'my-orders' ? 'Mes Commandes' :
+                  activeFilter === 'pending' ? 'Commandes en Attente' :
+                  activeFilter === 'delivered' ? 'Commandes Aujourd\'hui' :
+                  'Toutes les données'
+                }
+              </Badge>
+              <Button 
+                variant="outline" 
+                onClick={() => handleFilterChange('all')}
+                className="text-gray-600"
+              >
+                <FontAwesomeIcon icon={faTimes} className="mr-2" />
+                Effacer le filtre
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Navigation par onglets */}
         <Tabs defaultValue="menus" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
@@ -507,12 +572,18 @@ const EmployeePortalPage: React.FC = () => {
 
           {/* Onglet Menus */}
           <TabsContent value="menus">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <FontAwesomeIcon icon={faUtensils} className="text-green-600" />
-                  <span>Menus Disponibles</span>
-                </CardTitle>
+            {(activeFilter === 'all' || activeFilter === 'menus') && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <FontAwesomeIcon icon={faUtensils} className="text-green-600" />
+                    <span>Menus Disponibles</span>
+                    {activeFilter !== 'all' && (
+                      <Badge variant="outline" className="ml-2">
+                        {getFilteredMenus().length} menu(s)
+                      </Badge>
+                    )}
+                  </CardTitle>
                 <div className="flex items-center space-x-4 mt-4">
                   <div className="relative flex-1">
                     <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -528,7 +599,7 @@ const EmployeePortalPage: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredMenus.map((menu) => {
+                  {getFilteredMenus().map((menu) => {
                     const unavailable = !menu.is_available;
                     return (
                       <Card 
@@ -594,21 +665,29 @@ const EmployeePortalPage: React.FC = () => {
                 )}
               </CardContent>
             </Card>
+            )}
           </TabsContent>
 
           {/* Onglet Mes Commandes */}
           <TabsContent value="orders">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <FontAwesomeIcon icon={faShoppingCart} className="text-blue-600" />
-                    <span>Mes Commandes Récentes</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {orders.slice(0, 5).map((order) => (
+              {/* Mes Commandes Récentes - Affichage conditionnel */}
+              {(activeFilter === 'all' || activeFilter === 'my-orders' || activeFilter === 'pending' || activeFilter === 'delivered') && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <FontAwesomeIcon icon={faShoppingCart} className="text-blue-600" />
+                      <span>Mes Commandes Récentes</span>
+                      {activeFilter !== 'all' && (
+                        <Badge variant="outline" className="ml-2">
+                          {getFilteredOrders().length} commande(s)
+                        </Badge>
+                      )}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {getFilteredOrders().slice(0, 5).map((order) => (
                       <div key={order.id} className="border rounded-lg p-4">
                         <div className="flex items-center justify-between mb-2">
                           <h4 className="font-semibold">Commande #{orders.indexOf(order) + 1}</h4>
@@ -710,6 +789,7 @@ const EmployeePortalPage: React.FC = () => {
                   </div>
                 </CardContent>
               </Card>
+              )}
             </div>
           </TabsContent>
 
