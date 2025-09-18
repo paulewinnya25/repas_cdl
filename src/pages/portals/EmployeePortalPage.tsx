@@ -56,6 +56,7 @@ const EmployeePortalPage: React.FC = () => {
   const [isCancelOrderModalOpen, setIsCancelOrderModalOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<EmployeeOrderWithProfile | null>(null);
   const [activeFilter, setActiveFilter] = useState<'all' | 'menus' | 'my-orders' | 'pending' | 'delivered'>('all');
+  const [activeTab, setActiveTab] = useState('menus');
   const [newOrder, setNewOrder] = useState({
     employeeName: '',
     specialInstructions: '',
@@ -184,9 +185,9 @@ const EmployeePortalPage: React.FC = () => {
       case 'my-orders':
         return orders;
       case 'pending':
-        return orders.filter(order => order.status === "Commandé" || order.status === "En préparation");
+        return pendingOrders;
       case 'delivered':
-        return orders.filter(order => order.status === 'Prêt pour livraison' && isSameDay(new Date(order.created_at), new Date()));
+        return todayOrders;
       default:
         return orders;
     }
@@ -194,6 +195,13 @@ const EmployeePortalPage: React.FC = () => {
 
   const handleFilterChange = (filter: 'all' | 'menus' | 'my-orders' | 'pending' | 'delivered') => {
     setActiveFilter(filter);
+    
+    // Changer d'onglet automatiquement selon le filtre
+    if (filter === 'menus') {
+      setActiveTab('menus');
+    } else if (filter === 'my-orders' || filter === 'pending' || filter === 'delivered') {
+      setActiveTab('orders');
+    }
   };
 
   // plus utilisé (multi-menus retiré)
@@ -563,7 +571,7 @@ const EmployeePortalPage: React.FC = () => {
         )}
 
         {/* Navigation par onglets */}
-        <Tabs defaultValue="menus" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="menus">Menus</TabsTrigger>
             <TabsTrigger value="orders">Mes Commandes</TabsTrigger>

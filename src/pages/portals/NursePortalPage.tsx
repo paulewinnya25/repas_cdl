@@ -41,6 +41,7 @@ const NursePortalPage: React.FC = () => {
   const [employeeMenus, setEmployeeMenus] = useState<EmployeeMenu[]>([]);
   const [employeeOrdersToday, setEmployeeOrdersToday] = useState<EmployeeOrder[]>([]);
   const [activeFilter, setActiveFilter] = useState<'all' | 'patients' | 'today-orders' | 'pending' | 'recent-orders'>('all');
+  const [activeTab, setActiveTab] = useState('patients');
 
   const downloadCSV = (filename: string, rows: string[][]) => {
     const csvContent = rows.map(r => r.map(c => `"${(c ?? '').toString().replace(/"/g, '""')}"`).join(',')).join('\n');
@@ -323,9 +324,9 @@ const NursePortalPage: React.FC = () => {
   const getFilteredOrders = () => {
     switch (activeFilter) {
       case 'today-orders':
-        return orders.filter(order => isSameDay(new Date(order.created_at), new Date()));
+        return todayOrders;
       case 'pending':
-        return orders.filter(order => order.status === 'En attente d\'approbation' || order.status === 'En préparation');
+        return pendingOrders;
       case 'recent-orders':
         return orders.slice(0, 5); // Les 5 commandes les plus récentes
       default:
@@ -335,6 +336,13 @@ const NursePortalPage: React.FC = () => {
 
   const handleFilterChange = (filter: 'all' | 'patients' | 'today-orders' | 'pending' | 'recent-orders') => {
     setActiveFilter(filter);
+    
+    // Changer d'onglet automatiquement selon le filtre
+    if (filter === 'patients') {
+      setActiveTab('patients');
+    } else if (filter === 'today-orders' || filter === 'pending' || filter === 'recent-orders') {
+      setActiveTab('orders');
+    }
   };
 
   const handlePlaceOrder = async () => {
@@ -807,7 +815,7 @@ const NursePortalPage: React.FC = () => {
         )}
 
         {/* Navigation par onglets */}
-        <Tabs defaultValue="patients" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="patients">Patients</TabsTrigger>
             <TabsTrigger value="orders">Commandes</TabsTrigger>
