@@ -749,7 +749,16 @@ export default function CookPortalPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Statistiques rapides */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
+          <Card 
+            className="bg-gradient-to-r from-orange-500 to-orange-600 text-white cursor-pointer hover:shadow-lg transition-shadow"
+            onClick={() => {
+              // Filtrer pour afficher seulement les commandes patients
+              const patientOrdersSection = document.querySelector('[data-section="patient-orders"]');
+              if (patientOrdersSection) {
+                patientOrdersSection.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+          >
             <CardContent className="p-6">
               <div className="flex items-center">
                 <FontAwesomeIcon icon={faUsers} className="text-3xl mr-4" />
@@ -761,7 +770,16 @@ export default function CookPortalPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+          <Card 
+            className="bg-gradient-to-r from-blue-500 to-blue-600 text-white cursor-pointer hover:shadow-lg transition-shadow"
+            onClick={() => {
+              // Filtrer pour afficher seulement les commandes employés
+              const employeeOrdersSection = document.querySelector('[data-section="employee-orders"]');
+              if (employeeOrdersSection) {
+                employeeOrdersSection.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+          >
             <CardContent className="p-6">
               <div className="flex items-center">
                 <FontAwesomeIcon icon={faUtensils} className="text-3xl mr-4" />
@@ -773,7 +791,16 @@ export default function CookPortalPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-r from-red-500 to-red-600 text-white">
+          <Card 
+            className="bg-gradient-to-r from-red-500 to-red-600 text-white cursor-pointer hover:shadow-lg transition-shadow"
+            onClick={() => {
+              // Filtrer pour afficher seulement les commandes en attente
+              const pendingOrdersSection = document.querySelector('[data-section="pending-orders"]');
+              if (pendingOrdersSection) {
+                pendingOrdersSection.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+          >
             <CardContent className="p-6">
               <div className="flex items-center">
                 <FontAwesomeIcon icon={faClock} className="text-3xl mr-4" />
@@ -785,7 +812,16 @@ export default function CookPortalPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white">
+          <Card 
+            className="bg-gradient-to-r from-green-500 to-green-600 text-white cursor-pointer hover:shadow-lg transition-shadow"
+            onClick={() => {
+              // Filtrer pour afficher seulement les commandes livrées aujourd'hui
+              const deliveredOrdersSection = document.querySelector('[data-section="delivered-orders"]');
+              if (deliveredOrdersSection) {
+                deliveredOrdersSection.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+          >
             <CardContent className="p-6">
               <div className="flex items-center">
                 <FontAwesomeIcon icon={faCheckCircle} className="text-3xl mr-4" />
@@ -811,7 +847,7 @@ export default function CookPortalPage() {
           <TabsContent value="orders" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Commandes Patients */}
-              <Card>
+              <Card data-section="patient-orders">
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <FontAwesomeIcon icon={faUsers} className="mr-2 text-blue-600" />
@@ -914,7 +950,7 @@ export default function CookPortalPage() {
               </Card>
 
               {/* Commandes Employés */}
-              <Card>
+              <Card data-section="employee-orders">
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <FontAwesomeIcon icon={faUtensils} className="mr-2 text-green-600" />

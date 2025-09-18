@@ -692,7 +692,16 @@ const NursePortalPage: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Statistiques */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+          <Card 
+            className="bg-gradient-to-r from-blue-500 to-blue-600 text-white cursor-pointer hover:shadow-lg transition-shadow"
+            onClick={() => {
+              // Scroll vers la section des patients
+              const patientsSection = document.querySelector('[data-section="patients"]');
+              if (patientsSection) {
+                patientsSection.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+          >
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -704,7 +713,16 @@ const NursePortalPage: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white">
+          <Card 
+            className="bg-gradient-to-r from-green-500 to-green-600 text-white cursor-pointer hover:shadow-lg transition-shadow"
+            onClick={() => {
+              // Scroll vers la section des commandes d'aujourd'hui
+              const todayOrdersSection = document.querySelector('[data-section="today-orders"]');
+              if (todayOrdersSection) {
+                todayOrdersSection.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+          >
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -716,7 +734,16 @@ const NursePortalPage: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
+          <Card 
+            className="bg-gradient-to-r from-orange-500 to-orange-600 text-white cursor-pointer hover:shadow-lg transition-shadow"
+            onClick={() => {
+              // Scroll vers la section des commandes en attente
+              const pendingOrdersSection = document.querySelector('[data-section="pending-orders"]');
+              if (pendingOrdersSection) {
+                pendingOrdersSection.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+          >
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -728,7 +755,16 @@ const NursePortalPage: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
+          <Card 
+            className="bg-gradient-to-r from-purple-500 to-purple-600 text-white cursor-pointer hover:shadow-lg transition-shadow"
+            onClick={() => {
+              // Scroll vers la section des commandes récentes
+              const recentOrdersSection = document.querySelector('[data-section="recent-orders"]');
+              if (recentOrdersSection) {
+                recentOrdersSection.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+          >
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
