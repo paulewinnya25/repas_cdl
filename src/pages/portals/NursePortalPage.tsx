@@ -40,6 +40,7 @@ const NursePortalPage: React.FC = () => {
   const [patientMenus, setPatientMenus] = useState<PatientMenu[]>([]);
   const [employeeMenus, setEmployeeMenus] = useState<EmployeeMenu[]>([]);
   const [employeeOrdersToday, setEmployeeOrdersToday] = useState<EmployeeOrder[]>([]);
+  const [activeFilter, setActiveFilter] = useState<'all' | 'patients' | 'today-orders' | 'pending' | 'recent-orders'>('all');
 
   const downloadCSV = (filename: string, rows: string[][]) => {
     const csvContent = rows.map(r => r.map(c => `"${(c ?? '').toString().replace(/"/g, '""')}"`).join(',')).join('\n');
@@ -307,6 +308,33 @@ const NursePortalPage: React.FC = () => {
     if (found) return found.name;
     // fallback si non défini en base
     return `${mealType} - ${diet}`;
+  };
+
+  // Fonctions de filtrage
+  const getFilteredPatients = () => {
+    switch (activeFilter) {
+      case 'patients':
+        return patients;
+      default:
+        return patients;
+    }
+  };
+
+  const getFilteredOrders = () => {
+    switch (activeFilter) {
+      case 'today-orders':
+        return orders.filter(order => isSameDay(new Date(order.created_at), new Date()));
+      case 'pending':
+        return orders.filter(order => order.status === 'En attente d\'approbation' || order.status === 'En préparation');
+      case 'recent-orders':
+        return orders.slice(0, 5); // Les 5 commandes les plus récentes
+      default:
+        return orders;
+    }
+  };
+
+  const handleFilterChange = (filter: 'all' | 'patients' | 'today-orders' | 'pending' | 'recent-orders') => {
+    setActiveFilter(filter);
   };
 
   const handlePlaceOrder = async () => {
@@ -693,14 +721,8 @@ const NursePortalPage: React.FC = () => {
         {/* Statistiques */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card 
-            className="bg-gradient-to-r from-blue-500 to-blue-600 text-white cursor-pointer hover:shadow-lg transition-shadow"
-            onClick={() => {
-              // Scroll vers la section des patients
-              const patientsSection = document.querySelector('[data-section="patients"]');
-              if (patientsSection) {
-                patientsSection.scrollIntoView({ behavior: 'smooth' });
-              }
-            }}
+            className={`bg-gradient-to-r from-blue-500 to-blue-600 text-white cursor-pointer hover:shadow-lg transition-shadow ${activeFilter === 'patients' ? 'ring-4 ring-blue-300' : ''}`}
+            onClick={() => handleFilterChange('patients')}
           >
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -714,14 +736,8 @@ const NursePortalPage: React.FC = () => {
           </Card>
 
           <Card 
-            className="bg-gradient-to-r from-green-500 to-green-600 text-white cursor-pointer hover:shadow-lg transition-shadow"
-            onClick={() => {
-              // Scroll vers la section des commandes récentes (qui inclut les commandes d'aujourd'hui)
-              const recentOrdersSection = document.querySelector('[data-section="recent-orders"]');
-              if (recentOrdersSection) {
-                recentOrdersSection.scrollIntoView({ behavior: 'smooth' });
-              }
-            }}
+            className={`bg-gradient-to-r from-green-500 to-green-600 text-white cursor-pointer hover:shadow-lg transition-shadow ${activeFilter === 'today-orders' ? 'ring-4 ring-green-300' : ''}`}
+            onClick={() => handleFilterChange('today-orders')}
           >
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -735,14 +751,8 @@ const NursePortalPage: React.FC = () => {
           </Card>
 
           <Card 
-            className="bg-gradient-to-r from-orange-500 to-orange-600 text-white cursor-pointer hover:shadow-lg transition-shadow"
-            onClick={() => {
-              // Scroll vers la section des commandes en attente
-              const pendingOrdersSection = document.querySelector('[data-section="pending-orders"]');
-              if (pendingOrdersSection) {
-                pendingOrdersSection.scrollIntoView({ behavior: 'smooth' });
-              }
-            }}
+            className={`bg-gradient-to-r from-orange-500 to-orange-600 text-white cursor-pointer hover:shadow-lg transition-shadow ${activeFilter === 'pending' ? 'ring-4 ring-orange-300' : ''}`}
+            onClick={() => handleFilterChange('pending')}
           >
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -756,14 +766,8 @@ const NursePortalPage: React.FC = () => {
           </Card>
 
           <Card 
-            className="bg-gradient-to-r from-purple-500 to-purple-600 text-white cursor-pointer hover:shadow-lg transition-shadow"
-            onClick={() => {
-              // Scroll vers la section des commandes récentes
-              const recentOrdersSection = document.querySelector('[data-section="recent-orders"]');
-              if (recentOrdersSection) {
-                recentOrdersSection.scrollIntoView({ behavior: 'smooth' });
-              }
-            }}
+            className={`bg-gradient-to-r from-purple-500 to-purple-600 text-white cursor-pointer hover:shadow-lg transition-shadow ${activeFilter === 'recent-orders' ? 'ring-4 ring-purple-300' : ''}`}
+            onClick={() => handleFilterChange('recent-orders')}
           >
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -777,6 +781,31 @@ const NursePortalPage: React.FC = () => {
           </Card>
         </div>
 
+        {/* Indicateur de filtre actif */}
+        {activeFilter !== 'all' && (
+          <div className="mb-6 flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <Badge variant="secondary" className="text-lg px-4 py-2">
+                Filtre actif: {
+                  activeFilter === 'patients' ? 'Patients' :
+                  activeFilter === 'today-orders' ? 'Commandes Aujourd\'hui' :
+                  activeFilter === 'pending' ? 'Commandes en Attente' :
+                  activeFilter === 'recent-orders' ? 'Commandes Récentes' :
+                  'Toutes les données'
+                }
+              </Badge>
+              <Button 
+                variant="outline" 
+                onClick={() => handleFilterChange('all')}
+                className="text-gray-600"
+              >
+                <FontAwesomeIcon icon={faTimes} className="mr-2" />
+                Effacer le filtre
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Navigation par onglets */}
         <Tabs defaultValue="patients" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
@@ -787,18 +816,24 @@ const NursePortalPage: React.FC = () => {
 
           {/* Onglet Patients */}
           <TabsContent value="patients">
-            <Card data-section="patients">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <FontAwesomeIcon icon={faUsers} className="text-blue-600" />
-                    <span>Liste des Patients</span>
-                  </div>
-                  <Button onClick={() => setIsPatientModalOpen(true)}>
-                    <FontAwesomeIcon icon={faPlus} className="mr-2" />
-                    Ajouter un patient
-                  </Button>
-                </CardTitle>
+            {(activeFilter === 'all' || activeFilter === 'patients') && (
+              <Card data-section="patients">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <FontAwesomeIcon icon={faUsers} className="text-blue-600" />
+                      <span>Liste des Patients</span>
+                      {activeFilter !== 'all' && (
+                        <Badge variant="outline" className="ml-2">
+                          {getFilteredPatients().length} patient(s)
+                        </Badge>
+                      )}
+                    </div>
+                    <Button onClick={() => setIsPatientModalOpen(true)}>
+                      <FontAwesomeIcon icon={faPlus} className="mr-2" />
+                      Ajouter un patient
+                    </Button>
+                  </CardTitle>
                 <div className="flex items-center space-x-4 mt-4">
                   <div className="relative flex-1">
                     <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -867,21 +902,29 @@ const NursePortalPage: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
+            )}
           </TabsContent>
 
           {/* Onglet Commandes */}
           <TabsContent value="orders">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card data-section="recent-orders">
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <FontAwesomeIcon icon={faClipboardList} className="text-blue-600" />
-                    <span>Commandes Récentes</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {orders.slice(0, 5).map((order) => (
+              {/* Commandes Récentes - Affichage conditionnel */}
+              {(activeFilter === 'all' || activeFilter === 'recent-orders' || activeFilter === 'today-orders' || activeFilter === 'pending') && (
+                <Card data-section="recent-orders">
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <FontAwesomeIcon icon={faClipboardList} className="text-blue-600" />
+                      <span>Commandes Récentes</span>
+                      {activeFilter !== 'all' && (
+                        <Badge variant="outline" className="ml-2">
+                          {getFilteredOrders().length} commande(s)
+                        </Badge>
+                      )}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {getFilteredOrders().slice(0, 5).map((order) => (
                       <div 
                         key={order.id} 
                         className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors"
@@ -946,14 +989,22 @@ const NursePortalPage: React.FC = () => {
                   </div>
                 </CardContent>
               </Card>
+              )}
 
-              <Card data-section="pending-orders">
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <FontAwesomeIcon icon={faExclamationTriangle} className="text-orange-600" />
-                    <span>Commandes en Attente</span>
-                  </CardTitle>
-                </CardHeader>
+              {/* Commandes en Attente - Affichage conditionnel */}
+              {(activeFilter === 'all' || activeFilter === 'pending') && (
+                <Card data-section="pending-orders">
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <FontAwesomeIcon icon={faExclamationTriangle} className="text-orange-600" />
+                      <span>Commandes en Attente</span>
+                      {activeFilter !== 'all' && (
+                        <Badge variant="outline" className="ml-2">
+                          {pendingOrders.length} commande(s)
+                        </Badge>
+                      )}
+                    </CardTitle>
+                  </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     {pendingOrders.map((order) => (
@@ -1008,6 +1059,7 @@ const NursePortalPage: React.FC = () => {
                   </div>
                 </CardContent>
               </Card>
+              )}
             </div>
           </TabsContent>
 
