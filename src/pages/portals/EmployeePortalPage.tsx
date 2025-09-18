@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { isSameDay } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../integrations/supabase/client';
 import { EmployeeMenu, EmployeeOrder, UserRole } from '../../types/repas-cdl';
 
@@ -29,7 +30,8 @@ import {
   faCreditCard,
   faEdit,
   faTrash,
-  faTimes
+  faTimes,
+  faArrowLeft
 } from '@fortawesome/free-solid-svg-icons';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -40,11 +42,11 @@ import { Badge } from '../../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../components/ui/dialog';
 import { Textarea } from '../../components/ui/textarea';
-import { Header } from '../../components/ui/Header';
 import { showSuccess, showError } from '../../utils/toast';
 // MultiMenuOrderModal retiré selon demande
 
 const EmployeePortalPage: React.FC = () => {
+  const navigate = useNavigate();
   const [menus, setMenus] = useState<EmployeeMenu[]>([]);
   const [orders, setOrders] = useState<EmployeeOrderWithProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -111,6 +113,10 @@ const EmployeePortalPage: React.FC = () => {
       setUser({ id: '550e8400-e29b-41d4-a716-446655440012' });
       setCurrentUserRole('Employé');
     }
+  };
+
+  const handleBackToPortals = () => {
+    navigate('/portals');
   };
 
   const fetchData = async () => {
@@ -461,11 +467,31 @@ const EmployeePortalPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 dark:from-gray-900 dark:to-gray-800">
       {/* Header */}
-      <Header 
-        title="Portail Employé" 
-        subtitle="Commandes personnelles"
-        showLogo={true}
-      />
+      <div className="bg-white shadow-sm border-b border-green-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center">
+              <img 
+                src="/logo-centre-diagnostic-official.svg" 
+                alt="Centre Diagnostic" 
+                className="h-8 w-auto mr-4"
+              />
+              <div>
+                <h1 className="text-2xl font-bold text-green-600">Portail Employé</h1>
+                <p className="text-sm text-gray-600">Commandes personnelles</p>
+              </div>
+            </div>
+            <Button 
+              onClick={handleBackToPortals}
+              variant="outline"
+              className="text-gray-600 hover:text-gray-700 hover:bg-gray-50 border-gray-200"
+            >
+              <FontAwesomeIcon icon={faArrowLeft} className="mr-2" />
+              Retour aux portails
+            </Button>
+          </div>
+        </div>
+      </div>
       
       {/* Statistiques rapides */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
