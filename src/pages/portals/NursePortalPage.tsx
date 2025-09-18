@@ -42,6 +42,7 @@ const NursePortalPage: React.FC = () => {
   const [employeeOrdersToday, setEmployeeOrdersToday] = useState<EmployeeOrder[]>([]);
   const [activeFilter, setActiveFilter] = useState<'all' | 'patients' | 'today-orders' | 'pending' | 'recent-orders'>('all');
   const [activeTab, setActiveTab] = useState('patients');
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
   const downloadCSV = (filename: string, rows: string[][]) => {
     const csvContent = rows.map(r => r.map(c => `"${(c ?? '').toString().replace(/"/g, '""')}"`).join(',')).join('\n');
@@ -727,7 +728,7 @@ const NursePortalPage: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Statistiques */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
           <Card 
             className={`bg-gradient-to-r from-blue-500 to-blue-600 text-white cursor-pointer hover:shadow-lg transition-shadow ${activeFilter === 'patients' ? 'ring-4 ring-blue-300' : ''}`}
             onClick={() => handleFilterChange('patients')}
@@ -739,6 +740,21 @@ const NursePortalPage: React.FC = () => {
                   <p className="text-3xl font-bold">{patients.length}</p>
                 </div>
                 <FontAwesomeIcon icon={faUsers} className="text-4xl text-blue-200" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="bg-gradient-to-r from-teal-500 to-teal-600 text-white cursor-pointer hover:shadow-lg transition-shadow"
+            onClick={() => setActiveTab('menus')}
+          >
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-teal-100">Menus Patients</p>
+                  <p className="text-3xl font-bold">{patientMenus.length}</p>
+                </div>
+                <FontAwesomeIcon icon={faUtensils} className="text-4xl text-teal-200" />
               </div>
             </CardContent>
           </Card>
@@ -816,8 +832,9 @@ const NursePortalPage: React.FC = () => {
 
         {/* Navigation par onglets */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="patients">Patients</TabsTrigger>
+            <TabsTrigger value="menus">Menus Patients</TabsTrigger>
             <TabsTrigger value="orders">Commandes</TabsTrigger>
             <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
           </TabsList>
@@ -911,6 +928,115 @@ const NursePortalPage: React.FC = () => {
               </CardContent>
             </Card>
             )}
+          </TabsContent>
+
+          {/* Onglet Menus Patients */}
+          <TabsContent value="menus">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <FontAwesomeIcon icon={faUtensils} className="text-green-600" />
+                  <span>Menus Patients</span>
+                  <Badge variant="outline" className="ml-2">
+                    {patientMenus.length} menu(s)
+                  </Badge>
+                </CardTitle>
+                <CardDescription>
+                  Consultez les menus disponibles pour les patients selon les régimes alimentaires et les jours de la semaine
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {/* Filtres par jour de la semaine */}
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant={selectedDay === null ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSelectedDay(null)}
+                      className="text-xs"
+                    >
+                      Tous les jours
+                    </Button>
+                    {['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'].map((day) => (
+                      <Button
+                        key={day}
+                        variant={selectedDay === day ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setSelectedDay(day)}
+                        className="text-xs"
+                      >
+                        {day}
+                      </Button>
+                    ))}
+                  </div>
+
+                  {/* Affichage des menus par régime alimentaire */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {patientMenus
+                      .filter(menu => selectedDay === null || menu.day_of_week === selectedDay)
+                      .map((menu) => (
+                      <Card key={menu.id} className="hover:shadow-lg transition-shadow">
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-lg mb-1">{menu.dish_name}</h3>
+                              <p className="text-sm text-gray-600 mb-2">{menu.description}</p>
+                              
+                              <div className="flex flex-wrap gap-1 mb-2">
+                                <Badge variant="secondary" className="text-xs">
+                                  {menu.day_of_week}
+                                </Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  {menu.meal_type}
+                                </Badge>
+                                <Badge 
+                                  variant={menu.dietary_restriction === 'Normal' ? 'default' : 'destructive'}
+                                  className="text-xs"
+                                >
+                                  {menu.dietary_restriction}
+                                </Badge>
+                              </div>
+                            </div>
+                            
+                            {menu.photo_url && (
+                              <img 
+                                src={menu.photo_url}
+                                alt={menu.dish_name}
+                                className="w-16 h-16 object-cover rounded-lg ml-3"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                            )}
+                          </div>
+                          
+                          <div className="text-sm text-gray-500">
+                            <p><strong>Régime:</strong> {menu.dietary_restriction}</p>
+                            <p><strong>Repas:</strong> {menu.meal_type}</p>
+                            <p><strong>Jour:</strong> {menu.day_of_week}</p>
+                            {menu.is_available ? (
+                              <Badge variant="default" className="mt-2">Disponible</Badge>
+                            ) : (
+                              <Badge variant="secondary" className="mt-2">Indisponible</Badge>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+
+                  {patientMenus.filter(menu => selectedDay === null || menu.day_of_week === selectedDay).length === 0 && (
+                    <div className="text-center py-8">
+                      <FontAwesomeIcon icon={faUtensils} className="text-4xl text-gray-300 mb-4" />
+                      <p className="text-gray-500 text-lg">
+                        {selectedDay ? `Aucun menu disponible pour ${selectedDay}` : 'Aucun menu patient disponible'}
+                      </p>
+                      <p className="text-gray-400">Les menus seront ajoutés par l'équipe cuisine</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Onglet Commandes */}
