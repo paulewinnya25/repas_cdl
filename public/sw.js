@@ -8,18 +8,27 @@ const STATIC_CACHE_URLS = [
   '/logo-centre-diagnostic-official.svg'
 ];
 
-// Installation du Service Worker
+// Désactiver immédiatement tous les autres Service Workers
 self.addEventListener('install', (event) => {
-  console.log('Service Worker: Installation');
+  console.log('Service Worker: Installation - Désactivation des autres SW');
+  
+  // Prendre immédiatement le contrôle
+  self.skipWaiting();
+  
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('Service Worker: Mise en cache des fichiers statiques');
-        return cache.addAll(STATIC_CACHE_URLS);
-      })
-      .catch((error) => {
-        console.error('Service Worker: Erreur lors de la mise en cache:', error);
-      })
+    Promise.all([
+      // Désactiver les autres Service Workers
+      self.registration.unregister().catch(() => {}),
+      // Puis réenregistrer notre propre SW
+      caches.open(CACHE_NAME)
+        .then((cache) => {
+          console.log('Service Worker: Mise en cache des fichiers statiques');
+          return cache.addAll(STATIC_CACHE_URLS);
+        })
+        .catch((error) => {
+          console.error('Service Worker: Erreur lors de la mise en cache:', error);
+        })
+    ])
   );
 });
 

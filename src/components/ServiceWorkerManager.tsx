@@ -75,18 +75,45 @@ export const ServiceWorkerManager: React.FC = () => {
     try {
       const registrations = await navigator.serviceWorker.getRegistrations();
       
+      console.log('🔍 Service Workers trouvés:', registrations.length);
+      
       for (const registration of registrations) {
-        // Désactiver les Service Workers qui ne sont pas le nôtre
-        if (!registration.scope.includes('/sw.js')) {
-          console.log('Désactivation du Service Worker:', registration.scope);
+        const scriptURL = registration.active?.scriptURL || registration.waiting?.scriptURL || '';
+        const scope = registration.scope;
+        
+        console.log('📋 Service Worker:', { scriptURL, scope });
+        
+        // Désactiver tous les Service Workers problématiques
+        if (
+          scriptURL.includes('cnm-sw.js') ||
+          scriptURL.includes('netlify') ||
+          scriptURL.includes('_app') ||
+          scriptURL.includes('_next') ||
+          scriptURL.includes('vercel') ||
+          scriptURL.includes('cloudflare') ||
+          (!scriptURL.includes('/sw.js') && scope.includes(window.location.origin))
+        ) {
+          console.log('🗑️ Désactivation:', scriptURL);
           await registration.unregister();
         }
       }
       
-      // Recharger la page pour appliquer les changements
-      window.location.reload();
+      // Vider le cache
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(
+          cacheNames.map(cacheName => caches.delete(cacheName))
+        );
+        console.log('🧹 Cache vidé');
+      }
+      
+      // Recharger la page
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+      
     } catch (error) {
-      console.error('Erreur lors de la désactivation:', error);
+      console.error('❌ Erreur lors de la désactivation:', error);
     }
   };
 
