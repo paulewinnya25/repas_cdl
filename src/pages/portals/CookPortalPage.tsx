@@ -794,10 +794,10 @@ export default function CookPortalPage() {
           <Card 
             className="bg-gradient-to-r from-red-500 to-red-600 text-white cursor-pointer hover:shadow-lg transition-shadow"
             onClick={() => {
-              // Filtrer pour afficher seulement les commandes en attente
-              const pendingOrdersSection = document.querySelector('[data-section="pending-orders"]');
-              if (pendingOrdersSection) {
-                pendingOrdersSection.scrollIntoView({ behavior: 'smooth' });
+              // Scroll vers la section des commandes (qui inclut les commandes en attente)
+              const ordersTab = document.querySelector('[data-tab="orders"]');
+              if (ordersTab) {
+                ordersTab.scrollIntoView({ behavior: 'smooth' });
               }
             }}
           >
@@ -815,10 +815,10 @@ export default function CookPortalPage() {
           <Card 
             className="bg-gradient-to-r from-green-500 to-green-600 text-white cursor-pointer hover:shadow-lg transition-shadow"
             onClick={() => {
-              // Filtrer pour afficher seulement les commandes livrées aujourd'hui
-              const deliveredOrdersSection = document.querySelector('[data-section="delivered-orders"]');
-              if (deliveredOrdersSection) {
-                deliveredOrdersSection.scrollIntoView({ behavior: 'smooth' });
+              // Scroll vers la section des commandes (qui inclut les commandes livrées)
+              const ordersTab = document.querySelector('[data-tab="orders"]');
+              if (ordersTab) {
+                ordersTab.scrollIntoView({ behavior: 'smooth' });
               }
             }}
           >
@@ -844,7 +844,7 @@ export default function CookPortalPage() {
           </TabsList>
 
           {/* Onglet Commandes */}
-          <TabsContent value="orders" className="space-y-6">
+          <TabsContent value="orders" className="space-y-6" data-tab="orders">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Commandes Patients */}
               <Card data-section="patient-orders">

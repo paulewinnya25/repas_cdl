@@ -716,10 +716,10 @@ const NursePortalPage: React.FC = () => {
           <Card 
             className="bg-gradient-to-r from-green-500 to-green-600 text-white cursor-pointer hover:shadow-lg transition-shadow"
             onClick={() => {
-              // Scroll vers la section des commandes d'aujourd'hui
-              const todayOrdersSection = document.querySelector('[data-section="today-orders"]');
-              if (todayOrdersSection) {
-                todayOrdersSection.scrollIntoView({ behavior: 'smooth' });
+              // Scroll vers la section des commandes récentes (qui inclut les commandes d'aujourd'hui)
+              const recentOrdersSection = document.querySelector('[data-section="recent-orders"]');
+              if (recentOrdersSection) {
+                recentOrdersSection.scrollIntoView({ behavior: 'smooth' });
               }
             }}
           >
@@ -787,7 +787,7 @@ const NursePortalPage: React.FC = () => {
 
           {/* Onglet Patients */}
           <TabsContent value="patients">
-            <Card>
+            <Card data-section="patients">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
@@ -872,7 +872,7 @@ const NursePortalPage: React.FC = () => {
           {/* Onglet Commandes */}
           <TabsContent value="orders">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
+              <Card data-section="recent-orders">
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <FontAwesomeIcon icon={faClipboardList} className="text-blue-600" />
@@ -947,7 +947,7 @@ const NursePortalPage: React.FC = () => {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card data-section="pending-orders">
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <FontAwesomeIcon icon={faExclamationTriangle} className="text-orange-600" />
