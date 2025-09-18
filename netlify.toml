@@ -19,8 +19,6 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     Content-Security-Policy = "default-src 'self'; img-src 'self' data: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://*.netlify.com; worker-src 'self';"
     Service-Worker-Allowed = "/"
-    # Bloquer les Service Workers externes
-    Clear-Site-Data = "executionContexts"
 
 # Headers spécifiques pour les images
 [[headers]]

@@ -116,7 +116,7 @@ const EmployeePortalPage: React.FC = () => {
   };
 
   const handleBackToPortals = () => {
-    navigate('/portals');
+    navigate('/portails');
   };
 
   const fetchData = async () => {
