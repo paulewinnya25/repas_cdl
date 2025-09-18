@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Header } from '@/components/ui/Header';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUserTie, faUtensils, faClock, faCheckCircle, faPlus, faEdit, faTrash, faUsers, faClipboardList, faChartLine, faBell, faDownload, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
+import { faUserTie, faUtensils, faClock, faCheckCircle, faPlus, faEdit, faTrash, faUsers, faClipboardList, faChartLine, faBell, faDownload, faSignOutAlt, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { supabase } from '@/integrations/supabase/client';
 import { showSuccess, showError } from '@/utils/toast';
 import type { Patient, Order, EmployeeMenu, EmployeeOrder, PatientMenu, DietaryRestriction, PatientMealType, DayOfWeek } from '@/types/repas-cdl';
