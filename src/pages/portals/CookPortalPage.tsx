@@ -29,6 +29,7 @@ export default function CookPortalPage() {
   const [isPatientMenuModalOpen, setIsPatientMenuModalOpen] = useState(false);
   const [isEditPatientMenuModalOpen, setIsEditPatientMenuModalOpen] = useState(false);
   const [isDeleteOrderModalOpen, setIsDeleteOrderModalOpen] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<'all' | 'patients' | 'employees' | 'pending' | 'delivered'>('all');
   const downloadCSV = (filename: string, rows: string[][]) => {
     const csvContent = rows.map(r => r.map(c => `"${(c ?? '').toString().replace(/"/g, '""')}"`).join(',')).join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -193,6 +194,37 @@ export default function CookPortalPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Fonctions de filtrage
+  const getFilteredPatientOrders = () => {
+    switch (activeFilter) {
+      case 'patients':
+        return patientOrders;
+      case 'pending':
+        return patientOrders.filter(order => order.status === 'En attente d\'approbation' || order.status === 'En préparation');
+      case 'delivered':
+        return patientOrders.filter(order => order.status === 'Prêt pour livraison' && isSameDay(new Date(order.created_at), new Date()));
+      default:
+        return patientOrders;
+    }
+  };
+
+  const getFilteredEmployeeOrders = () => {
+    switch (activeFilter) {
+      case 'employees':
+        return employeeOrders;
+      case 'pending':
+        return employeeOrders.filter(order => order.status === 'En attente d\'approbation' || order.status === 'En préparation');
+      case 'delivered':
+        return employeeOrders.filter(order => order.status === 'Prêt pour livraison' && isSameDay(new Date(order.created_at), new Date()));
+      default:
+        return employeeOrders;
+    }
+  };
+
+  const handleFilterChange = (filter: 'all' | 'patients' | 'employees' | 'pending' | 'delivered') => {
+    setActiveFilter(filter);
   };
 
   const handleMenuSubmit = async () => {
@@ -750,14 +782,8 @@ export default function CookPortalPage() {
         {/* Statistiques rapides */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card 
-            className="bg-gradient-to-r from-orange-500 to-orange-600 text-white cursor-pointer hover:shadow-lg transition-shadow"
-            onClick={() => {
-              // Filtrer pour afficher seulement les commandes patients
-              const patientOrdersSection = document.querySelector('[data-section="patient-orders"]');
-              if (patientOrdersSection) {
-                patientOrdersSection.scrollIntoView({ behavior: 'smooth' });
-              }
-            }}
+            className={`bg-gradient-to-r from-orange-500 to-orange-600 text-white cursor-pointer hover:shadow-lg transition-shadow ${activeFilter === 'patients' ? 'ring-4 ring-orange-300' : ''}`}
+            onClick={() => handleFilterChange('patients')}
           >
             <CardContent className="p-6">
               <div className="flex items-center">
@@ -771,14 +797,8 @@ export default function CookPortalPage() {
           </Card>
 
           <Card 
-            className="bg-gradient-to-r from-blue-500 to-blue-600 text-white cursor-pointer hover:shadow-lg transition-shadow"
-            onClick={() => {
-              // Filtrer pour afficher seulement les commandes employés
-              const employeeOrdersSection = document.querySelector('[data-section="employee-orders"]');
-              if (employeeOrdersSection) {
-                employeeOrdersSection.scrollIntoView({ behavior: 'smooth' });
-              }
-            }}
+            className={`bg-gradient-to-r from-blue-500 to-blue-600 text-white cursor-pointer hover:shadow-lg transition-shadow ${activeFilter === 'employees' ? 'ring-4 ring-blue-300' : ''}`}
+            onClick={() => handleFilterChange('employees')}
           >
             <CardContent className="p-6">
               <div className="flex items-center">
@@ -792,14 +812,8 @@ export default function CookPortalPage() {
           </Card>
 
           <Card 
-            className="bg-gradient-to-r from-red-500 to-red-600 text-white cursor-pointer hover:shadow-lg transition-shadow"
-            onClick={() => {
-              // Scroll vers la section des commandes (qui inclut les commandes en attente)
-              const ordersTab = document.querySelector('[data-tab="orders"]');
-              if (ordersTab) {
-                ordersTab.scrollIntoView({ behavior: 'smooth' });
-              }
-            }}
+            className={`bg-gradient-to-r from-red-500 to-red-600 text-white cursor-pointer hover:shadow-lg transition-shadow ${activeFilter === 'pending' ? 'ring-4 ring-red-300' : ''}`}
+            onClick={() => handleFilterChange('pending')}
           >
             <CardContent className="p-6">
               <div className="flex items-center">
@@ -813,14 +827,8 @@ export default function CookPortalPage() {
           </Card>
 
           <Card 
-            className="bg-gradient-to-r from-green-500 to-green-600 text-white cursor-pointer hover:shadow-lg transition-shadow"
-            onClick={() => {
-              // Scroll vers la section des commandes (qui inclut les commandes livrées)
-              const ordersTab = document.querySelector('[data-tab="orders"]');
-              if (ordersTab) {
-                ordersTab.scrollIntoView({ behavior: 'smooth' });
-              }
-            }}
+            className={`bg-gradient-to-r from-green-500 to-green-600 text-white cursor-pointer hover:shadow-lg transition-shadow ${activeFilter === 'delivered' ? 'ring-4 ring-green-300' : ''}`}
+            onClick={() => handleFilterChange('delivered')}
           >
             <CardContent className="p-6">
               <div className="flex items-center">
@@ -834,6 +842,31 @@ export default function CookPortalPage() {
           </Card>
         </div>
 
+        {/* Indicateur de filtre actif */}
+        {activeFilter !== 'all' && (
+          <div className="mb-6 flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <Badge variant="secondary" className="text-lg px-4 py-2">
+                Filtre actif: {
+                  activeFilter === 'patients' ? 'Commandes Patients' :
+                  activeFilter === 'employees' ? 'Commandes Employés' :
+                  activeFilter === 'pending' ? 'Commandes en Attente' :
+                  activeFilter === 'delivered' ? 'Commandes Livrées Aujourd\'hui' :
+                  'Toutes les commandes'
+                }
+              </Badge>
+              <Button 
+                variant="outline" 
+                onClick={() => handleFilterChange('all')}
+                className="text-gray-600"
+              >
+                <FontAwesomeIcon icon={faTimes} className="mr-2" />
+                Effacer le filtre
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Onglets principaux */}
         <Tabs defaultValue="orders" className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">
@@ -846,17 +879,23 @@ export default function CookPortalPage() {
           {/* Onglet Commandes */}
           <TabsContent value="orders" className="space-y-6" data-tab="orders">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Commandes Patients */}
-              <Card data-section="patient-orders">
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <FontAwesomeIcon icon={faUsers} className="mr-2 text-blue-600" />
-                    Commandes Patients
-                  </CardTitle>
-                </CardHeader>
+              {/* Commandes Patients - Affichage conditionnel */}
+              {(activeFilter === 'all' || activeFilter === 'patients' || activeFilter === 'pending' || activeFilter === 'delivered') && (
+                <Card data-section="patient-orders">
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <FontAwesomeIcon icon={faUsers} className="mr-2 text-blue-600" />
+                      Commandes Patients
+                      {activeFilter !== 'all' && (
+                        <Badge variant="outline" className="ml-2">
+                          {getFilteredPatientOrders().length} résultat(s)
+                        </Badge>
+                      )}
+                    </CardTitle>
+                  </CardHeader>
                 <CardContent>
                   <div className="space-y-3 max-h-96 overflow-y-auto">
-                    {patientOrders.slice(0, 10).map(order => (
+                    {getFilteredPatientOrders().slice(0, 10).map(order => (
                       <div 
                         key={order.id} 
                         className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
@@ -948,18 +987,25 @@ export default function CookPortalPage() {
                   </div>
                 </CardContent>
               </Card>
+              )}
 
-              {/* Commandes Employés */}
-              <Card data-section="employee-orders">
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <FontAwesomeIcon icon={faUtensils} className="mr-2 text-green-600" />
-                    Commandes Employés
-                  </CardTitle>
-                </CardHeader>
+              {/* Commandes Employés - Affichage conditionnel */}
+              {(activeFilter === 'all' || activeFilter === 'employees' || activeFilter === 'pending' || activeFilter === 'delivered') && (
+                <Card data-section="employee-orders">
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <FontAwesomeIcon icon={faUtensils} className="mr-2 text-green-600" />
+                      Commandes Employés
+                      {activeFilter !== 'all' && (
+                        <Badge variant="outline" className="ml-2">
+                          {getFilteredEmployeeOrders().length} résultat(s)
+                        </Badge>
+                      )}
+                    </CardTitle>
+                  </CardHeader>
                 <CardContent>
                   <div className="space-y-3 max-h-96 overflow-y-auto">
-                    {employeeOrders.slice(0, 10).map(order => (
+                    {getFilteredEmployeeOrders().slice(0, 10).map(order => (
                       <div 
                         key={order.id} 
                         className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
@@ -1056,6 +1102,7 @@ export default function CookPortalPage() {
                   </div>
                 </CardContent>
               </Card>
+              )}
             </div>
           </TabsContent>
 
