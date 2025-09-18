@@ -1318,12 +1318,19 @@ export default function CookPortalPage() {
               <div className="space-y-2">
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/jpg,image/png,image/gif"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   aria-label="Sélectionner une image pour le menu"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) {
+                      // Vérifier le type MIME du fichier
+                      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+                      if (!allowedTypes.includes(file.type)) {
+                        alert('Format d\'image non supporté. Veuillez utiliser JPG, PNG ou GIF.');
+                        e.target.value = '';
+                        return;
+                      }
                       // Stocker le fichier pour l'upload
                       (window as any).selectedMenuFile = file;
                     }
@@ -1415,12 +1422,19 @@ export default function CookPortalPage() {
               <div className="space-y-2">
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/jpg,image/png,image/gif"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   aria-label="Sélectionner une image pour le menu"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) {
+                      // Vérifier le type MIME du fichier
+                      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+                      if (!allowedTypes.includes(file.type)) {
+                        alert('Format d\'image non supporté. Veuillez utiliser JPG, PNG ou GIF.');
+                        e.target.value = '';
+                        return;
+                      }
                       // Stocker le fichier pour l'upload
                       (window as any).selectedMenuFile = file;
                     }
