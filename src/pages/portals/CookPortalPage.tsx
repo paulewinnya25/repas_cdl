@@ -30,6 +30,7 @@ export default function CookPortalPage() {
   const [isEditPatientMenuModalOpen, setIsEditPatientMenuModalOpen] = useState(false);
   const [isDeleteOrderModalOpen, setIsDeleteOrderModalOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<'all' | 'patients' | 'employees' | 'pending' | 'delivered'>('all');
+  const [activeTab, setActiveTab] = useState('orders');
   const downloadCSV = (filename: string, rows: string[][]) => {
     const csvContent = rows.map(r => r.map(c => `"${(c ?? '').toString().replace(/"/g, '""')}"`).join(',')).join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -225,6 +226,13 @@ export default function CookPortalPage() {
 
   const handleFilterChange = (filter: 'all' | 'patients' | 'employees' | 'pending' | 'delivered') => {
     setActiveFilter(filter);
+    // Changer automatiquement vers l'onglet Commandes pour voir les résultats du filtre
+    setActiveTab('orders');
+  };
+
+  const handleClearFilter = () => {
+    setActiveFilter('all');
+    // Ne pas changer d'onglet, rester sur l'onglet actuel
   };
 
   const handleMenuSubmit = async () => {
@@ -857,7 +865,7 @@ export default function CookPortalPage() {
               </Badge>
               <Button 
                 variant="outline" 
-                onClick={() => handleFilterChange('all')}
+                onClick={handleClearFilter}
                 className="text-gray-600"
               >
                 <FontAwesomeIcon icon={faTimes} className="mr-2" />
@@ -868,7 +876,7 @@ export default function CookPortalPage() {
         )}
 
         {/* Onglets principaux */}
-        <Tabs defaultValue="orders" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="orders">Commandes</TabsTrigger>
             <TabsTrigger value="menus">Menus Employés</TabsTrigger>
@@ -1108,6 +1116,45 @@ export default function CookPortalPage() {
 
           {/* Onglet Menus Employés */}
           <TabsContent value="menus" className="space-y-6">
+            {/* Indicateur de filtre actif */}
+            {activeFilter !== 'all' && (
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <FontAwesomeIcon icon={faClipboardList} className="text-blue-600" />
+                    <span className="text-blue-800 dark:text-blue-200 font-medium">
+                      Filtre actif: {
+                        activeFilter === 'patients' ? 'Commandes Patients' :
+                        activeFilter === 'employees' ? 'Commandes Employés' :
+                        activeFilter === 'pending' ? 'Commandes en Attente' :
+                        activeFilter === 'delivered' ? 'Commandes Livrées Aujourd\'hui' :
+                        'Toutes les commandes'
+                      }
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setActiveTab('orders')}
+                      className="text-blue-600 border-blue-300"
+                    >
+                      Voir les résultats
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={handleClearFilter}
+                      className="text-gray-600"
+                    >
+                      <FontAwesomeIcon icon={faTimes} className="mr-1" />
+                      Effacer
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
@@ -1188,6 +1235,45 @@ export default function CookPortalPage() {
 
           {/* Onglet Menus Patients */}
           <TabsContent value="patient-menus" className="space-y-6">
+            {/* Indicateur de filtre actif */}
+            {activeFilter !== 'all' && (
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <FontAwesomeIcon icon={faClipboardList} className="text-blue-600" />
+                    <span className="text-blue-800 dark:text-blue-200 font-medium">
+                      Filtre actif: {
+                        activeFilter === 'patients' ? 'Commandes Patients' :
+                        activeFilter === 'employees' ? 'Commandes Employés' :
+                        activeFilter === 'pending' ? 'Commandes en Attente' :
+                        activeFilter === 'delivered' ? 'Commandes Livrées Aujourd\'hui' :
+                        'Toutes les commandes'
+                      }
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setActiveTab('orders')}
+                      className="text-blue-600 border-blue-300"
+                    >
+                      Voir les résultats
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={handleClearFilter}
+                      className="text-gray-600"
+                    >
+                      <FontAwesomeIcon icon={faTimes} className="mr-1" />
+                      Effacer
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
@@ -1305,6 +1391,45 @@ export default function CookPortalPage() {
 
           {/* Onglet Vue d'ensemble */}
           <TabsContent value="overview" className="space-y-6">
+            {/* Indicateur de filtre actif */}
+            {activeFilter !== 'all' && (
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <FontAwesomeIcon icon={faClipboardList} className="text-blue-600" />
+                    <span className="text-blue-800 dark:text-blue-200 font-medium">
+                      Filtre actif: {
+                        activeFilter === 'patients' ? 'Commandes Patients' :
+                        activeFilter === 'employees' ? 'Commandes Employés' :
+                        activeFilter === 'pending' ? 'Commandes en Attente' :
+                        activeFilter === 'delivered' ? 'Commandes Livrées Aujourd\'hui' :
+                        'Toutes les commandes'
+                      }
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setActiveTab('orders')}
+                      className="text-blue-600 border-blue-300"
+                    >
+                      Voir les résultats
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={handleClearFilter}
+                      className="text-gray-600"
+                    >
+                      <FontAwesomeIcon icon={faTimes} className="mr-1" />
+                      Effacer
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
