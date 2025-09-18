@@ -92,6 +92,11 @@ export const CookPortal = ({ userProfile }: CookPortalProps) => {
       // Vérifier si un fichier a été sélectionné
       const selectedFile = (window as any).selectedMenuFile;
       if (selectedFile) {
+        // TEMPORAIRE: Désactiver l'upload de fichiers en raison de problèmes de configuration
+        showError("L'upload de fichiers est temporairement désactivé. Veuillez utiliser une URL d'image.");
+        return;
+        
+        /* Code d'upload désactivé temporairement
         const file = selectedFile;
         const filePath = `public/${Date.now()}_${file.name}`;
         const { error: uploadError } = await supabase.storage.from('menu_media').upload(filePath, file, {
@@ -101,7 +106,13 @@ export const CookPortal = ({ userProfile }: CookPortalProps) => {
 
         const { data: urlData } = supabase.storage.from('menu_media').getPublicUrl(filePath);
         mediaUrl = urlData.publicUrl;
+        */
       } else if (values.photo_url instanceof File) {
+        // TEMPORAIRE: Désactiver l'upload de fichiers en raison de problèmes de configuration
+        showError("L'upload de fichiers est temporairement désactivé. Veuillez utiliser une URL d'image.");
+        return;
+        
+        /* Code d'upload désactivé temporairement
         const file = values.photo_url;
         const filePath = `public/${Date.now()}_${file.name}`;
         const { error: uploadError } = await supabase.storage.from('menu_media').upload(filePath, file, {
@@ -111,6 +122,7 @@ export const CookPortal = ({ userProfile }: CookPortalProps) => {
 
         const { data: urlData } = supabase.storage.from('menu_media').getPublicUrl(filePath);
         mediaUrl = urlData.publicUrl;
+        */
       }
 
       const dataToSubmit = {
