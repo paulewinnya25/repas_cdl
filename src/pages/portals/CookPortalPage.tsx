@@ -209,7 +209,9 @@ export default function CookPortalPage() {
       if (selectedFile) {
         const file = selectedFile;
         const filePath = `public/${Date.now()}_${file.name}`;
-        const { error: uploadError } = await supabase.storage.from('menu_media').upload(filePath, file);
+        const { error: uploadError } = await supabase.storage.from('menu_media').upload(filePath, file, {
+          contentType: file.type
+        });
         if (uploadError) throw uploadError;
 
         const { data: urlData } = supabase.storage.from('menu_media').getPublicUrl(filePath);
@@ -256,7 +258,9 @@ export default function CookPortalPage() {
       if (selectedFile) {
         const file = selectedFile;
         const filePath = `public/${Date.now()}_${file.name}`;
-        const { error: uploadError } = await supabase.storage.from('menu_media').upload(filePath, file);
+        const { error: uploadError } = await supabase.storage.from('menu_media').upload(filePath, file, {
+          contentType: file.type
+        });
         if (uploadError) throw uploadError;
 
         const { data: urlData } = supabase.storage.from('menu_media').getPublicUrl(filePath);

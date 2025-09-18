@@ -94,7 +94,9 @@ export const CookPortal = ({ userProfile }: CookPortalProps) => {
       if (selectedFile) {
         const file = selectedFile;
         const filePath = `public/${Date.now()}_${file.name}`;
-        const { error: uploadError } = await supabase.storage.from('menu_media').upload(filePath, file);
+        const { error: uploadError } = await supabase.storage.from('menu_media').upload(filePath, file, {
+          contentType: file.type
+        });
         if (uploadError) throw uploadError;
 
         const { data: urlData } = supabase.storage.from('menu_media').getPublicUrl(filePath);
@@ -102,7 +104,9 @@ export const CookPortal = ({ userProfile }: CookPortalProps) => {
       } else if (values.photo_url instanceof File) {
         const file = values.photo_url;
         const filePath = `public/${Date.now()}_${file.name}`;
-        const { error: uploadError } = await supabase.storage.from('menu_media').upload(filePath, file);
+        const { error: uploadError } = await supabase.storage.from('menu_media').upload(filePath, file, {
+          contentType: file.type
+        });
         if (uploadError) throw uploadError;
 
         const { data: urlData } = supabase.storage.from('menu_media').getPublicUrl(filePath);
