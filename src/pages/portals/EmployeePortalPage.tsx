@@ -615,12 +615,16 @@ const EmployeePortalPage: React.FC = () => {
                                 src={menu.photo_url}
                                 alt={menu.name}
                                 className="w-20 h-20 object-cover rounded-lg mr-3"
+                                onError={(e) => {
+                                  console.warn('Erreur de chargement de l\'image du menu:', menu.name, e);
+                                  e.currentTarget.style.display = 'none';
+                                  e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                }}
                               />
-                            ) : (
-                              <div className="w-20 h-20 bg-green-100 rounded-lg flex items-center justify-center mr-3">
-                                <FontAwesomeIcon icon={faUtensils} className="text-green-600 text-2xl" />
-                              </div>
-                            )}
+                            ) : null}
+                            <div className={`w-20 h-20 bg-green-100 rounded-lg flex items-center justify-center mr-3 ${menu.photo_url ? 'hidden' : ''}`}>
+                              <FontAwesomeIcon icon={faUtensils} className="text-green-600 text-2xl" />
+                            </div>
                             <div className="flex-1">
                               <div className="flex items-center justify-between">
                                 <h3 className="font-semibold text-lg">{menu.name}</h3>

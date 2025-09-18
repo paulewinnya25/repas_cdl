@@ -1134,12 +1134,16 @@ export default function CookPortalPage() {
                           src={menu.photo_url} 
                           alt={menu.name}
                           className="w-full h-32 object-cover rounded-lg mb-3"
+                          onError={(e) => {
+                            console.warn('Erreur de chargement de l\'image du menu:', menu.name, e);
+                            e.currentTarget.style.display = 'none';
+                            e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                          }}
                         />
-                      ) : (
-                        <div className="w-full h-32 bg-orange-100 rounded-lg flex items-center justify-center mb-3">
-                          <FontAwesomeIcon icon={faUtensils} className="text-orange-600 text-2xl" />
-                        </div>
-                      )}
+                      ) : null}
+                      <div className={`w-full h-32 bg-orange-100 rounded-lg flex items-center justify-center mb-3 ${menu.photo_url ? 'hidden' : ''}`}>
+                        <FontAwesomeIcon icon={faUtensils} className="text-orange-600 text-2xl" />
+                      </div>
                       <h3 className="font-semibold text-lg mb-2">{menu.name}</h3>
                       <p className="text-sm text-gray-600 mb-3">{menu.description}</p>
                       <div className="flex items-center justify-between mb-3">
