@@ -18,7 +18,8 @@ import {
   faBell,
   faEdit,
   faTrash,
-  faTimes
+  faTimes,
+  faSignOutAlt
 } from '@fortawesome/free-solid-svg-icons';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -55,8 +56,8 @@ const NursePortalPage: React.FC = () => {
 
   const exportDailyReportCSV = () => {
     const patientRows = orders
-      .filter(o => isSameDay(new Date((o as any).date || o.created_at || ''), new Date()))
-      .map(o => ['Patient', o.patients?.name || '', o.patients?.room || '', o.meal_type, o.menu, o.status, (o.created_at || (o as any).date) || '']);
+      .filter(o => isSameDay(new Date((o as Order & { date?: string }).date || o.created_at || ''), new Date()))
+      .map(o => ['Patient', o.patients?.name || '', o.patients?.room || '', o.meal_type, o.menu, o.status, (o.created_at || (o as Order & { date?: string }).date) || '']);
     const employeeRows = employeeOrdersToday
       .map(o => ['Employé', o.employee_name || '', '', 'Employé', o.employee_menus?.name || '', o.status, o.created_at || '']);
     const header = ['Type', 'Nom', 'Chambre', 'Repas', 'Menu', 'Statut', 'Date'];
@@ -67,7 +68,7 @@ const NursePortalPage: React.FC = () => {
     const todayStr = new Date().toLocaleDateString('fr-FR');
     const win = window.open('', '_blank');
     if (!win) return;
-    const patientRows = orders.filter(o => isSameDay(new Date((o as any).date || o.created_at || ''), new Date()));
+    const patientRows = orders.filter(o => isSameDay(new Date((o as Order & { date?: string }).date || o.created_at || ''), new Date()));
     win.document.write(`
       <html><head><title>Rapport journalier ${todayStr}</title>
       <style>body{font-family:Arial;padding:16px} table{width:100%;border-collapse:collapse;margin-top:12px} th,td{border:1px solid #ddd;padding:6px;font-size:12px} h2{margin:0 0 8px}</style>
@@ -75,7 +76,7 @@ const NursePortalPage: React.FC = () => {
       <h2>Rapport journalier - ${todayStr}</h2>
       <h3>Patients</h3>
       <table><thead><tr><th>Nom</th><th>Chambre</th><th>Repas</th><th>Menu</th><th>Statut</th><th>Date</th></tr></thead><tbody>
-      ${patientRows.map(o => `<tr><td>${o.patients?.name || ''}</td><td>${o.patients?.room || ''}</td><td>${o.meal_type}</td><td>${o.menu}</td><td>${o.status}</td><td>${(o.created_at || o.date) ?? ''}</td></tr>`).join('')}
+      ${patientRows.map(o => `<tr><td>${o.patients?.name || ''}</td><td>${o.patients?.room || ''}</td><td>${o.meal_type}</td><td>${o.menu}</td><td>${o.status}</td><td>${(o.created_at || (o as Order & { date?: string }).date) ?? ''}</td></tr>`).join('')}
       </tbody></table>
       <h3>Employés</h3>
       <table><thead><tr><th>Employé</th><th>Menu</th><th>Statut</th><th>Date</th><th>Total (XAF)</th></tr></thead><tbody>
@@ -90,6 +91,18 @@ const NursePortalPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+
+  // Fonction de déconnexion
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      // Rediriger vers la page d'accueil
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error);
+      showError('Erreur lors de la déconnexion');
+    }
+  };
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
   const [isEditPatientModalOpen, setIsEditPatientModalOpen] = useState(false);
@@ -100,6 +113,7 @@ const NursePortalPage: React.FC = () => {
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [newOrder, setNewOrder] = useState({
     mealType: '',
+    menu: '',
     instructions: '',
     companionMeal: false,
     companionInstructions: '',
@@ -129,7 +143,7 @@ const NursePortalPage: React.FC = () => {
   const [currentUserRole, setCurrentUserRole] = useState<UserRole>('Infirmier');
   const [hasAccess, setHasAccess] = useState<boolean>(false);
   const [accessCode, setAccessCode] = useState<string>('');
-  const requiredCode = (import.meta as any).env?.VITE_NURSE_ACCESS_CODE || 'INFIRM_2025';
+  const requiredCode = (import.meta as { env?: { VITE_NURSE_ACCESS_CODE?: string } }).env?.VITE_NURSE_ACCESS_CODE || 'INFIRM_2025';
 
   useEffect(() => {
     fetchData();
@@ -327,7 +341,7 @@ const NursePortalPage: React.FC = () => {
         // Validation des accompagnements
         const required = newOrder.companionAccompaniments;
         if ((newOrder.companionSelectedOptions || []).length < required) {
-          showError(`Choisissez ${required} accompagnement(s) pour l\'accompagnateur.`);
+          showError(`Choisissez ${required} accompagnement(s) pour l'accompagnateur.`);
           return;
         }
         const accompText = newOrder.companionSelectedOptions.join(' + ');
@@ -358,7 +372,7 @@ const NursePortalPage: React.FC = () => {
 
       showSuccess(`Commande créée avec succès - Menu: ${menu}`);
 
-      setNewOrder({ mealType: '', instructions: '', companionMeal: false, companionInstructions: '', companionSelectedMenu: null, companionAccompaniments: 1, companionSelectedOptions: [] });
+      setNewOrder({ mealType: '', menu: '', instructions: '', companionMeal: false, companionInstructions: '', companionSelectedMenu: null, companionAccompaniments: 1, companionSelectedOptions: [] });
       setIsOrderModalOpen(false);
       setSelectedPatient(null);
       fetchData();
@@ -528,7 +542,12 @@ const NursePortalPage: React.FC = () => {
     setNewOrder({
       mealType: order.meal_type,
       menu: order.menu,
-      instructions: order.instructions || ''
+      instructions: order.instructions || '',
+      companionMeal: false,
+      companionInstructions: '',
+      companionSelectedMenu: null,
+      companionAccompaniments: 1,
+      companionSelectedOptions: []
     });
     setIsEditOrderModalOpen(true);
   };
@@ -552,7 +571,7 @@ const NursePortalPage: React.FC = () => {
       if (error) throw error;
 
       showSuccess('Commande modifiée avec succès');
-      setNewOrder({ mealType: '', menu: '', instructions: '' });
+      setNewOrder({ mealType: '', menu: '', instructions: '', companionMeal: false, companionInstructions: '', companionSelectedMenu: null, companionAccompaniments: 1, companionSelectedOptions: [] });
       setIsEditOrderModalOpen(false);
       setEditingOrder(null);
       fetchData();
@@ -630,11 +649,31 @@ const NursePortalPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       {/* Header */}
-      <Header 
-        title="Portail Infirmier" 
-        subtitle="Gestion des commandes patients"
-        showLogo={true}
-      />
+      <div className="bg-white shadow-sm border-b border-blue-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center">
+              <img 
+                src="/logo-centre-diagnostic-official.svg" 
+                alt="Centre Diagnostic" 
+                className="h-8 w-auto mr-4"
+              />
+              <div>
+                <h1 className="text-2xl font-bold text-blue-600">Portail Infirmier</h1>
+                <p className="text-sm text-gray-600">Gestion des commandes patients</p>
+              </div>
+            </div>
+            <Button 
+              onClick={handleLogout}
+              variant="outline"
+              className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+            >
+              <FontAwesomeIcon icon={faSignOutAlt} className="mr-2" />
+              Déconnexion
+            </Button>
+          </div>
+        </div>
+      </div>
       
       {/* Statistiques rapides */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -741,7 +780,8 @@ const NursePortalPage: React.FC = () => {
                   {filteredPatients.map((patient) => (
                     <Card 
                       key={patient.id} 
-                      className="hover:shadow-lg transition-shadow border-l-4 border-l-blue-500"
+                      className="hover:shadow-lg transition-shadow border-l-4 border-l-blue-500 cursor-pointer hover:border-blue-300"
+                      onClick={() => handlePatientClick(patient)}
                     >
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between mb-2">
@@ -806,11 +846,15 @@ const NursePortalPage: React.FC = () => {
                 <CardContent>
                   <div className="space-y-4">
                     {orders.slice(0, 5).map((order) => (
-                      <div key={order.id} className="border rounded-lg p-4">
+                      <div 
+                        key={order.id} 
+                        className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                        onClick={() => handleOrderEdit(order)}
+                      >
                         <div className="flex items-center justify-between mb-2">
                           <h4 className="font-semibold">Commande #{orders.indexOf(order) + 1}</h4>
                           <Badge 
-                            variant={order.status === 'En attente d\'approbation' ? 'destructive' : 'default'}
+                            variant={order.status === "En attente d'approbation" ? 'destructive' : 'default'}
                           >
                             {order.status}
                           </Badge>
@@ -962,9 +1006,9 @@ const NursePortalPage: React.FC = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2 text-sm">
-                    <div className="flex justify-between"><span>Patients - En attente</span><span className="font-medium">{orders.filter(o => new Date(o.created_at || o.date).toDateString() === new Date().toDateString() && o.status === "En attente d'approbation").length}</span></div>
-                    <div className="flex justify-between"><span>Patients - En préparation</span><span className="font-medium">{orders.filter(o => new Date(o.created_at || o.date).toDateString() === new Date().toDateString() && o.status === 'En préparation').length}</span></div>
-                    <div className="flex justify-between"><span>Patients - Livrés</span><span className="font-medium">{orders.filter(o => new Date(o.created_at || o.date).toDateString() === new Date().toDateString() && o.status === 'Livré').length}</span></div>
+                    <div className="flex justify-between"><span>Patients - En attente</span><span className="font-medium">{orders.filter(o => new Date(o.created_at || (o as Order & { date?: string }).date).toDateString() === new Date().toDateString() && o.status === "En attente d'approbation").length}</span></div>
+                    <div className="flex justify-between"><span>Patients - En préparation</span><span className="font-medium">{orders.filter(o => new Date(o.created_at || (o as Order & { date?: string }).date).toDateString() === new Date().toDateString() && o.status === 'En préparation').length}</span></div>
+                    <div className="flex justify-between"><span>Patients - Livrés</span><span className="font-medium">{orders.filter(o => new Date(o.created_at || (o as Order & { date?: string }).date).toDateString() === new Date().toDateString() && o.status === 'Livré').length}</span></div>
                     <hr className="my-2" />
                     </div>
                   <div className="flex gap-2 mt-4">

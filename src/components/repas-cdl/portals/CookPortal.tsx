@@ -88,7 +88,18 @@ export const CookPortal = ({ userProfile }: CookPortalProps) => {
     setIsSubmitting(true);
     try {
       let mediaUrl = selectedMenu?.photo_url || null;
-      if (values.photo_url instanceof File) {
+      
+      // Vérifier si un fichier a été sélectionné
+      const selectedFile = (window as any).selectedMenuFile;
+      if (selectedFile) {
+        const file = selectedFile;
+        const filePath = `public/${Date.now()}_${file.name}`;
+        const { error: uploadError } = await supabase.storage.from('menu_media').upload(filePath, file);
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabase.storage.from('menu_media').getPublicUrl(filePath);
+        mediaUrl = urlData.publicUrl;
+      } else if (values.photo_url instanceof File) {
         const file = values.photo_url;
         const filePath = `public/${Date.now()}_${file.name}`;
         const { error: uploadError } = await supabase.storage.from('menu_media').upload(filePath, file);
@@ -557,6 +568,34 @@ export const CookPortal = ({ userProfile }: CookPortalProps) => {
         </div>
 
         <div>
+          <Label htmlFor="menu-photo">Photo du menu</Label>
+          <div className="space-y-2">
+            <input
+              id="menu-photo-file"
+              type="file"
+              accept="image/*"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              aria-label="Sélectionner une image pour le menu"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  // Stocker le fichier pour l'upload
+                  (window as any).selectedMenuFile = file;
+                }
+              }}
+            />
+            <p className="text-sm text-gray-500">Ou utilisez une URL existante :</p>
+            <input
+              id="menu-photo-url"
+              type="url"
+              placeholder="https://exemple.com/photo.jpg"
+              defaultValue={selectedMenu?.photo_url || ''}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            />
+          </div>
+        </div>
+
+        <div>
           <Label htmlFor="menu-price">Prix (XAF)</Label>
           <input
             id="menu-price"
@@ -592,13 +631,14 @@ export const CookPortal = ({ userProfile }: CookPortalProps) => {
               const priceInput = document.getElementById('menu-price') as HTMLInputElement | null;
               const availableInput = document.getElementById('menu-available') as HTMLInputElement | null;
               const accompInput = document.getElementById('menu-accompaniments') as HTMLInputElement | null;
+              const photoUrlInput = document.getElementById('menu-photo-url') as HTMLInputElement | null;
 
               const values = {
                 name: nameInput?.value?.trim() || '',
                 description: descInput?.value?.trim() || '',
                 price: priceInput?.value ? Number(priceInput.value) : 0,
                 is_available: availableInput?.checked ?? true,
-                photo_url: selectedMenu?.photo_url || null,
+                photo_url: photoUrlInput?.value?.trim() || selectedMenu?.photo_url || null,
                 accompaniment_options: accompInput?.value?.trim() || ''
               } as any;
 

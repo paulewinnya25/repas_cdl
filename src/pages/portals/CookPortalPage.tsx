@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Header } from '@/components/ui/Header';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUserTie, faUtensils, faClock, faCheckCircle, faPlus, faEdit, faTrash, faUsers, faClipboardList, faChartLine, faBell, faDownload } from '@fortawesome/free-solid-svg-icons';
+import { faUserTie, faUtensils, faClock, faCheckCircle, faPlus, faEdit, faTrash, faUsers, faClipboardList, faChartLine, faBell, faDownload, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
 import { supabase } from '@/integrations/supabase/client';
 import { showSuccess, showError } from '@/utils/toast';
 import type { Patient, Order, EmployeeMenu, EmployeeOrder, PatientMenu, DietaryRestriction, PatientMealType, DayOfWeek } from '@/types/repas-cdl';
@@ -59,6 +59,18 @@ export default function CookPortalPage() {
   const [hasAccess, setHasAccess] = useState<boolean>(false);
   const [accessCode, setAccessCode] = useState<string>('');
   const requiredCode = (import.meta as any).env?.VITE_COOK_ACCESS_CODE || 'CUISIN_2025';
+
+  // Fonction de déconnexion
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      // Rediriger vers la page d'accueil
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error);
+      showError('Erreur lors de la déconnexion');
+    }
+  };
 
   // Form states for employee menus
   const [menuName, setMenuName] = useState('');
@@ -190,6 +202,20 @@ export default function CookPortalPage() {
     }
 
     try {
+      let finalPhotoUrl = menuPhotoUrl;
+      
+      // Vérifier si un fichier a été sélectionné
+      const selectedFile = (window as any).selectedMenuFile;
+      if (selectedFile) {
+        const file = selectedFile;
+        const filePath = `public/${Date.now()}_${file.name}`;
+        const { error: uploadError } = await supabase.storage.from('menu_media').upload(filePath, file);
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabase.storage.from('menu_media').getPublicUrl(filePath);
+        finalPhotoUrl = urlData.publicUrl;
+      }
+
       const descriptionCombined = menuAccompaniments
         ? (menuDescription ? `${menuDescription}\nAccompagnements: ${menuAccompaniments}` : `Accompagnements: ${menuAccompaniments}`)
         : menuDescription;
@@ -199,7 +225,7 @@ export default function CookPortalPage() {
           name: menuName,
           description: descriptionCombined || '',
           price: parseFloat(menuPrice),
-          photo_url: menuPhotoUrl,
+          photo_url: finalPhotoUrl,
           is_available: menuAvailable
         }]);
 
@@ -223,6 +249,20 @@ export default function CookPortalPage() {
     }
 
     try {
+      let finalPhotoUrl = menuPhotoUrl;
+      
+      // Vérifier si un fichier a été sélectionné
+      const selectedFile = (window as any).selectedMenuFile;
+      if (selectedFile) {
+        const file = selectedFile;
+        const filePath = `public/${Date.now()}_${file.name}`;
+        const { error: uploadError } = await supabase.storage.from('menu_media').upload(filePath, file);
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabase.storage.from('menu_media').getPublicUrl(filePath);
+        finalPhotoUrl = urlData.publicUrl;
+      }
+
       const descriptionCombined = menuAccompaniments
         ? (menuDescription ? `${menuDescription}\nAccompagnements: ${menuAccompaniments}` : `Accompagnements: ${menuAccompaniments}`)
         : menuDescription;
@@ -232,7 +272,7 @@ export default function CookPortalPage() {
           name: menuName,
           description: descriptionCombined || '',
           price: parseFloat(menuPrice),
-          photo_url: menuPhotoUrl,
+          photo_url: finalPhotoUrl,
           is_available: menuAvailable
         })
         .eq('id', editingMenu.id);
@@ -650,12 +690,31 @@ export default function CookPortalPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-100">
       {/* Header */}
-      <Header 
-        title="Portail Cuisinier" 
-        subtitle="Gestion des commandes et menus"
-        showLogo={true}
-        className="border-orange-500"
-      />
+      <div className="bg-white shadow-sm border-b border-orange-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center">
+              <img 
+                src="/logo-centre-diagnostic-official.svg" 
+                alt="Centre Diagnostic" 
+                className="h-8 w-auto mr-4"
+              />
+              <div>
+                <h1 className="text-2xl font-bold text-orange-600">Portail Cuisinier</h1>
+                <p className="text-sm text-gray-600">Gestion des commandes et menus</p>
+              </div>
+            </div>
+            <Button 
+              onClick={handleLogout}
+              variant="outline"
+              className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+            >
+              <FontAwesomeIcon icon={faSignOutAlt} className="mr-2" />
+              Déconnexion
+            </Button>
+          </div>
+        </div>
+      </div>
       
       {/* Statistiques rapides */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -746,7 +805,18 @@ export default function CookPortalPage() {
                 <CardContent>
                   <div className="space-y-3 max-h-96 overflow-y-auto">
                     {patientOrders.slice(0, 10).map(order => (
-                      <div key={order.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div 
+                        key={order.id} 
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                        onClick={() => {
+                          // Action par défaut : mettre à jour le statut si possible
+                          if (order.status === 'En attente d\'approbation') {
+                            updateOrderStatus(order.id, 'En préparation');
+                          } else if (order.status === 'En préparation') {
+                            updateOrderStatus(order.id, 'Livré');
+                          }
+                        }}
+                      >
                         <div className="flex items-center">
                           <div className={`p-2 rounded-full mr-3 ${
                             order.status === 'Livré' ? 'bg-green-100' :
@@ -786,7 +856,10 @@ export default function CookPortalPage() {
                             {order.status === 'En attente d\'approbation' && (
                               <Button 
                                 size="sm" 
-                                onClick={() => updateOrderStatus(order.id, 'En préparation')}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateOrderStatus(order.id, 'En préparation');
+                                }}
                               >
                                 <FontAwesomeIcon icon={faClock} className="mr-1" />
                                 Préparer
@@ -795,7 +868,10 @@ export default function CookPortalPage() {
                             {order.status === 'En préparation' && (
                               <Button 
                                 size="sm" 
-                                onClick={() => updateOrderStatus(order.id, 'Livré')}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateOrderStatus(order.id, 'Livré');
+                                }}
                                 className="bg-green-600 hover:bg-green-700"
                               >
                                 <FontAwesomeIcon icon={faCheckCircle} className="mr-1" />
@@ -805,7 +881,10 @@ export default function CookPortalPage() {
                             <Button 
                               size="sm" 
                               variant="outline"
-                              onClick={() => handleDeleteOrder('patient', order)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteOrder('patient', order);
+                              }}
                               className="text-red-600 hover:text-red-700 hover:bg-red-50"
                             >
                               <FontAwesomeIcon icon={faTrash} />
@@ -829,7 +908,18 @@ export default function CookPortalPage() {
                 <CardContent>
                   <div className="space-y-3 max-h-96 overflow-y-auto">
                     {employeeOrders.slice(0, 10).map(order => (
-                      <div key={order.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div 
+                        key={order.id} 
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                        onClick={() => {
+                          // Action par défaut : mettre à jour le statut si possible
+                          if (order.status === 'Commandé') {
+                            updateOrderStatus(order.id, 'En préparation', true);
+                          } else if (order.status === 'En préparation') {
+                            updateOrderStatus(order.id, 'Livré', true);
+                          }
+                        }}
+                      >
                         <div className="flex items-center">
                           <div className={`p-2 rounded-full mr-3 ${
                             order.status === 'Livré' ? 'bg-green-100' :
@@ -874,7 +964,10 @@ export default function CookPortalPage() {
                             {order.status === 'Commandé' && (
                               <Button 
                                 size="sm" 
-                                onClick={() => updateOrderStatus(order.id, 'En préparation', true)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateOrderStatus(order.id, 'En préparation', true);
+                                }}
                               >
                                 <FontAwesomeIcon icon={faClock} className="mr-1" />
                                 Préparer
@@ -883,7 +976,10 @@ export default function CookPortalPage() {
                             {order.status === 'En préparation' && (
                               <Button 
                                 size="sm" 
-                                onClick={() => updateOrderStatus(order.id, 'Livré', true)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateOrderStatus(order.id, 'Livré', true);
+                                }}
                                 className="bg-green-600 hover:bg-green-700"
                               >
                                 <FontAwesomeIcon icon={faCheckCircle} className="mr-1" />
@@ -893,7 +989,10 @@ export default function CookPortalPage() {
                             <Button 
                               size="sm" 
                               variant="outline"
-                              onClick={() => handleDeleteOrder('employee', order)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteOrder('employee', order);
+                              }}
                               className="text-red-600 hover:text-red-700 hover:bg-red-50"
                             >
                               <FontAwesomeIcon icon={faTrash} />
@@ -926,7 +1025,11 @@ export default function CookPortalPage() {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {employeeMenus.map(menu => (
-                    <div key={menu.id} className="border rounded-lg p-4 hover:shadow-lg transition-shadow">
+                    <div 
+                      key={menu.id} 
+                      className="border rounded-lg p-4 hover:shadow-lg transition-shadow cursor-pointer hover:border-orange-300"
+                      onClick={() => openEditModal(menu)}
+                    >
                       {menu.photo_url ? (
                         <img 
                           src={menu.photo_url} 
@@ -952,7 +1055,10 @@ export default function CookPortalPage() {
                         <Button 
                           size="sm" 
                           variant="outline" 
-                          onClick={() => openEditModal(menu)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEditModal(menu);
+                          }}
                           className="flex-1"
                         >
                           <FontAwesomeIcon icon={faEdit} className="mr-1" />
@@ -961,7 +1067,10 @@ export default function CookPortalPage() {
                         <Button 
                           size="sm" 
                           variant="outline"
-                          onClick={() => handleMenuDelete(menu.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMenuDelete(menu.id);
+                          }}
                           title="Supprimer le menu"
                         >
                           <FontAwesomeIcon icon={faTrash} />
@@ -1205,13 +1314,29 @@ export default function CookPortalPage() {
               />
             </div>
             <div>
-              <Label htmlFor="menu-photo">URL de la photo (optionnel)</Label>
-              <Input
-                id="menu-photo"
-                placeholder="https://exemple.com/photo.jpg"
-                value={menuPhotoUrl}
-                onChange={(e) => setMenuPhotoUrl(e.target.value)}
-              />
+              <Label htmlFor="menu-photo">Photo du menu</Label>
+              <div className="space-y-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  aria-label="Sélectionner une image pour le menu"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      // Stocker le fichier pour l'upload
+                      (window as any).selectedMenuFile = file;
+                    }
+                  }}
+                />
+                <p className="text-sm text-gray-500">Ou utilisez une URL existante :</p>
+                <Input
+                  id="menu-photo"
+                  placeholder="https://exemple.com/photo.jpg"
+                  value={menuPhotoUrl}
+                  onChange={(e) => setMenuPhotoUrl(e.target.value)}
+                />
+              </div>
             </div>
             <div className="flex items-center space-x-2">
               <input
@@ -1286,13 +1411,29 @@ export default function CookPortalPage() {
               />
             </div>
             <div>
-              <Label htmlFor="edit-menu-photo">URL de la photo (optionnel)</Label>
-              <Input
-                id="edit-menu-photo"
-                placeholder="https://exemple.com/photo.jpg"
-                value={menuPhotoUrl}
-                onChange={(e) => setMenuPhotoUrl(e.target.value)}
-              />
+              <Label htmlFor="edit-menu-photo">Photo du menu</Label>
+              <div className="space-y-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  aria-label="Sélectionner une image pour le menu"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      // Stocker le fichier pour l'upload
+                      (window as any).selectedMenuFile = file;
+                    }
+                  }}
+                />
+                <p className="text-sm text-gray-500">Ou utilisez une URL existante :</p>
+                <Input
+                  id="edit-menu-photo"
+                  placeholder="https://exemple.com/photo.jpg"
+                  value={menuPhotoUrl}
+                  onChange={(e) => setMenuPhotoUrl(e.target.value)}
+                />
+              </div>
             </div>
             <div className="flex items-center space-x-2">
               <input
