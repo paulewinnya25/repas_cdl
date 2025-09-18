@@ -1327,6 +1327,25 @@ export default function CookPortalPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                           {dayMenus.map((menu) => (
                             <div key={menu.id} className="border rounded-lg p-4 bg-gray-50">
+                              {/* Image du menu */}
+                              <div className="mb-3">
+                                {menu.photo_url ? (
+                                  <img 
+                                    src={menu.photo_url} 
+                                    alt={menu.name}
+                                    className="w-full h-32 object-cover rounded-lg"
+                                    onError={(e) => {
+                                      console.warn('Erreur de chargement de l\'image du menu:', menu.name, e);
+                                      e.currentTarget.style.display = 'none';
+                                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                    }}
+                                  />
+                                ) : null}
+                                <div className={`w-full h-32 bg-green-100 rounded-lg flex items-center justify-center ${menu.photo_url ? 'hidden' : ''}`}>
+                                  <FontAwesomeIcon icon={faUtensils} className="text-green-600 text-2xl" />
+                                </div>
+                              </div>
+                              
                               <div className="flex items-center justify-between mb-2">
                                 <h4 className="font-semibold text-sm">{menu.name}</h4>
                                 <Badge variant={menu.is_available ? 'default' : 'secondary'} className="text-xs">
