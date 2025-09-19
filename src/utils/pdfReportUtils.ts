@@ -148,7 +148,6 @@ export const createPDFFooter = (doc: jsPDF): void => {
     doc.setFontSize(8);
     doc.setTextColor(100, 100, 100);
     doc.text(`Page ${i} sur ${pageCount}`, 20, 285);
-    doc.text('Centre Diagnostic - Système de Gestion des Repas', 150, 285);
   }
 };
 
