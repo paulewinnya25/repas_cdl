@@ -1,7 +1,7 @@
 // Service Worker simplifié pour l'application Repas CDL
 // Ce fichier évite les conflits avec Netlify
 
-const CACHE_NAME = 'repas-cdl-v1';
+const CACHE_NAME = 'repas-cdl-v2';
 
 // Installation simple
 self.addEventListener('install', (event) => {

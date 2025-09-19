@@ -24,7 +24,7 @@
         const scriptURL = registration.active?.scriptURL || registration.waiting?.scriptURL || '';
         
         // Désactiver seulement les Service Workers problématiques
-        if (scriptURL.includes('cnm-sw.js') || scriptURL.includes('netlify')) {
+        if (scriptURL.includes('cnm-sw.js') || scriptURL.includes('netlify') || scriptURL.includes('sw.js')) {
           console.log(`🗑️ Désactivation du Service Worker: ${scriptURL}`);
           await registration.unregister();
         }
