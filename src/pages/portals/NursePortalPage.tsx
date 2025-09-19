@@ -60,7 +60,7 @@ const NursePortalPage: React.FC = () => {
   };
 
   const exportDailyReportCSV = () => {
-    const todayOrders = orders.filter(o => isSameDay(new Date((o as Order & { date?: string }).date || o.created_at || ''), new Date()));
+    const todayOrders = orders.filter(o => isToday((o as Order & { date?: string }).date || o.created_at));
     
     // Seulement les commandes patients pour le rapport infirmier
     // Calculer les statistiques de plats (patients seulement)
@@ -124,7 +124,7 @@ const NursePortalPage: React.FC = () => {
 
   const printDailyReport = () => {
     const todayStr = new Date().toLocaleDateString('fr-FR');
-    const todayOrders = orders.filter(o => isSameDay(new Date((o as Order & { date?: string }).date || o.created_at || ''), new Date()));
+    const todayOrders = orders.filter(o => isToday((o as Order & { date?: string }).date || o.created_at));
     
     // Seulement les commandes patients pour le rapport infirmier
     // Calculer les statistiques de plats (patients seulement)
@@ -313,7 +313,7 @@ const NursePortalPage: React.FC = () => {
     }
     
     // Pied de page
-    const pageCount = doc.internal.getNumberOfPages();
+    const pageCount = doc.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
       doc.setFontSize(8);
@@ -329,18 +329,57 @@ const NursePortalPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
 
+  // Fonction pour vérifier si une date est aujourd'hui (plus robuste)
+  const isToday = (dateString: string | undefined): boolean => {
+    if (!dateString) return false;
+    
+    try {
+      const orderDate = new Date(dateString);
+      const today = new Date();
+      
+      // Vérifier si la date est valide
+      if (isNaN(orderDate.getTime())) return false;
+      
+      // Comparer année, mois et jour
+      return orderDate.getFullYear() === today.getFullYear() &&
+             orderDate.getMonth() === today.getMonth() &&
+             orderDate.getDate() === today.getDate();
+    } catch (error) {
+      console.error('Erreur lors de la comparaison de dates:', error);
+      return false;
+    }
+  };
+
   // Debug function pour vérifier les données
   const debugData = () => {
     console.log('=== DEBUG DONNÉES ===');
     console.log('Orders total:', orders.length);
-    console.log('Orders aujourd\'hui:', orders.filter(o => {
-      const orderDate = new Date((o as Order & { date?: string }).date || o.created_at || '');
-      const today = new Date();
-      const isToday = isSameDay(orderDate, today);
-      console.log(`Order ${o.id}: date=${orderDate.toISOString()}, today=${today.toISOString()}, isToday=${isToday}`);
-      return isToday;
-    }).length);
-    console.log('Date actuelle:', new Date().toISOString());
+    console.log('Orders:', orders);
+    
+    const today = new Date();
+    console.log('Date actuelle:', today.toISOString());
+    console.log('Date actuelle (locale):', today.toLocaleDateString());
+    
+    orders.forEach((o, index) => {
+      const orderDateString = (o as Order & { date?: string }).date || o.created_at || '';
+      const isTodayOrder = isToday(orderDateString);
+      console.log(`Order ${index}:`, {
+        id: o.id,
+        status: o.status,
+        created_at: o.created_at,
+        date: (o as Order & { date?: string }).date,
+        orderDateString: orderDateString,
+        isToday: isTodayOrder
+      });
+    });
+    
+    const todayOrders = orders.filter(o => {
+      const orderDateString = (o as Order & { date?: string }).date || o.created_at || '';
+      return isToday(orderDateString);
+    });
+    
+    console.log('Orders aujourd\'hui:', todayOrders.length);
+    console.log('Orders aujourd\'hui:', todayOrders);
     console.log('===================');
   };
 
@@ -1502,13 +1541,13 @@ const NursePortalPage: React.FC = () => {
                         <div className="flex justify-between">
                           <span>Total plats commandés</span>
                           <span className="font-bold" style={{ color: '#41b8ac' }}>
-                            {orders.filter(o => isSameDay(new Date((o as Order & { date?: string }).date || o.created_at || ''), new Date())).length}
+                            {orders.filter(o => isToday((o as Order & { date?: string }).date || o.created_at)).length}
                           </span>
                         </div>
                         <div className="flex justify-between">
                           <span>Total plats livrés</span>
                           <span className="font-bold" style={{ color: '#41b8ac' }}>
-                            {orders.filter(o => isSameDay(new Date((o as Order & { date?: string }).date || o.created_at || ''), new Date()) && o.status === 'Livré').length}
+                            {orders.filter(o => isToday((o as Order & { date?: string }).date || o.created_at) && o.status === 'Livré').length}
                           </span>
                         </div>
                       </div>
@@ -1520,7 +1559,7 @@ const NursePortalPage: React.FC = () => {
                       <div className="space-y-2 text-sm">
                         {(() => {
                           const dishesSummary = new Map<string, { quantity: number, type: string }>();
-                          const todayOrders = orders.filter(o => isSameDay(new Date((o as Order & { date?: string }).date || o.created_at || ''), new Date()));
+                          const todayOrders = orders.filter(o => isToday((o as Order & { date?: string }).date || o.created_at));
                           
                           // Ajouter seulement les plats patients
                           todayOrders.forEach(order => {
@@ -1548,9 +1587,9 @@ const NursePortalPage: React.FC = () => {
 
                     {/* Statistiques par statut - Patients seulement */}
                     <div className="space-y-2 text-sm">
-                      <div className="flex justify-between"><span>Patients - En attente</span><span className="font-medium">{orders.filter(o => isSameDay(new Date((o as Order & { date?: string }).date || o.created_at || ''), new Date()) && o.status === "En attente d'approbation").length}</span></div>
-                      <div className="flex justify-between"><span>Patients - En préparation</span><span className="font-medium">{orders.filter(o => isSameDay(new Date((o as Order & { date?: string }).date || o.created_at || ''), new Date()) && o.status === 'En préparation').length}</span></div>
-                      <div className="flex justify-between"><span>Patients - Livrés</span><span className="font-medium">{orders.filter(o => isSameDay(new Date((o as Order & { date?: string }).date || o.created_at || ''), new Date()) && o.status === 'Livré').length}</span></div>
+                      <div className="flex justify-between"><span>Patients - En attente</span><span className="font-medium">{orders.filter(o => isToday((o as Order & { date?: string }).date || o.created_at) && o.status === "En attente d'approbation").length}</span></div>
+                      <div className="flex justify-between"><span>Patients - En préparation</span><span className="font-medium">{orders.filter(o => isToday((o as Order & { date?: string }).date || o.created_at) && o.status === 'En préparation').length}</span></div>
+                      <div className="flex justify-between"><span>Patients - Livrés</span><span className="font-medium">{orders.filter(o => isToday((o as Order & { date?: string }).date || o.created_at) && o.status === 'Livré').length}</span></div>
                     </div>
                   </div>
                   <div className="flex gap-2 mt-4">
