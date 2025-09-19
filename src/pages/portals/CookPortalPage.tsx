@@ -994,7 +994,8 @@ export default function CookPortalPage() {
           {/* Carte d'alerte pour les stocks bas */}
           {inventoryItems.filter(item => item.current_stock <= item.min_stock).length > 0 && (
             <Card 
-              className="bg-gradient-to-r from-red-500 to-red-600 text-white cursor-pointer hover:shadow-lg transition-shadow animate-pulse"
+              className="text-white cursor-pointer hover:shadow-lg transition-shadow animate-pulse"
+              style={{ background: 'linear-gradient(to right, #dc2626, #ef4444)' }}
               onClick={() => setActiveTab('inventory')}
             >
               <CardContent className="p-6">
@@ -1689,10 +1690,10 @@ export default function CookPortalPage() {
               <CardContent>
                 {/* Section d'alertes de stock */}
                 {inventoryItems.filter(item => item.current_stock <= item.min_stock).length > 0 && (
-                  <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
+                  <div className="mb-6 p-4 border-l-4 rounded-lg" style={{ backgroundColor: '#fef2f2', borderLeftColor: '#dc2626' }}>
                     <div className="flex items-center mb-3">
-                      <FontAwesomeIcon icon={faExclamationTriangle} className="text-red-600 text-xl mr-3" />
-                      <h3 className="text-lg font-semibold text-red-800">
+                      <FontAwesomeIcon icon={faExclamationTriangle} className="text-xl mr-3" style={{ color: '#dc2626' }} />
+                      <h3 className="text-lg font-semibold" style={{ color: '#dc2626' }}>
                         ⚠️ Alertes de Stock Minimal
                       </h3>
                     </div>
@@ -1702,12 +1703,13 @@ export default function CookPortalPage() {
                         .map((item) => (
                           <div 
                             key={item.id}
-                            className="bg-white p-3 rounded-lg border border-red-200 shadow-sm"
+                            className="bg-white p-3 rounded-lg border shadow-sm"
+                            style={{ borderColor: '#fecaca' }}
                           >
                             <div className="flex items-center justify-between">
                               <div>
-                                <h4 className="font-semibold text-red-800">{item.name}</h4>
-                                <p className="text-sm text-red-600">
+                                <h4 className="font-semibold" style={{ color: '#dc2626' }}>{item.name}</h4>
+                                <p className="text-sm" style={{ color: '#dc2626' }}>
                                   Stock: <span className="font-bold">{item.current_stock}</span> {item.unit} 
                                   (Min: {item.min_stock} {item.unit})
                                 </p>
@@ -1721,7 +1723,8 @@ export default function CookPortalPage() {
                                     size="sm" 
                                     variant="outline"
                                     onClick={() => updateInventoryStock(item.id, item.current_stock + 1)}
-                                    className="text-green-600 border-green-300 hover:bg-green-50"
+                                    className="hover:bg-green-50"
+                                    style={{ color: '#41b8ac', borderColor: '#41b8ac' }}
                                   >
                                     <FontAwesomeIcon icon={faPlus} className="text-xs" />
                                   </Button>
@@ -1732,7 +1735,8 @@ export default function CookPortalPage() {
                                       setEditingInventoryItem(item);
                                       setIsEditInventoryModalOpen(true);
                                     }}
-                                    className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                                    className="hover:bg-blue-50"
+                                    style={{ color: '#5ac2ec', borderColor: '#5ac2ec' }}
                                   >
                                     <FontAwesomeIcon icon={faEdit} className="text-xs" />
                                   </Button>
@@ -1742,7 +1746,7 @@ export default function CookPortalPage() {
                           </div>
                         ))}
                     </div>
-                    <div className="mt-3 text-sm text-red-700">
+                    <div className="mt-3 text-sm" style={{ color: '#dc2626' }}>
                       <FontAwesomeIcon icon={faBell} className="mr-2" />
                       <strong>Action requise :</strong> Réapprovisionner ces articles pour éviter les ruptures de stock.
                     </div>
@@ -1751,10 +1755,10 @@ export default function CookPortalPage() {
 
                 {/* Section d'alertes de stock moyen */}
                 {inventoryItems.filter(item => item.current_stock > item.min_stock && item.current_stock <= item.min_stock * 1.5).length > 0 && (
-                  <div className="mb-6 p-4 bg-yellow-50 border-l-4 border-yellow-500 rounded-lg">
+                  <div className="mb-6 p-4 border-l-4 rounded-lg" style={{ backgroundColor: '#fefce8', borderLeftColor: '#eab308' }}>
                     <div className="flex items-center mb-3">
-                      <FontAwesomeIcon icon={faExclamationTriangle} className="text-yellow-600 text-xl mr-3" />
-                      <h3 className="text-lg font-semibold text-yellow-800">
+                      <FontAwesomeIcon icon={faExclamationTriangle} className="text-xl mr-3" style={{ color: '#eab308' }} />
+                      <h3 className="text-lg font-semibold" style={{ color: '#a16207' }}>
                         ⚡ Attention - Stock Moyen
                       </h3>
                     </div>
@@ -1764,18 +1768,19 @@ export default function CookPortalPage() {
                         .map((item) => (
                           <div 
                             key={item.id}
-                            className="bg-white p-3 rounded-lg border border-yellow-200 shadow-sm"
+                            className="bg-white p-3 rounded-lg border shadow-sm"
+                            style={{ borderColor: '#fde68a' }}
                           >
                             <div className="flex items-center justify-between">
                               <div>
-                                <h4 className="font-semibold text-yellow-800">{item.name}</h4>
-                                <p className="text-sm text-yellow-600">
+                                <h4 className="font-semibold" style={{ color: '#a16207' }}>{item.name}</h4>
+                                <p className="text-sm" style={{ color: '#a16207' }}>
                                   Stock: <span className="font-bold">{item.current_stock}</span> {item.unit} 
                                   (Min: {item.min_stock} {item.unit})
                                 </p>
                               </div>
                               <div className="text-right">
-                                <Badge variant="secondary" className="mb-2 bg-yellow-200 text-yellow-800">
+                                <Badge variant="secondary" className="mb-2" style={{ backgroundColor: '#fde68a', color: '#a16207' }}>
                                   Stock Moyen
                                 </Badge>
                                 <div className="flex items-center space-x-1">
@@ -1783,7 +1788,8 @@ export default function CookPortalPage() {
                                     size="sm" 
                                     variant="outline"
                                     onClick={() => updateInventoryStock(item.id, item.current_stock + 1)}
-                                    className="text-green-600 border-green-300 hover:bg-green-50"
+                                    className="hover:bg-green-50"
+                                    style={{ color: '#41b8ac', borderColor: '#41b8ac' }}
                                   >
                                     <FontAwesomeIcon icon={faPlus} className="text-xs" />
                                   </Button>
@@ -1794,7 +1800,8 @@ export default function CookPortalPage() {
                                       setEditingInventoryItem(item);
                                       setIsEditInventoryModalOpen(true);
                                     }}
-                                    className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                                    className="hover:bg-blue-50"
+                                    style={{ color: '#5ac2ec', borderColor: '#5ac2ec' }}
                                   >
                                     <FontAwesomeIcon icon={faEdit} className="text-xs" />
                                   </Button>
@@ -1804,7 +1811,7 @@ export default function CookPortalPage() {
                           </div>
                         ))}
                     </div>
-                    <div className="mt-3 text-sm text-yellow-700">
+                    <div className="mt-3 text-sm" style={{ color: '#a16207' }}>
                       <FontAwesomeIcon icon={faBell} className="mr-2" />
                       <strong>Surveillance :</strong> Ces articles approchent du stock minimal. Planifiez le réapprovisionnement.
                     </div>
@@ -1813,41 +1820,41 @@ export default function CookPortalPage() {
 
                 {/* Résumé des alertes */}
                 <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                  <div className="p-4 rounded-lg border" style={{ backgroundColor: '#fef2f2', borderColor: '#fecaca' }}>
                     <div className="flex items-center">
-                      <FontAwesomeIcon icon={faExclamationTriangle} className="text-red-600 text-2xl mr-3" />
+                      <FontAwesomeIcon icon={faExclamationTriangle} className="text-2xl mr-3" style={{ color: '#dc2626' }} />
                       <div>
-                        <h4 className="font-semibold text-red-800">Stock Bas</h4>
-                        <p className="text-2xl font-bold text-red-600">
+                        <h4 className="font-semibold" style={{ color: '#dc2626' }}>Stock Bas</h4>
+                        <p className="text-2xl font-bold" style={{ color: '#dc2626' }}>
                           {inventoryItems.filter(item => item.current_stock <= item.min_stock).length}
                         </p>
-                        <p className="text-sm text-red-600">Articles critiques</p>
+                        <p className="text-sm" style={{ color: '#dc2626' }}>Articles critiques</p>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                  <div className="p-4 rounded-lg border" style={{ backgroundColor: '#fefce8', borderColor: '#fde68a' }}>
                     <div className="flex items-center">
-                      <FontAwesomeIcon icon={faExclamationTriangle} className="text-yellow-600 text-2xl mr-3" />
+                      <FontAwesomeIcon icon={faExclamationTriangle} className="text-2xl mr-3" style={{ color: '#eab308' }} />
                       <div>
-                        <h4 className="font-semibold text-yellow-800">Stock Moyen</h4>
-                        <p className="text-2xl font-bold text-yellow-600">
+                        <h4 className="font-semibold" style={{ color: '#a16207' }}>Stock Moyen</h4>
+                        <p className="text-2xl font-bold" style={{ color: '#a16207' }}>
                           {inventoryItems.filter(item => item.current_stock > item.min_stock && item.current_stock <= item.min_stock * 1.5).length}
                         </p>
-                        <p className="text-sm text-yellow-600">À surveiller</p>
+                        <p className="text-sm" style={{ color: '#a16207' }}>À surveiller</p>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                  <div className="p-4 rounded-lg border" style={{ backgroundColor: '#f0fdf4', borderColor: '#bbf7d0' }}>
                     <div className="flex items-center">
-                      <FontAwesomeIcon icon={faCheckCircle} className="text-green-600 text-2xl mr-3" />
+                      <FontAwesomeIcon icon={faCheckCircle} className="text-2xl mr-3" style={{ color: '#41b8ac' }} />
                       <div>
-                        <h4 className="font-semibold text-green-800">Stock OK</h4>
-                        <p className="text-2xl font-bold text-green-600">
+                        <h4 className="font-semibold" style={{ color: '#41b8ac' }}>Stock OK</h4>
+                        <p className="text-2xl font-bold" style={{ color: '#41b8ac' }}>
                           {inventoryItems.filter(item => item.current_stock > item.min_stock * 1.5).length}
                         </p>
-                        <p className="text-sm text-green-600">Articles suffisants</p>
+                        <p className="text-sm" style={{ color: '#41b8ac' }}>Articles suffisants</p>
                       </div>
                     </div>
                   </div>
@@ -1857,25 +1864,32 @@ export default function CookPortalPage() {
                   {inventoryItems.map((item) => (
                     <Card 
                       key={item.id} 
-                      className={`border-l-4 ${
-                        item.current_stock <= item.min_stock 
-                          ? 'border-l-red-500 bg-red-50' 
+                      className="border-l-4"
+                      style={{
+                        borderLeftColor: item.current_stock <= item.min_stock 
+                          ? '#dc2626' 
                           : item.current_stock <= item.min_stock * 1.5 
-                            ? 'border-l-yellow-500 bg-yellow-50' 
-                            : 'border-l-green-500 bg-green-50'
-                      }`}
+                            ? '#eab308' 
+                            : '#41b8ac',
+                        backgroundColor: item.current_stock <= item.min_stock 
+                          ? '#fef2f2' 
+                          : item.current_stock <= item.min_stock * 1.5 
+                            ? '#fefce8' 
+                            : '#f0fdf4'
+                      }}
                     >
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between mb-3">
                           <h3 className="font-semibold text-lg">{item.name}</h3>
                           <Badge 
-                            variant={
-                              item.current_stock <= item.min_stock 
-                                ? 'destructive' 
+                            style={{
+                              backgroundColor: item.current_stock <= item.min_stock 
+                                ? '#dc2626' 
                                 : item.current_stock <= item.min_stock * 1.5 
-                                  ? 'secondary' 
-                                  : 'default'
-                            }
+                                  ? '#eab308' 
+                                  : '#41b8ac',
+                              color: 'white'
+                            }}
                           >
                             {item.current_stock <= item.min_stock ? 'Stock bas' : 
                              item.current_stock <= item.min_stock * 1.5 ? 'Stock moyen' : 'Stock OK'}
@@ -1916,6 +1930,8 @@ export default function CookPortalPage() {
                               variant="outline"
                               onClick={() => updateInventoryStock(item.id, item.current_stock - 1)}
                               disabled={item.current_stock <= 0}
+                              style={{ color: '#dc2626', borderColor: '#dc2626' }}
+                              className="hover:bg-red-50"
                             >
                               <FontAwesomeIcon icon={faMinus} className="mr-1" />
                             </Button>
@@ -1924,6 +1940,8 @@ export default function CookPortalPage() {
                               size="sm" 
                               variant="outline"
                               onClick={() => updateInventoryStock(item.id, item.current_stock + 1)}
+                              style={{ color: '#41b8ac', borderColor: '#41b8ac' }}
+                              className="hover:bg-green-50"
                             >
                               <FontAwesomeIcon icon={faPlus} className="mr-1" />
                             </Button>
@@ -1936,6 +1954,8 @@ export default function CookPortalPage() {
                                 setEditingInventoryItem(item);
                                 setIsEditInventoryModalOpen(true);
                               }}
+                              style={{ color: '#5ac2ec', borderColor: '#5ac2ec' }}
+                              className="hover:bg-blue-50"
                             >
                               <FontAwesomeIcon icon={faEdit} className="mr-1" />
                             </Button>
@@ -1943,7 +1963,8 @@ export default function CookPortalPage() {
                               size="sm" 
                               variant="outline"
                               onClick={() => handleInventoryDelete(item.id)}
-                              className="text-red-600 hover:text-red-700"
+                              style={{ color: '#dc2626', borderColor: '#dc2626' }}
+                              className="hover:bg-red-50"
                             >
                               <FontAwesomeIcon icon={faTrash} className="mr-1" />
                             </Button>
