@@ -9,7 +9,6 @@ import NotFound from "./pages/NotFound";
 import NursePortalPage from "./pages/portals/NursePortalPage";
 import EmployeePortalPage from "./pages/portals/EmployeePortalPage";
 import CookPortalPage from "./pages/portals/CookPortalPage";
-import { ServiceWorkerManager } from "./components/ServiceWorkerManager";
 import ResourceErrorHandler from "./components/ResourceErrorHandler";
 
 const queryClient = new QueryClient();
@@ -21,7 +20,6 @@ const App = () => {
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <ServiceWorkerManager />
           <BrowserRouter
             future={{
               v7_startTransition: true,
