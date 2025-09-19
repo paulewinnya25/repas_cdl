@@ -893,7 +893,7 @@ export default function CookPortalPage() {
       { label: 'Commandes aujourd\'hui', value: totalToday },
       { label: 'Total plats commandés', value: totalOrderedDishes },
       { label: 'Total plats livrés', value: totalDeliveredDishes },
-      { label: 'Total recette', value: `${totalRevenue.toLocaleString('fr-FR')} XAF` }
+      { label: 'Total recette', value: `${totalRevenue.toLocaleString('fr-FR').replace(/\s/g, ' ')} XAF` }
     ];
     yPosition = createSummarySection(doc, yPosition, 'RÉSUMÉ DU JOUR', summaryData);
     
@@ -916,7 +916,7 @@ export default function CookPortalPage() {
       o.quantity.toString(),
       o.status || 'N/A',
       (o.created_at || '').toString().replace('T', ' ').substring(0, 16),
-      `${(o.total_price || 0).toLocaleString('fr-FR')} XAF`
+      `${(o.total_price || 0).toLocaleString('fr-FR').replace(/\s/g, ' ')} XAF`
     ]);
     yPosition = createTable(doc, yPosition, 'COMMANDES EMPLOYÉS', 
       ['Employé', 'Menu', 'Quantité', 'Statut', 'Heure', 'Total'], employeeRows, LOGO_COLORS.blue);

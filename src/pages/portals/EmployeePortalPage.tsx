@@ -404,7 +404,7 @@ const EmployeePortalPage: React.FC = () => {
       ['RÉSUMÉ DU JOUR'],
       ['Total plats commandés', totalOrderedDishes.toString()],
       ['Total plats livrés', totalDeliveredDishes.toString()],
-      ['Total dépensé', totalRevenue.toLocaleString('fr-FR') + ' XAF'],
+      ['Total dépensé', totalRevenue.toLocaleString('fr-FR').replace(/\s/g, ' ') + ' XAF'],
       [''],
       ['NOMS DES EMPLOYÉS QUI ONT COMMANDÉ AVEC LE NOMBRE DE PLATS'],
       ['Nom Employé', 'Nombre de plats', 'Nombre de commandes', 'Total dépensé (XAF)']
@@ -416,7 +416,7 @@ const EmployeePortalPage: React.FC = () => {
         employee, 
         data.totalDishes.toString(), 
         data.orders.toString(),
-        data.totalSpent.toLocaleString('fr-FR')
+        data.totalSpent.toLocaleString('fr-FR').replace(/\s/g, ' ')
       ]);
     });
     
