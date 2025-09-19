@@ -40,6 +40,8 @@ import NotificationSystem from '../../components/NotificationSystem';
 import { useNotifications, createOrderNotification } from '../../hooks/useNotifications';
 import AdvancedAnalytics from '../../components/AdvancedAnalytics';
 import MobileNurseInterface from '../../components/MobileNurseInterface';
+import errorHandler from '../../utils/errorHandler';
+import SystemDiagnostic from '../../components/SystemDiagnostic';
 
 const NursePortalPage: React.FC = () => {
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -1034,13 +1036,14 @@ const NursePortalPage: React.FC = () => {
 
         {/* Navigation par onglets */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="patients">Patients</TabsTrigger>
             <TabsTrigger value="menus">Menus Patients</TabsTrigger>
             <TabsTrigger value="orders">Commandes</TabsTrigger>
             <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="mobile">Mobile</TabsTrigger>
+            <TabsTrigger value="diagnostic">Diagnostic</TabsTrigger>
           </TabsList>
 
           {/* Onglet Patients */}
@@ -1447,6 +1450,11 @@ const NursePortalPage: React.FC = () => {
                 console.log('Patient scanné:', patientId);
               }}
             />
+          </TabsContent>
+
+          {/* Onglet Diagnostic */}
+          <TabsContent value="diagnostic">
+            <SystemDiagnostic />
           </TabsContent>
         </Tabs>
       </div>
