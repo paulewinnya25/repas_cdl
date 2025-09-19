@@ -990,34 +990,6 @@ const EmployeePortalPage: React.FC = () => {
                 </CardContent>
               </Card>
 
-              {/* Rapport journalier simple */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <FontAwesomeIcon icon={faShoppingCart} className="text-blue-600" />
-                    <span>Mon rapport du jour</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between"><span>Commandées</span><span className="font-medium">{orders.filter(o => new Date(o.created_at).toDateString() === new Date().toDateString() && o.status === 'Commandé').length}</span></div>
-                    <div className="flex justify-between"><span>En préparation</span><span className="font-medium">{orders.filter(o => new Date(o.created_at).toDateString() === new Date().toDateString() && o.status === 'En préparation').length}</span></div>
-                    <div className="flex justify-between"><span>Livrées</span><span className="font-medium">{orders.filter(o => new Date(o.created_at).toDateString() === new Date().toDateString() && o.status === 'Livré').length}</span></div>
-                  </div>
-                  <div className="flex gap-2 mt-4">
-                    <Button size="sm" variant="outline" onClick={exportMyDailyReportCSV}>Exporter CSV</Button>
-                    <Button 
-                      size="sm" 
-                      onClick={exportDailyReportPDF}
-                      className="text-white"
-                      style={{ backgroundColor: '#5ac2ec' }}
-                    >
-                      <FontAwesomeIcon icon={faFilePdf} className="mr-2" />
-                      Rapport PDF
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
           </TabsContent>
         </Tabs>
