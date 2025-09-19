@@ -355,7 +355,21 @@ export default function CookPortalPage() {
 
       if (error) throw error;
 
-      showSuccess('Stock mis à jour');
+      // Trouver l'article mis à jour pour vérifier le stock
+      const updatedItem = inventoryItems.find(item => item.id === itemId);
+      if (updatedItem) {
+        const item = { ...updatedItem, current_stock: newStock };
+        
+        // Afficher une alerte si le stock atteint le minimum
+        if (newStock <= item.min_stock) {
+          showError(`⚠️ ALERTE STOCK BAS: ${item.name} - Stock: ${newStock} ${item.unit} (Min: ${item.min_stock} ${item.unit})`);
+        } else if (newStock <= item.min_stock * 1.5) {
+          showError(`⚡ ATTENTION: ${item.name} approche du stock minimal - Stock: ${newStock} ${item.unit}`);
+        } else {
+          showSuccess(`Stock mis à jour: ${item.name} - ${newStock} ${item.unit}`);
+        }
+      }
+
       fetchInventoryData();
     } catch (error) {
       console.error('Erreur lors de la mise à jour du stock:', error);
@@ -976,6 +990,25 @@ export default function CookPortalPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Carte d'alerte pour les stocks bas */}
+          {inventoryItems.filter(item => item.current_stock <= item.min_stock).length > 0 && (
+            <Card 
+              className="bg-gradient-to-r from-red-500 to-red-600 text-white cursor-pointer hover:shadow-lg transition-shadow animate-pulse"
+              onClick={() => setActiveTab('inventory')}
+            >
+              <CardContent className="p-6">
+                <div className="flex items-center">
+                  <FontAwesomeIcon icon={faExclamationTriangle} className="text-3xl mr-4 animate-bounce" />
+                  <div>
+                    <p className="text-red-100">⚠️ ALERTE STOCK BAS</p>
+                    <p className="text-3xl font-bold">{inventoryItems.filter(item => item.current_stock <= item.min_stock).length}</p>
+                    <p className="text-sm text-red-200">Articles critiques</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Indicateur de filtre actif */}
@@ -1654,6 +1687,172 @@ export default function CookPortalPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
+                {/* Section d'alertes de stock */}
+                {inventoryItems.filter(item => item.current_stock <= item.min_stock).length > 0 && (
+                  <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
+                    <div className="flex items-center mb-3">
+                      <FontAwesomeIcon icon={faExclamationTriangle} className="text-red-600 text-xl mr-3" />
+                      <h3 className="text-lg font-semibold text-red-800">
+                        ⚠️ Alertes de Stock Minimal
+                      </h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {inventoryItems
+                        .filter(item => item.current_stock <= item.min_stock)
+                        .map((item) => (
+                          <div 
+                            key={item.id}
+                            className="bg-white p-3 rounded-lg border border-red-200 shadow-sm"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <h4 className="font-semibold text-red-800">{item.name}</h4>
+                                <p className="text-sm text-red-600">
+                                  Stock: <span className="font-bold">{item.current_stock}</span> {item.unit} 
+                                  (Min: {item.min_stock} {item.unit})
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <Badge variant="destructive" className="mb-2">
+                                  Stock Bas
+                                </Badge>
+                                <div className="flex items-center space-x-1">
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={() => updateInventoryStock(item.id, item.current_stock + 1)}
+                                    className="text-green-600 border-green-300 hover:bg-green-50"
+                                  >
+                                    <FontAwesomeIcon icon={faPlus} className="text-xs" />
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={() => {
+                                      setEditingInventoryItem(item);
+                                      setIsEditInventoryModalOpen(true);
+                                    }}
+                                    className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                                  >
+                                    <FontAwesomeIcon icon={faEdit} className="text-xs" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                    <div className="mt-3 text-sm text-red-700">
+                      <FontAwesomeIcon icon={faBell} className="mr-2" />
+                      <strong>Action requise :</strong> Réapprovisionner ces articles pour éviter les ruptures de stock.
+                    </div>
+                  </div>
+                )}
+
+                {/* Section d'alertes de stock moyen */}
+                {inventoryItems.filter(item => item.current_stock > item.min_stock && item.current_stock <= item.min_stock * 1.5).length > 0 && (
+                  <div className="mb-6 p-4 bg-yellow-50 border-l-4 border-yellow-500 rounded-lg">
+                    <div className="flex items-center mb-3">
+                      <FontAwesomeIcon icon={faExclamationTriangle} className="text-yellow-600 text-xl mr-3" />
+                      <h3 className="text-lg font-semibold text-yellow-800">
+                        ⚡ Attention - Stock Moyen
+                      </h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {inventoryItems
+                        .filter(item => item.current_stock > item.min_stock && item.current_stock <= item.min_stock * 1.5)
+                        .map((item) => (
+                          <div 
+                            key={item.id}
+                            className="bg-white p-3 rounded-lg border border-yellow-200 shadow-sm"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <h4 className="font-semibold text-yellow-800">{item.name}</h4>
+                                <p className="text-sm text-yellow-600">
+                                  Stock: <span className="font-bold">{item.current_stock}</span> {item.unit} 
+                                  (Min: {item.min_stock} {item.unit})
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <Badge variant="secondary" className="mb-2 bg-yellow-200 text-yellow-800">
+                                  Stock Moyen
+                                </Badge>
+                                <div className="flex items-center space-x-1">
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={() => updateInventoryStock(item.id, item.current_stock + 1)}
+                                    className="text-green-600 border-green-300 hover:bg-green-50"
+                                  >
+                                    <FontAwesomeIcon icon={faPlus} className="text-xs" />
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={() => {
+                                      setEditingInventoryItem(item);
+                                      setIsEditInventoryModalOpen(true);
+                                    }}
+                                    className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                                  >
+                                    <FontAwesomeIcon icon={faEdit} className="text-xs" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                    <div className="mt-3 text-sm text-yellow-700">
+                      <FontAwesomeIcon icon={faBell} className="mr-2" />
+                      <strong>Surveillance :</strong> Ces articles approchent du stock minimal. Planifiez le réapprovisionnement.
+                    </div>
+                  </div>
+                )}
+
+                {/* Résumé des alertes */}
+                <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                    <div className="flex items-center">
+                      <FontAwesomeIcon icon={faExclamationTriangle} className="text-red-600 text-2xl mr-3" />
+                      <div>
+                        <h4 className="font-semibold text-red-800">Stock Bas</h4>
+                        <p className="text-2xl font-bold text-red-600">
+                          {inventoryItems.filter(item => item.current_stock <= item.min_stock).length}
+                        </p>
+                        <p className="text-sm text-red-600">Articles critiques</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                    <div className="flex items-center">
+                      <FontAwesomeIcon icon={faExclamationTriangle} className="text-yellow-600 text-2xl mr-3" />
+                      <div>
+                        <h4 className="font-semibold text-yellow-800">Stock Moyen</h4>
+                        <p className="text-2xl font-bold text-yellow-600">
+                          {inventoryItems.filter(item => item.current_stock > item.min_stock && item.current_stock <= item.min_stock * 1.5).length}
+                        </p>
+                        <p className="text-sm text-yellow-600">À surveiller</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                    <div className="flex items-center">
+                      <FontAwesomeIcon icon={faCheckCircle} className="text-green-600 text-2xl mr-3" />
+                      <div>
+                        <h4 className="font-semibold text-green-800">Stock OK</h4>
+                        <p className="text-2xl font-bold text-green-600">
+                          {inventoryItems.filter(item => item.current_stock > item.min_stock * 1.5).length}
+                        </p>
+                        <p className="text-sm text-green-600">Articles suffisants</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {inventoryItems.map((item) => (
                     <Card 
