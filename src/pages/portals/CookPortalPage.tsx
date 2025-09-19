@@ -898,7 +898,7 @@ export default function CookPortalPage() {
                 className="h-8 w-auto mr-4"
               />
               <div>
-                <h1 className="text-2xl font-bold text-orange-600">Portail Cuisinier</h1>
+                <h1 className="text-2xl font-bold" style={{ color: '#5ac2ec' }}>Portail Cuisinier</h1>
                 <p className="text-sm text-gray-600">Gestion des commandes et menus</p>
               </div>
             </div>
@@ -919,11 +919,11 @@ export default function CookPortalPage() {
         <div className="flex justify-end space-x-6">
           <div className="text-center">
             <p className="text-sm text-gray-600">Commandes en attente</p>
-            <p className="text-2xl font-bold text-red-600">{pendingPatientOrders.length + pendingEmployeeOrders.length}</p>
+            <p className="text-2xl font-bold" style={{ color: '#dc2626' }}>{pendingPatientOrders.length + pendingEmployeeOrders.length}</p>
           </div>
           <div className="text-center">
             <p className="text-sm text-gray-600">Commandes aujourd'hui</p>
-            <p className="text-2xl font-bold text-green-600">{todayPatientOrders.length + todayEmployeeOrders.length}</p>
+            <p className="text-2xl font-bold" style={{ color: '#41b8ac' }}>{todayPatientOrders.length + todayEmployeeOrders.length}</p>
           </div>
         </div>
       </div>
@@ -932,14 +932,18 @@ export default function CookPortalPage() {
         {/* Statistiques rapides */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card 
-            className={`bg-gradient-to-r from-orange-500 to-orange-600 text-white cursor-pointer hover:shadow-lg transition-shadow ${activeFilter === 'patients' ? 'ring-4 ring-orange-300' : ''}`}
+            className={`text-white cursor-pointer hover:shadow-lg transition-shadow ${activeFilter === 'patients' ? 'ring-4' : ''}`}
+            style={{ 
+              background: 'linear-gradient(to right, #5ac2ec, #4fb3d9)',
+              ringColor: activeFilter === 'patients' ? '#5ac2ec' : undefined
+            }}
             onClick={() => handleFilterChange('patients')}
           >
             <CardContent className="p-6">
               <div className="flex items-center">
                 <FontAwesomeIcon icon={faUsers} className="text-3xl mr-4" />
                 <div>
-                  <p className="text-orange-100">Commandes Patients</p>
+                  <p className="text-blue-100">Commandes Patients</p>
                   <p className="text-3xl font-bold">{patientOrders.length}</p>
                 </div>
               </div>
@@ -947,14 +951,18 @@ export default function CookPortalPage() {
           </Card>
 
           <Card 
-            className={`bg-gradient-to-r from-blue-500 to-blue-600 text-white cursor-pointer hover:shadow-lg transition-shadow ${activeFilter === 'employees' ? 'ring-4 ring-blue-300' : ''}`}
+            className={`text-white cursor-pointer hover:shadow-lg transition-shadow ${activeFilter === 'employees' ? 'ring-4' : ''}`}
+            style={{ 
+              background: 'linear-gradient(to right, #41b8ac, #3aa89c)',
+              ringColor: activeFilter === 'employees' ? '#41b8ac' : undefined
+            }}
             onClick={() => handleFilterChange('employees')}
           >
             <CardContent className="p-6">
               <div className="flex items-center">
                 <FontAwesomeIcon icon={faUtensils} className="text-3xl mr-4" />
                 <div>
-                  <p className="text-blue-100">Commandes Employés</p>
+                  <p className="text-green-100">Commandes Employés</p>
                   <p className="text-3xl font-bold">{employeeOrders.length}</p>
                 </div>
               </div>
@@ -962,7 +970,11 @@ export default function CookPortalPage() {
           </Card>
 
           <Card 
-            className={`bg-gradient-to-r from-red-500 to-red-600 text-white cursor-pointer hover:shadow-lg transition-shadow ${activeFilter === 'pending' ? 'ring-4 ring-red-300' : ''}`}
+            className={`text-white cursor-pointer hover:shadow-lg transition-shadow ${activeFilter === 'pending' ? 'ring-4' : ''}`}
+            style={{ 
+              background: 'linear-gradient(to right, #dc2626, #ef4444)',
+              ringColor: activeFilter === 'pending' ? '#dc2626' : undefined
+            }}
             onClick={() => handleFilterChange('pending')}
           >
             <CardContent className="p-6">
@@ -977,7 +989,11 @@ export default function CookPortalPage() {
           </Card>
 
           <Card 
-            className={`bg-gradient-to-r from-green-500 to-green-600 text-white cursor-pointer hover:shadow-lg transition-shadow ${activeFilter === 'delivered' ? 'ring-4 ring-green-300' : ''}`}
+            className={`text-white cursor-pointer hover:shadow-lg transition-shadow ${activeFilter === 'delivered' ? 'ring-4' : ''}`}
+            style={{ 
+              background: 'linear-gradient(to right, #41b8ac, #3aa89c)',
+              ringColor: activeFilter === 'delivered' ? '#41b8ac' : undefined
+            }}
             onClick={() => handleFilterChange('delivered')}
           >
             <CardContent className="p-6">
@@ -1055,7 +1071,7 @@ export default function CookPortalPage() {
                 <Card data-section="patient-orders">
                   <CardHeader>
                     <CardTitle className="flex items-center">
-                      <FontAwesomeIcon icon={faUsers} className="mr-2 text-blue-600" />
+                      <FontAwesomeIcon icon={faUsers} className="mr-2" style={{ color: '#5ac2ec' }} />
                       Commandes Patients
                       {activeFilter !== 'all' && (
                         <Badge variant="outline" className="ml-2">
@@ -1107,11 +1123,14 @@ export default function CookPortalPage() {
                           </div>
                         </div>
                         <div className="flex flex-col items-end space-y-2">
-                          <Badge variant={
-                            order.status === 'Livré' ? 'default' :
-                            order.status === 'En préparation' ? 'secondary' :
-                            'outline'
-                          }>
+                          <Badge 
+                            style={{
+                              backgroundColor: order.status === 'Livré' ? '#41b8ac' :
+                                             order.status === 'En préparation' ? '#eab308' :
+                                             '#dc2626',
+                              color: 'white'
+                            }}
+                          >
                             {order.status}
                           </Badge>
                           <div className="flex space-x-2">
@@ -1222,11 +1241,14 @@ export default function CookPortalPage() {
                           </div>
                         </div>
                         <div className="flex flex-col items-end space-y-2">
-                          <Badge variant={
-                            order.status === 'Livré' ? 'default' :
-                            order.status === 'En préparation' ? 'secondary' :
-                            'outline'
-                          }>
+                          <Badge 
+                            style={{
+                              backgroundColor: order.status === 'Livré' ? '#41b8ac' :
+                                             order.status === 'En préparation' ? '#eab308' :
+                                             '#dc2626',
+                              color: 'white'
+                            }}
+                          >
                             {order.status}
                           </Badge>
                           <div className="flex space-x-2">
@@ -1284,7 +1306,7 @@ export default function CookPortalPage() {
               <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <FontAwesomeIcon icon={faClipboardList} className="text-blue-600" />
+                    <FontAwesomeIcon icon={faClipboardList} style={{ color: '#5ac2ec' }} />
                     <span className="text-blue-800 dark:text-blue-200 font-medium">
                       Filtre actif: {
                         activeFilter === 'patients' ? 'Commandes Patients' :
@@ -1300,7 +1322,8 @@ export default function CookPortalPage() {
                       variant="outline" 
                       size="sm"
                       onClick={() => setActiveTab('orders')}
-                      className="text-blue-600 border-blue-300"
+                      style={{ color: '#5ac2ec', borderColor: '#5ac2ec' }}
+                      className="hover:bg-blue-50"
                     >
                       Voir les résultats
                     </Button>
@@ -1325,7 +1348,11 @@ export default function CookPortalPage() {
                     <FontAwesomeIcon icon={faUtensils} className="mr-2 text-orange-600" />
                     Menus Employés
                   </span>
-                  <Button onClick={() => setIsMenuModalOpen(true)}>
+                  <Button 
+                    onClick={() => setIsMenuModalOpen(true)}
+                    style={{ backgroundColor: '#5ac2ec', borderColor: '#5ac2ec' }}
+                    className="hover:bg-blue-600"
+                  >
                     <FontAwesomeIcon icon={faPlus} className="mr-2" />
                     Ajouter un menu
                   </Button>
@@ -1351,16 +1378,21 @@ export default function CookPortalPage() {
                           }}
                         />
                       ) : null}
-                      <div className={`w-full h-32 bg-orange-100 rounded-lg flex items-center justify-center mb-3 ${menu.photo_url ? 'hidden' : ''}`}>
-                        <FontAwesomeIcon icon={faUtensils} className="text-orange-600 text-2xl" />
+                      <div className={`w-full h-32 rounded-lg flex items-center justify-center mb-3 ${menu.photo_url ? 'hidden' : ''}`} style={{ backgroundColor: '#fef3c7' }}>
+                        <FontAwesomeIcon icon={faUtensils} className="text-2xl" style={{ color: '#d97706' }} />
                       </div>
                       <h3 className="font-semibold text-lg mb-2">{menu.name}</h3>
                       <p className="text-sm text-gray-600 mb-3">{menu.description}</p>
                       <div className="flex items-center justify-between mb-3">
-                        <Badge variant="outline" className="bg-orange-50 text-orange-700">
+                        <Badge variant="outline" style={{ backgroundColor: '#fef3c7', color: '#d97706', borderColor: '#fbbf24' }}>
                           {menu.price.toLocaleString('fr-FR')} XAF
                         </Badge>
-                        <Badge variant={menu.is_available ? 'default' : 'secondary'}>
+                        <Badge 
+                          style={{
+                            backgroundColor: menu.is_available ? '#41b8ac' : '#6b7280',
+                            color: 'white'
+                          }}
+                        >
                           {menu.is_available ? 'Disponible' : 'Indisponible'}
                         </Badge>
                       </div>
@@ -1403,7 +1435,7 @@ export default function CookPortalPage() {
               <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <FontAwesomeIcon icon={faClipboardList} className="text-blue-600" />
+                    <FontAwesomeIcon icon={faClipboardList} style={{ color: '#5ac2ec' }} />
                     <span className="text-blue-800 dark:text-blue-200 font-medium">
                       Filtre actif: {
                         activeFilter === 'patients' ? 'Commandes Patients' :
@@ -1419,7 +1451,8 @@ export default function CookPortalPage() {
                       variant="outline" 
                       size="sm"
                       onClick={() => setActiveTab('orders')}
-                      className="text-blue-600 border-blue-300"
+                      style={{ color: '#5ac2ec', borderColor: '#5ac2ec' }}
+                      className="hover:bg-blue-50"
                     >
                       Voir les résultats
                     </Button>
@@ -1486,7 +1519,7 @@ export default function CookPortalPage() {
                     
                     return (
                       <div key={day} className="border rounded-lg p-4">
-                        <h3 className="text-lg font-semibold mb-4 text-blue-600">{day}</h3>
+                        <h3 className="text-lg font-semibold mb-4" style={{ color: '#5ac2ec' }}>{day}</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                           {dayMenus.map((menu) => (
                             <div key={menu.id} className="border rounded-lg p-4 bg-gray-50">
@@ -1504,21 +1537,27 @@ export default function CookPortalPage() {
                                     }}
                                   />
                                 ) : null}
-                                <div className={`w-full h-32 bg-green-100 rounded-lg flex items-center justify-center ${menu.photo_url ? 'hidden' : ''}`}>
-                                  <FontAwesomeIcon icon={faUtensils} className="text-green-600 text-2xl" />
+                                <div className={`w-full h-32 rounded-lg flex items-center justify-center ${menu.photo_url ? 'hidden' : ''}`} style={{ backgroundColor: '#f0fdf4' }}>
+                                  <FontAwesomeIcon icon={faUtensils} className="text-2xl" style={{ color: '#41b8ac' }} />
                                 </div>
                               </div>
                               
                               <div className="flex items-center justify-between mb-2">
                                 <h4 className="font-semibold text-sm">{menu.name}</h4>
-                                <Badge variant={menu.is_available ? 'default' : 'secondary'} className="text-xs">
+                                <Badge 
+                                  className="text-xs"
+                                  style={{
+                                    backgroundColor: menu.is_available ? '#41b8ac' : '#6b7280',
+                                    color: 'white'
+                                  }}
+                                >
                                   {menu.is_available ? 'Disponible' : 'Indisponible'}
                                 </Badge>
                               </div>
                               <div className="space-y-1 mb-3">
                                 <p className="text-xs text-gray-600">{menu.description}</p>
                                 <div className="flex justify-between text-xs">
-                                  <span className="font-medium text-blue-600">{menu.dietary_restriction}</span>
+                                  <span className="font-medium" style={{ color: '#5ac2ec' }}>{menu.dietary_restriction}</span>
                                   <span className="font-medium text-green-600">{menu.meal_type}</span>
                                 </div>
                                 {/* Prix supprimé car menus patients gratuits */}
@@ -1578,7 +1617,7 @@ export default function CookPortalPage() {
               <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <FontAwesomeIcon icon={faClipboardList} className="text-blue-600" />
+                    <FontAwesomeIcon icon={faClipboardList} style={{ color: '#5ac2ec' }} />
                     <span className="text-blue-800 dark:text-blue-200 font-medium">
                       Filtre actif: {
                         activeFilter === 'patients' ? 'Commandes Patients' :
@@ -1594,7 +1633,8 @@ export default function CookPortalPage() {
                       variant="outline" 
                       size="sm"
                       onClick={() => setActiveTab('orders')}
-                      className="text-blue-600 border-blue-300"
+                      style={{ color: '#5ac2ec', borderColor: '#5ac2ec' }}
+                      className="hover:bg-blue-50"
                     >
                       Voir les résultats
                     </Button>
@@ -1678,10 +1718,14 @@ export default function CookPortalPage() {
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span className="flex items-center">
-                    <FontAwesomeIcon icon={faWarehouse} className="mr-2 text-purple-600" />
+                    <FontAwesomeIcon icon={faWarehouse} className="mr-2" style={{ color: '#5ac2ec' }} />
                     Gestion de Stock de la Cuisine
                   </span>
-                  <Button onClick={() => setIsInventoryModalOpen(true)}>
+                  <Button 
+                    onClick={() => setIsInventoryModalOpen(true)}
+                    style={{ backgroundColor: '#5ac2ec', borderColor: '#5ac2ec' }}
+                    className="hover:bg-blue-600"
+                  >
                     <FontAwesomeIcon icon={faPlus} className="mr-2" />
                     Ajouter un article
                   </Button>
