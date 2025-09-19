@@ -6,51 +6,54 @@ export const LOGO_COLORS = {
   green: [65, 184, 172] as [number, number, number], // #41b8ac
 };
 
-// Fonction pour charger le logo depuis Cloudinary
+// Fonction pour charger le logo PNG directement depuis Cloudinary
 export const loadLogoImage = async (): Promise<string> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    // Forcer le chargement haute qualité
-    img.style.imageRendering = 'high-quality';
+    
     img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        reject(new Error('Canvas context not available'));
-        return;
+      try {
+        // Créer un canvas pour optimiser la qualité
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        if (!ctx) {
+          reject(new Error('Impossible de créer le contexte canvas'));
+          return;
+        }
+        
+        // Définir la taille du canvas (plus grande pour une meilleure qualité)
+        const maxWidth = 70;
+        const maxHeight = 50;
+        const scale = 2; // Facteur d'échelle pour l'anti-aliasing
+        
+        canvas.width = maxWidth * scale;
+        canvas.height = maxHeight * scale;
+        
+        // Configurer le contexte pour une qualité maximale
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.scale(scale, scale);
+        
+        // Dessiner l'image sur le canvas
+        ctx.drawImage(img, 0, 0, maxWidth, maxHeight);
+        
+        // Convertir en PNG avec qualité maximale
+        const dataUrl = canvas.toDataURL('image/png', 1.0);
+        resolve(dataUrl);
+      } catch (error) {
+        console.error('Erreur lors du traitement du logo:', error);
+        reject(error);
       }
-      
-      // Redimensionner le logo pour le PDF avec haute résolution
-      const maxWidth = 70; // Double la taille pour meilleure qualité
-      const maxHeight = 50;
-      const aspectRatio = img.width / img.height;
-      
-      let width = maxWidth;
-      let height = maxWidth / aspectRatio;
-      
-      if (height > maxHeight) {
-        height = maxHeight;
-        width = maxHeight * aspectRatio;
-      }
-      
-      // Créer un canvas haute résolution
-      const scale = 2; // Facteur d'échelle pour anti-aliasing
-      canvas.width = width * scale;
-      canvas.height = height * scale;
-      
-      // Améliorer la qualité du rendu
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-      ctx.scale(scale, scale);
-      ctx.drawImage(img, 0, 0, width, height);
-      resolve(canvas.toDataURL('image/png', 1.0)); // Qualité maximale
     };
+    
     img.onerror = () => {
-      console.warn('Logo local non trouvé, utilisation du logo Cloudinary');
-      img.src = 'https://res.cloudinary.com/dd64mwkl2/image/upload/v1734533177/Centre_Diagnostic-Logo_cyekdg.svg';
+      reject(new Error('Impossible de charger le logo PNG'));
     };
-    img.src = '/logo-centre-diagnostic-official.svg';
+    
+    // Utiliser directement le logo PNG fourni
+    img.src = "https://res.cloudinary.com/dd64mwkl2/image/upload/v1758286702/Centre_Diagnostic-Logo_xhxxpv.png";
   });
 };
 
