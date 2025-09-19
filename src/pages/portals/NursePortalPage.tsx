@@ -67,48 +67,88 @@ const NursePortalPage: React.FC = () => {
                                  employeeOrdersToday.filter(o => o.status === 'Livré').reduce((sum, order) => sum + order.quantity, 0);
     
     // Créer un résumé des plats commandés avec quantités
-    const dishesSummary = new Map<string, { quantity: number, type: string }>();
+    const dishesSummary = new Map<string, { quantity: number, type: string, status: string }>();
     
     // Ajouter les plats patients (1 plat par commande)
     todayOrders.forEach(order => {
       const key = `Patient - ${order.menu}`;
-      dishesSummary.set(key, { 
-        quantity: (dishesSummary.get(key)?.quantity || 0) + 1, 
-        type: 'Patient' 
-      });
+      const existing = dishesSummary.get(key);
+      if (existing) {
+        existing.quantity += 1;
+      } else {
+        dishesSummary.set(key, { 
+          quantity: 1, 
+          type: 'Patient',
+          status: order.status
+        });
+      }
     });
     
     // Ajouter les plats employés avec quantités
     employeeOrdersToday.forEach(order => {
       const key = `Employé - ${order.employee_menus?.name || 'Menu inconnu'}`;
-      dishesSummary.set(key, { 
-        quantity: (dishesSummary.get(key)?.quantity || 0) + order.quantity, 
-        type: 'Employé' 
-      });
+      const existing = dishesSummary.get(key);
+      if (existing) {
+        existing.quantity += order.quantity;
+      } else {
+        dishesSummary.set(key, { 
+          quantity: order.quantity, 
+          type: 'Employé',
+          status: order.status
+        });
+      }
     });
     
     // Créer les lignes du rapport
     const summaryRows = [
+      ['RAPPORT JOURNALIER - PORTAL INFIRMIER'],
+      ['Date', new Date().toLocaleDateString('fr-FR')],
+      [''],
       ['RÉSUMÉ DU JOUR'],
-      ['Total plats commandés', totalOrderedDishes.toString()],
-      ['Total plats livrés', totalDeliveredDishes.toString()],
+      ['Total plats commandés aujourd\'hui', totalOrderedDishes.toString()],
+      ['Total plats livrés aujourd\'hui', totalDeliveredDishes.toString()],
       [''],
       ['DÉTAIL DES PLATS COMMANDÉS'],
-      ['Type', 'Menu', 'Quantité']
+      ['Type', 'Menu', 'Quantité', 'Statut']
     ];
     
     // Ajouter les détails des plats
     Array.from(dishesSummary.entries()).forEach(([menu, data]) => {
-      summaryRows.push([data.type, menu.split(' - ')[1], data.quantity.toString()]);
+      summaryRows.push([data.type, menu.split(' - ')[1], data.quantity.toString(), data.status]);
     });
     
-    summaryRows.push([''], ['DÉTAIL DES COMMANDES']);
+    summaryRows.push([''], ['DÉTAIL DES COMMANDES PATIENTS']);
     
-    const patientRows = todayOrders.map(o => ['Patient', o.patients?.name || '', o.patients?.room || '', o.meal_type, o.menu, o.status, (o.created_at || (o as Order & { date?: string }).date) || '']);
-    const employeeRows = employeeOrdersToday.map(o => ['Employé', o.employee_name || '', '', 'Employé', o.employee_menus?.name || '', o.status, o.created_at || '', o.quantity.toString()]);
-    const header = ['Type', 'Nom', 'Chambre', 'Repas', 'Menu', 'Statut', 'Date', 'Quantité'];
+    const patientRows = todayOrders.map(o => [
+      o.patients?.name || '', 
+      o.patients?.room || '', 
+      o.meal_type, 
+      o.menu, 
+      o.status, 
+      (o.created_at || (o as Order & { date?: string }).date) || ''
+    ]);
+    const patientHeader = ['Nom Patient', 'Chambre', 'Repas', 'Menu', 'Statut', 'Date'];
     
-    downloadCSV(`rapport_journalier_${new Date().toISOString().slice(0,10)}.csv`, [...summaryRows, header, ...patientRows, ...employeeRows]);
+    summaryRows.push([''], ['DÉTAIL DES COMMANDES EMPLOYÉS']);
+    
+    const employeeRows = employeeOrdersToday.map(o => [
+      o.employee_name || '', 
+      o.employee_menus?.name || '', 
+      o.quantity.toString(),
+      o.status, 
+      o.created_at || '',
+      (o.total_price || 0).toLocaleString('fr-FR') + ' XAF'
+    ]);
+    const employeeHeader = ['Nom Employé', 'Menu', 'Quantité', 'Statut', 'Date', 'Prix Total'];
+    
+    downloadCSV(`rapport_journalier_infirmier_${new Date().toISOString().slice(0,10)}.csv`, [
+      ...summaryRows, 
+      patientHeader, 
+      ...patientRows,
+      [''],
+      employeeHeader,
+      ...employeeRows
+    ]);
   };
 
   const printDailyReport = () => {
@@ -124,28 +164,40 @@ const NursePortalPage: React.FC = () => {
                                  employeeOrdersToday.filter(o => o.status === 'Livré').reduce((sum, order) => sum + order.quantity, 0);
     
     // Créer un résumé des plats commandés avec quantités
-    const dishesSummary = new Map<string, { quantity: number, type: string }>();
+    const dishesSummary = new Map<string, { quantity: number, type: string, status: string }>();
     
     // Ajouter les plats patients (1 plat par commande)
     todayOrders.forEach(order => {
       const key = `Patient - ${order.menu}`;
-      dishesSummary.set(key, { 
-        quantity: (dishesSummary.get(key)?.quantity || 0) + 1, 
-        type: 'Patient' 
-      });
+      const existing = dishesSummary.get(key);
+      if (existing) {
+        existing.quantity += 1;
+      } else {
+        dishesSummary.set(key, { 
+          quantity: 1, 
+          type: 'Patient',
+          status: order.status
+        });
+      }
     });
     
     // Ajouter les plats employés avec quantités
     employeeOrdersToday.forEach(order => {
       const key = `Employé - ${order.employee_menus?.name || 'Menu inconnu'}`;
-      dishesSummary.set(key, { 
-        quantity: (dishesSummary.get(key)?.quantity || 0) + order.quantity, 
-        type: 'Employé' 
-      });
+      const existing = dishesSummary.get(key);
+      if (existing) {
+        existing.quantity += order.quantity;
+      } else {
+        dishesSummary.set(key, { 
+          quantity: order.quantity, 
+          type: 'Employé',
+          status: order.status
+        });
+      }
     });
     
     win.document.write(`
-      <html><head><title>Rapport journalier ${todayStr}</title>
+      <html><head><title>Rapport journalier Infirmier ${todayStr}</title>
       <style>
         body{font-family:Arial;padding:16px;line-height:1.4}
         table{width:100%;border-collapse:collapse;margin-top:12px}
@@ -157,32 +209,33 @@ const NursePortalPage: React.FC = () => {
         .dishes-table{margin-top:8px}
       </style>
       </head><body>
-      <h2>Rapport journalier - ${todayStr}</h2>
+      <h2>Rapport journalier - Portail Infirmier</h2>
+      <p><strong>Date:</strong> ${todayStr}</p>
       
       <div class="summary">
         <h3>📊 Résumé du jour</h3>
-        <div class="summary-item">Total plats commandés: ${totalOrderedDishes}</div>
-        <div class="summary-item">Total plats livrés: ${totalDeliveredDishes}</div>
+        <div class="summary-item">Total plats commandés aujourd'hui: ${totalOrderedDishes}</div>
+        <div class="summary-item">Total plats livrés aujourd'hui: ${totalDeliveredDishes}</div>
       </div>
       
       <h3>🍽️ Détail des plats commandés</h3>
       <table class="dishes-table">
-        <thead><tr><th>Type</th><th>Menu</th><th>Quantité</th></tr></thead>
+        <thead><tr><th>Type</th><th>Menu</th><th>Quantité</th><th>Statut</th></tr></thead>
         <tbody>
         ${Array.from(dishesSummary.entries()).map(([menu, data]) => 
-          `<tr><td>${data.type}</td><td>${menu.split(' - ')[1]}</td><td>${data.quantity}</td></tr>`
+          `<tr><td>${data.type}</td><td>${menu.split(' - ')[1]}</td><td>${data.quantity}</td><td>${data.status}</td></tr>`
         ).join('')}
         </tbody>
       </table>
       
       <h3>👥 Commandes Patients</h3>
-      <table><thead><tr><th>Nom</th><th>Chambre</th><th>Repas</th><th>Menu</th><th>Statut</th><th>Date</th></tr></thead><tbody>
+      <table><thead><tr><th>Nom Patient</th><th>Chambre</th><th>Repas</th><th>Menu</th><th>Statut</th><th>Date</th></tr></thead><tbody>
       ${todayOrders.map(o => `<tr><td>${o.patients?.name || ''}</td><td>${o.patients?.room || ''}</td><td>${o.meal_type}</td><td>${o.menu}</td><td>${o.status}</td><td>${(o.created_at || (o as Order & { date?: string }).date) ?? ''}</td></tr>`).join('')}
       </tbody></table>
       
       <h3>👨‍💼 Commandes Employés</h3>
-      <table><thead><tr><th>Employé</th><th>Menu</th><th>Quantité</th><th>Statut</th><th>Date</th><th>Total (XAF)</th></tr></thead><tbody>
-      ${employeeOrdersToday.map(o => `<tr><td>${o.employee_name || ''}</td><td>${o.employee_menus?.name || ''}</td><td>${o.quantity}</td><td>${o.status}</td><td>${o.created_at || ''}</td><td>${(o.total_price || 0).toLocaleString('fr-FR')}</td></tr>`).join('')}
+      <table><thead><tr><th>Nom Employé</th><th>Menu</th><th>Quantité</th><th>Statut</th><th>Date</th><th>Prix Total</th></tr></thead><tbody>
+      ${employeeOrdersToday.map(o => `<tr><td>${o.employee_name || ''}</td><td>${o.employee_menus?.name || ''}</td><td>${o.quantity}</td><td>${o.status}</td><td>${o.created_at || ''}</td><td>${(o.total_price || 0).toLocaleString('fr-FR')} XAF</td></tr>`).join('')}
       </tbody></table>
       </body></html>
     `);

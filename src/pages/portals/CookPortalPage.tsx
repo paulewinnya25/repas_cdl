@@ -70,49 +70,102 @@ export default function CookPortalPage() {
     const totalDeliveredDishes = todayPatientOrders.filter(o => o.status === 'Livré').length + 
                                  todayEmployeeOrders.filter(o => o.status === 'Livré').reduce((sum, order) => sum + order.quantity, 0);
     
-    // Créer un résumé des plats commandés avec quantités
-    const dishesSummary = new Map<string, { quantity: number, type: string }>();
+    // Calculer les recettes
+    const totalRevenue = todayEmployeeOrders.reduce((sum, order) => sum + (order.total_price || 0), 0);
+    
+    // Créer un résumé des plats commandés avec quantités et statuts
+    const dishesSummary = new Map<string, { quantity: number, type: string, status: string, revenue: number }>();
     
     // Ajouter les plats patients (1 plat par commande)
     todayPatientOrders.forEach(order => {
       const key = `Patient - ${order.menu}`;
-      dishesSummary.set(key, { 
-        quantity: (dishesSummary.get(key)?.quantity || 0) + 1, 
-        type: 'Patient' 
-      });
+      const existing = dishesSummary.get(key);
+      if (existing) {
+        existing.quantity += 1;
+      } else {
+        dishesSummary.set(key, { 
+          quantity: 1, 
+          type: 'Patient',
+          status: order.status,
+          revenue: 0
+        });
+      }
     });
     
     // Ajouter les plats employés avec quantités
     todayEmployeeOrders.forEach(order => {
       const key = `Employé - ${order.employee_menus?.name || 'Menu inconnu'}`;
-      dishesSummary.set(key, { 
-        quantity: (dishesSummary.get(key)?.quantity || 0) + order.quantity, 
-        type: 'Employé' 
-      });
+      const existing = dishesSummary.get(key);
+      if (existing) {
+        existing.quantity += order.quantity;
+        existing.revenue += order.total_price || 0;
+      } else {
+        dishesSummary.set(key, { 
+          quantity: order.quantity, 
+          type: 'Employé',
+          status: order.status,
+          revenue: order.total_price || 0
+        });
+      }
     });
     
     // Créer les lignes du rapport
     const summaryRows = [
-      ['RÉSUMÉ DU JOUR - CUISINE'],
+      ['RAPPORT JOURNALIER - PORTAL CUISINIER'],
+      ['Date', new Date().toLocaleDateString('fr-FR')],
+      [''],
+      ['RÉSUMÉ DU JOUR'],
       ['Total plats commandés', totalOrderedDishes.toString()],
       ['Total plats livrés', totalDeliveredDishes.toString()],
+      ['Total recette', totalRevenue.toLocaleString('fr-FR') + ' XAF'],
       [''],
-      ['DÉTAIL DES PLATS COMMANDÉS'],
-      ['Type', 'Menu', 'Quantité']
+      ['DÉTAIL PAR MENU AVEC QUANTITÉS ET STATUTS'],
+      ['Type', 'Menu', 'Quantité', 'Statut', 'Recette (XAF)']
     ];
     
     // Ajouter les détails des plats
     Array.from(dishesSummary.entries()).forEach(([menu, data]) => {
-      summaryRows.push([data.type, menu.split(' - ')[1], data.quantity.toString()]);
+      summaryRows.push([
+        data.type, 
+        menu.split(' - ')[1], 
+        data.quantity.toString(), 
+        data.status,
+        data.revenue.toLocaleString('fr-FR')
+      ]);
     });
     
-    summaryRows.push([''], ['DÉTAIL DES COMMANDES']);
+    summaryRows.push([''], ['DÉTAIL DES COMMANDES PATIENTS']);
     
-    const patientRows = todayPatientOrders.map(o => ['Patient', o.patients?.name || '', o.patients?.room || '', `${o.meal_type} - ${o.menu}`, o.status, (o.created_at || o.date) || '', '']);
-    const employeeRows = todayEmployeeOrders.map(o => ['Employé', o.employee_name || '', '', o.employee_menus?.name || '', o.status, o.created_at || '', String(o.total_price || 0), o.quantity.toString()]);
-    const header = ['Type', 'Nom', 'Chambre/Employé', 'Menu', 'Statut', 'Date', 'Total (XAF)', 'Quantité'];
+    const patientRows = todayPatientOrders.map(o => [
+      o.patients?.name || '', 
+      o.patients?.room || '', 
+      o.meal_type, 
+      o.menu || '', 
+      o.status,
+      (o.created_at || o.date || '').toString().replace('T', ' ').substring(0, 16)
+    ]);
+    const patientHeader = ['Nom Patient', 'Chambre', 'Repas', 'Menu', 'Statut', 'Heure'];
     
-    downloadCSV(`rapport_cuisine_${new Date().toISOString().slice(0,10)}.csv`, [...summaryRows, header, ...patientRows, ...employeeRows]);
+    summaryRows.push([''], ['DÉTAIL DES COMMANDES EMPLOYÉS']);
+    
+    const employeeRows = todayEmployeeOrders.map(o => [
+      o.employee_name || '', 
+      o.employee_menus?.name || '', 
+      o.quantity.toString(), 
+      o.status,
+      (o.created_at || '').toString().replace('T', ' ').substring(0, 16),
+      (o.total_price || 0).toLocaleString('fr-FR') + ' XAF'
+    ]);
+    const employeeHeader = ['Nom Employé', 'Menu', 'Quantité', 'Statut', 'Heure', 'Prix Total'];
+    
+    downloadCSV(`rapport_journalier_cuisinier_${new Date().toISOString().slice(0,10)}.csv`, [
+      ...summaryRows, 
+      patientHeader, 
+      ...patientRows,
+      [''],
+      employeeHeader,
+      ...employeeRows
+    ]);
   };
   const [editingMenu, setEditingMenu] = useState<EmployeeMenu | null>(null);
   const [editingPatientMenu, setEditingPatientMenu] = useState<PatientMenu | null>(null);
@@ -850,7 +903,7 @@ export default function CookPortalPage() {
       `Commandes aujourd'hui: ${totalToday}`,
       `Total plats commandés: ${totalOrderedDishes}`,
       `Total plats livrés: ${totalDeliveredDishes}`,
-      `Recettes employés aujourd'hui: ${totalRevenue.toLocaleString('fr-FR')} XAF`,
+      `Total recette: ${totalRevenue.toLocaleString('fr-FR')} XAF`,
     ];
     summary.forEach((line, idx) => doc.text(line, 40, y + idx * 16));
     y += summary.length * 16 + 10;

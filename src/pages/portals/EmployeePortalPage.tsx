@@ -356,43 +356,86 @@ const EmployeePortalPage: React.FC = () => {
     const totalDeliveredDishes = todayOrders.filter(o => o.status === 'Livré').reduce((sum, order) => sum + order.quantity, 0);
     const totalRevenue = todayOrders.reduce((sum, order) => sum + (order.total_price || 0), 0);
     
-    // Créer un résumé des plats commandés avec quantités
-    const dishesSummary = new Map<string, { quantity: number, totalPrice: number }>();
+    // Créer un résumé des plats commandés avec quantités et prix
+    const dishesSummary = new Map<string, { quantity: number, totalPrice: number, status: string }>();
+    
+    // Créer un résumé des employés qui ont commandé
+    const employeesSummary = new Map<string, { totalDishes: number, totalSpent: number, orders: number }>();
     
     todayOrders.forEach(order => {
       const menuName = order.employee_menus?.name || 'Menu inconnu';
-      const existing = dishesSummary.get(menuName);
-      if (existing) {
-        existing.quantity += order.quantity;
-        existing.totalPrice += order.total_price || 0;
+      const employeeName = order.employee_name || 'Employé inconnu';
+      
+      // Résumé par menu
+      const existingDish = dishesSummary.get(menuName);
+      if (existingDish) {
+        existingDish.quantity += order.quantity;
+        existingDish.totalPrice += order.total_price || 0;
       } else {
         dishesSummary.set(menuName, { 
           quantity: order.quantity, 
-          totalPrice: order.total_price || 0 
+          totalPrice: order.total_price || 0,
+          status: order.status
+        });
+      }
+      
+      // Résumé par employé
+      const existingEmployee = employeesSummary.get(employeeName);
+      if (existingEmployee) {
+        existingEmployee.totalDishes += order.quantity;
+        existingEmployee.totalSpent += order.total_price || 0;
+        existingEmployee.orders += 1;
+      } else {
+        employeesSummary.set(employeeName, {
+          totalDishes: order.quantity,
+          totalSpent: order.total_price || 0,
+          orders: 1
         });
       }
     });
     
     // Créer les lignes du rapport
     const summaryRows = [
-      ['RÉSUMÉ DU JOUR - EMPLOYÉ'],
+      ['RAPPORT JOURNALIER - PORTAL EMPLOYÉ'],
+      ['Date', new Date().toLocaleDateString('fr-FR')],
+      [''],
+      ['RÉSUMÉ DU JOUR'],
       ['Total plats commandés', totalOrderedDishes.toString()],
       ['Total plats livrés', totalDeliveredDishes.toString()],
       ['Total dépensé', totalRevenue.toLocaleString('fr-FR') + ' XAF'],
       [''],
-      ['DÉTAIL DES PLATS COMMANDÉS'],
-      ['Menu', 'Quantité', 'Total dépensé (XAF)']
+      ['NOMS DES EMPLOYÉS QUI ONT COMMANDÉ AVEC LE NOMBRE DE PLATS'],
+      ['Nom Employé', 'Nombre de plats', 'Nombre de commandes', 'Total dépensé (XAF)']
     ];
+    
+    // Ajouter les détails des employés
+    Array.from(employeesSummary.entries()).forEach(([employee, data]) => {
+      summaryRows.push([
+        employee, 
+        data.totalDishes.toString(), 
+        data.orders.toString(),
+        data.totalSpent.toLocaleString('fr-FR')
+      ]);
+    });
+    
+    summaryRows.push([''], ['DÉTAIL PAR MENU AVEC QUANTITÉS ET PRIX']);
+    summaryRows.push(['Menu', 'Quantité', 'Prix total (XAF)', 'Statut']);
     
     // Ajouter les détails des plats
     Array.from(dishesSummary.entries()).forEach(([menu, data]) => {
-      summaryRows.push([menu, data.quantity.toString(), data.totalPrice.toLocaleString('fr-FR')]);
+      summaryRows.push([
+        menu, 
+        data.quantity.toString(), 
+        data.totalPrice.toLocaleString('fr-FR'),
+        data.status
+      ]);
     });
     
     summaryRows.push([''], ['DÉTAIL DES COMMANDES']);
     
-    const header = ['Menu', 'Quantité', 'Statut', 'Prix (XAF)', 'Date'];
+    const header = ['Nom Employé', 'Menu', 'Quantité', 'Statut', 'Prix (XAF)', 'Date'];
     const rows = todayOrders.map(o => [
+      o.employee_name || '', 
       o.employee_menus?.name || '', 
       o.quantity.toString(), 
       o.status, 
@@ -405,7 +448,7 @@ const EmployeePortalPage: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `rapport_employe_${new Date().toISOString().slice(0,10)}.csv`;
+    a.download = `rapport_journalier_employe_${new Date().toISOString().slice(0,10)}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
