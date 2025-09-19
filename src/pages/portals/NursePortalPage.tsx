@@ -3,6 +3,7 @@ import { supabase } from '../../integrations/supabase/client';
 import { Patient, Order, UserRole, PatientMenu, EmployeeMenu, EmployeeOrder } from '../../types/repas-cdl';
 import { gabonCities } from '../../data/gabon-locations';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import jsPDF from 'jspdf';
 import { 
   faUserInjured, 
   faClipboardList, 
@@ -123,9 +124,6 @@ const NursePortalPage: React.FC = () => {
 
   const printDailyReport = () => {
     const todayStr = new Date().toLocaleDateString('fr-FR');
-    const win = window.open('', '_blank');
-    if (!win) return;
-    
     const todayOrders = orders.filter(o => isSameDay(new Date((o as Order & { date?: string }).date || o.created_at || ''), new Date()));
     
     // Seulement les commandes patients pour le rapport infirmier
@@ -151,47 +149,181 @@ const NursePortalPage: React.FC = () => {
       }
     });
     
-    win.document.write(`
-      <html><head><title>Rapport journalier Infirmier ${todayStr}</title>
-      <style>
-        body{font-family:Arial;padding:16px;line-height:1.4}
-        table{width:100%;border-collapse:collapse;margin-top:12px}
-        th,td{border:1px solid #ddd;padding:6px;font-size:12px;text-align:left}
-        h2{margin:0 0 8px;color:#333}
-        h3{margin:16px 0 8px;color:#555}
-        .summary{background:#f5f5f5;padding:12px;border-radius:4px;margin-bottom:16px}
-        .summary-item{margin:4px 0;font-weight:bold}
-        .dishes-table{margin-top:8px}
-      </style>
-      </head><body>
-      <h2>Rapport journalier - Portail Infirmier</h2>
-      <p><strong>Date:</strong> ${todayStr}</p>
+    // Créer un PDF professionnel avec jsPDF
+    const doc = new jsPDF();
+    
+    // Couleurs du logo
+    const blueColor = '#5ac2ec';
+    const greenColor = '#41b8ac';
+    
+    // En-tête avec logo et informations
+    doc.setFillColor(240, 253, 244); // Couleur de fond vert clair
+    doc.rect(0, 0, 210, 40, 'F');
+    
+    // Logo (texte stylisé)
+    doc.setFontSize(20);
+    doc.setTextColor(blueColor);
+    doc.setFont('helvetica', 'bold');
+    doc.text('CENTRE DIAGNOSTIC', 20, 15);
+    
+    doc.setFontSize(12);
+    doc.setTextColor(greenColor);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Rapport Journalier - Portail Infirmier', 20, 25);
+    
+    // Date et informations
+    doc.setFontSize(10);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Date: ${todayStr}`, 150, 15);
+    doc.text(`Généré le: ${new Date().toLocaleString('fr-FR')}`, 150, 25);
+    
+    // Ligne de séparation
+    doc.setDrawColor(blueColor);
+    doc.setLineWidth(0.5);
+    doc.line(20, 45, 190, 45);
+    
+    let yPosition = 60;
+    
+    // Résumé du jour
+    doc.setFontSize(14);
+    doc.setTextColor(blueColor);
+    doc.setFont('helvetica', 'bold');
+    doc.text('📊 RÉSUMÉ DU JOUR', 20, yPosition);
+    yPosition += 10;
+    
+    doc.setFontSize(11);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'normal');
+    
+    // Statistiques dans un encadré
+    doc.setFillColor(248, 250, 252);
+    doc.rect(20, yPosition - 5, 170, 25, 'F');
+    doc.setDrawColor(200, 200, 200);
+    doc.rect(20, yPosition - 5, 170, 25, 'S');
+    
+    doc.text(`Total plats commandés aujourd'hui: ${totalOrderedDishes}`, 25, yPosition + 5);
+    doc.text(`Total plats livrés aujourd'hui: ${totalDeliveredDishes}`, 25, yPosition + 15);
+    
+    yPosition += 35;
+    
+    // Détail des plats commandés
+    doc.setFontSize(14);
+    doc.setTextColor(blueColor);
+    doc.setFont('helvetica', 'bold');
+    doc.text('🍽️ DÉTAIL DES PLATS COMMANDÉS', 20, yPosition);
+    yPosition += 10;
+    
+    if (dishesSummary.size > 0) {
+      // En-tête du tableau
+      doc.setFillColor(blueColor);
+      doc.rect(20, yPosition - 5, 170, 10, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
       
-      <div class="summary">
-        <h3>📊 Résumé du jour</h3>
-        <div class="summary-item">Total plats commandés aujourd'hui: ${totalOrderedDishes}</div>
-        <div class="summary-item">Total plats livrés aujourd'hui: ${totalDeliveredDishes}</div>
-      </div>
+      doc.text('Type', 25, yPosition + 2);
+      doc.text('Menu', 50, yPosition + 2);
+      doc.text('Quantité', 120, yPosition + 2);
+      doc.text('Statut', 150, yPosition + 2);
       
-      <h3>🍽️ Détail des plats commandés</h3>
-      <table class="dishes-table">
-        <thead><tr><th>Type</th><th>Menu</th><th>Quantité</th><th>Statut</th></tr></thead>
-        <tbody>
-        ${Array.from(dishesSummary.entries()).map(([menu, data]) => 
-          `<tr><td>${data.type}</td><td>${menu.split(' - ')[1]}</td><td>${data.quantity}</td><td>${data.status}</td></tr>`
-        ).join('')}
-        </tbody>
-      </table>
+      yPosition += 10;
       
-      <h3>👥 Commandes Patients</h3>
-      <table><thead><tr><th>Nom Patient</th><th>Chambre</th><th>Repas</th><th>Menu</th><th>Statut</th><th>Date</th></tr></thead><tbody>
-      ${todayOrders.map(o => `<tr><td>${o.patients?.name || ''}</td><td>${o.patients?.room || ''}</td><td>${o.meal_type}</td><td>${o.menu}</td><td>${o.status}</td><td>${(o.created_at || (o as Order & { date?: string }).date) ?? ''}</td></tr>`).join('')}
-      </tbody></table>
-      </body></html>
-    `);
-    win.document.close();
-    win.focus();
-    win.print();
+      // Données du tableau
+      doc.setTextColor(0, 0, 0);
+      doc.setFont('helvetica', 'normal');
+      
+      Array.from(dishesSummary.entries()).forEach(([menu, data], index) => {
+        if (yPosition > 250) {
+          doc.addPage();
+          yPosition = 20;
+        }
+        
+        // Alternance des couleurs de fond
+        if (index % 2 === 0) {
+          doc.setFillColor(248, 250, 252);
+          doc.rect(20, yPosition - 5, 170, 10, 'F');
+        }
+        
+        doc.text(data.type, 25, yPosition + 2);
+        doc.text(menu.split(' - ')[1], 50, yPosition + 2);
+        doc.text(data.quantity.toString(), 120, yPosition + 2);
+        doc.text(data.status, 150, yPosition + 2);
+        
+        yPosition += 10;
+      });
+    } else {
+      doc.setTextColor(100, 100, 100);
+      doc.text('Aucun plat commandé aujourd\'hui', 25, yPosition);
+      yPosition += 10;
+    }
+    
+    yPosition += 15;
+    
+    // Détail des commandes patients
+    doc.setFontSize(14);
+    doc.setTextColor(blueColor);
+    doc.setFont('helvetica', 'bold');
+    doc.text('👥 DÉTAIL DES COMMANDES PATIENTS', 20, yPosition);
+    yPosition += 10;
+    
+    if (todayOrders.length > 0) {
+      // En-tête du tableau
+      doc.setFillColor(greenColor);
+      doc.rect(20, yPosition - 5, 170, 10, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      
+      doc.text('Patient', 25, yPosition + 2);
+      doc.text('Chambre', 60, yPosition + 2);
+      doc.text('Repas', 90, yPosition + 2);
+      doc.text('Menu', 120, yPosition + 2);
+      doc.text('Statut', 160, yPosition + 2);
+      
+      yPosition += 10;
+      
+      // Données du tableau
+      doc.setTextColor(0, 0, 0);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      
+      todayOrders.forEach((order, index) => {
+        if (yPosition > 250) {
+          doc.addPage();
+          yPosition = 20;
+        }
+        
+        // Alternance des couleurs de fond
+        if (index % 2 === 0) {
+          doc.setFillColor(248, 250, 252);
+          doc.rect(20, yPosition - 5, 170, 10, 'F');
+        }
+        
+        doc.text(order.patients?.name || 'N/A', 25, yPosition + 2);
+        doc.text(order.patients?.room || 'N/A', 60, yPosition + 2);
+        doc.text(order.meal_type, 90, yPosition + 2);
+        doc.text(order.menu, 120, yPosition + 2);
+        doc.text(order.status, 160, yPosition + 2);
+        
+        yPosition += 10;
+      });
+    } else {
+      doc.setTextColor(100, 100, 100);
+      doc.text('Aucune commande patient aujourd\'hui', 25, yPosition);
+    }
+    
+    // Pied de page
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Page ${i} sur ${pageCount}`, 20, 290);
+      doc.text('Centre Diagnostic - Système de Gestion des Repas', 150, 290);
+    }
+    
+    // Télécharger le PDF
+    doc.save(`rapport_journalier_infirmier_${new Date().toISOString().slice(0,10)}.pdf`);
   };
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
