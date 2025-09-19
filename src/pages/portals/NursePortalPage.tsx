@@ -152,70 +152,78 @@ const NursePortalPage: React.FC = () => {
     // Créer un PDF professionnel avec jsPDF
     const doc = new jsPDF();
     
-    // Couleurs du logo
-    const blueColor = '#5ac2ec';
-    const greenColor = '#41b8ac';
+    // Couleurs du logo (converties en RGB pour jsPDF)
+    const blueColor = [90, 194, 236]; // #5ac2ec
+    const greenColor = [65, 184, 172]; // #41b8ac
     
     // En-tête avec logo et informations
-    doc.setFillColor(240, 253, 244); // Couleur de fond vert clair
-    doc.rect(0, 0, 210, 40, 'F');
+    doc.setFillColor(blueColor[0], blueColor[1], blueColor[2]); // Fond bleu du logo
+    doc.rect(0, 0, 210, 50, 'F');
+    
+    // Logo stylisé avec cercle
+    doc.setFillColor(greenColor[0], greenColor[1], greenColor[2]); // Cercle vert
+    doc.circle(20, 20, 12, 'F');
+    doc.setFillColor(255, 255, 255); // Cercle blanc au centre
+    doc.circle(20, 20, 8, 'F');
+    doc.setFillColor(blueColor[0], blueColor[1], blueColor[2]); // Point bleu au centre
+    doc.circle(20, 20, 4, 'F');
     
     // Logo (texte stylisé)
-    doc.setFontSize(20);
-    doc.setTextColor(blueColor);
+    doc.setFontSize(24);
+    doc.setTextColor(255, 255, 255); // Texte blanc sur fond bleu
     doc.setFont('helvetica', 'bold');
-    doc.text('CENTRE DIAGNOSTIC', 20, 15);
+    doc.text('CENTRE DIAGNOSTIC', 45, 20);
     
-    doc.setFontSize(12);
-    doc.setTextColor(greenColor);
+    doc.setFontSize(14);
+    doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'normal');
-    doc.text('Rapport Journalier - Portail Infirmier', 20, 25);
+    doc.text('Rapport Journalier - Portail Infirmier', 45, 30);
     
     // Date et informations
-    doc.setFontSize(10);
-    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(11);
+    doc.setTextColor(255, 255, 255);
     doc.text(`Date: ${todayStr}`, 150, 15);
     doc.text(`Généré le: ${new Date().toLocaleString('fr-FR')}`, 150, 25);
     
-    // Ligne de séparation
-    doc.setDrawColor(blueColor);
-    doc.setLineWidth(0.5);
-    doc.line(20, 45, 190, 45);
+    // Ligne de séparation décorative
+    doc.setDrawColor(greenColor[0], greenColor[1], greenColor[2]);
+    doc.setLineWidth(2);
+    doc.line(20, 55, 190, 55);
     
-    let yPosition = 60;
+    let yPosition = 70;
     
     // Résumé du jour
-    doc.setFontSize(14);
-    doc.setTextColor(blueColor);
+    doc.setFontSize(18);
+    doc.setTextColor(blueColor[0], blueColor[1], blueColor[2]);
     doc.setFont('helvetica', 'bold');
-    doc.text('📊 RÉSUMÉ DU JOUR', 20, yPosition);
-    yPosition += 10;
+    doc.text('RÉSUMÉ DU JOUR', 20, yPosition);
+    yPosition += 15;
     
-    doc.setFontSize(11);
-    doc.setTextColor(0, 0, 0);
-    doc.setFont('helvetica', 'normal');
+    // Boîte de résumé avec design amélioré
+    doc.setFillColor(240, 253, 244); // Fond vert très clair
+    doc.rect(20, yPosition - 5, 170, 30, 'F');
+    doc.setDrawColor(greenColor[0], greenColor[1], greenColor[2]); // Bordure verte
+    doc.setLineWidth(1);
+    doc.rect(20, yPosition - 5, 170, 30, 'S');
     
-    // Statistiques dans un encadré
-    doc.setFillColor(248, 250, 252);
-    doc.rect(20, yPosition - 5, 170, 25, 'F');
-    doc.setDrawColor(200, 200, 200);
-    doc.rect(20, yPosition - 5, 170, 25, 'S');
+    doc.setFontSize(12);
+    doc.setTextColor(greenColor[0], greenColor[1], greenColor[2]); // Texte vert
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Total plats commandés aujourd'hui: ${totalOrderedDishes}`, 25, yPosition + 8);
+    doc.text(`Total plats livrés aujourd'hui: ${totalDeliveredDishes}`, 25, yPosition + 20);
     
-    doc.text(`Total plats commandés aujourd'hui: ${totalOrderedDishes}`, 25, yPosition + 5);
-    doc.text(`Total plats livrés aujourd'hui: ${totalDeliveredDishes}`, 25, yPosition + 15);
-    
-    yPosition += 35;
+    yPosition += 40;
     
     // Détail des plats commandés
-    doc.setFontSize(14);
-    doc.setTextColor(blueColor);
+    doc.setFontSize(16);
+    doc.setTextColor(blueColor[0], blueColor[1], blueColor[2]);
     doc.setFont('helvetica', 'bold');
-    doc.text('🍽️ DÉTAIL DES PLATS COMMANDÉS', 20, yPosition);
-    yPosition += 10;
+    doc.text('DÉTAIL DES PLATS COMMANDÉS', 20, yPosition);
+    yPosition += 15;
     
     if (dishesSummary.size > 0) {
       // En-tête du tableau
-      doc.setFillColor(blueColor);
+      doc.setFillColor(blueColor[0], blueColor[1], blueColor[2]);
       doc.rect(20, yPosition - 5, 170, 10, 'F');
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(10);
@@ -260,15 +268,15 @@ const NursePortalPage: React.FC = () => {
     yPosition += 15;
     
     // Détail des commandes patients
-    doc.setFontSize(14);
-    doc.setTextColor(blueColor);
+    doc.setFontSize(16);
+    doc.setTextColor(blueColor[0], blueColor[1], blueColor[2]);
     doc.setFont('helvetica', 'bold');
-    doc.text('👥 DÉTAIL DES COMMANDES PATIENTS', 20, yPosition);
-    yPosition += 10;
+    doc.text('DÉTAIL DES COMMANDES PATIENTS', 20, yPosition);
+    yPosition += 15;
     
     if (todayOrders.length > 0) {
       // En-tête du tableau
-      doc.setFillColor(greenColor);
+      doc.setFillColor(greenColor[0], greenColor[1], greenColor[2]);
       doc.rect(20, yPosition - 5, 170, 10, 'F');
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(9);
@@ -312,14 +320,20 @@ const NursePortalPage: React.FC = () => {
       doc.text('Aucune commande patient aujourd\'hui', 25, yPosition);
     }
     
-    // Pied de page
+    // Pied de page avec design
     const pageCount = doc.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
+      
+      // Ligne de pied de page
+      doc.setDrawColor(blueColor[0], blueColor[1], blueColor[2]);
+      doc.setLineWidth(0.5);
+      doc.line(20, 280, 190, 280);
+      
       doc.setFontSize(8);
       doc.setTextColor(100, 100, 100);
-      doc.text(`Page ${i} sur ${pageCount}`, 20, 290);
-      doc.text('Centre Diagnostic - Système de Gestion des Repas', 150, 290);
+      doc.text(`Page ${i} sur ${pageCount}`, 20, 285);
+      doc.text('Centre Diagnostic - Système de Gestion des Repas', 150, 285);
     }
     
     // Télécharger le PDF
@@ -1595,7 +1609,6 @@ const NursePortalPage: React.FC = () => {
                   <div className="flex gap-2 mt-4">
                     <Button size="sm" variant="outline" onClick={exportDailyReportCSV}>Exporter CSV</Button>
                     <Button size="sm" onClick={printDailyReport}>Imprimer / PDF</Button>
-                    <Button size="sm" variant="secondary" onClick={debugData}>Debug</Button>
                   </div>
                 </CardContent>
               </Card>
