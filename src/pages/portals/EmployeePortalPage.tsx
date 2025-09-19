@@ -178,11 +178,14 @@ const EmployeePortalPage: React.FC = () => {
 
   // Fonctions de filtrage
   const getFilteredMenus = () => {
+    // Filtrer pour ne montrer que les menus disponibles
+    const availableMenus = menus.filter(menu => menu.is_available);
+    
     switch (activeFilter) {
       case 'menus':
-        return menus;
+        return availableMenus;
       default:
-        return menus;
+        return availableMenus;
     }
   };
 
@@ -633,68 +636,60 @@ const EmployeePortalPage: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {getFilteredMenus().map((menu) => {
-                    const unavailable = !menu.is_available;
-                    return (
-                      <Card 
-                        key={menu.id} 
-                        className={`transition-shadow border-l-4 ${unavailable ? 'opacity-60 border-l-gray-400 cursor-not-allowed' : 'cursor-pointer hover:shadow-lg border-l-green-500'}`}
-                        onClick={() => { if (!unavailable) handleMenuClick(menu); }}
-                        aria-disabled={unavailable}
-                      >
-                        <CardContent className="p-4">
-                          <div className="flex items-center mb-3">
-                            {menu.photo_url ? (
-                              <img 
-                                src={menu.photo_url}
-                                alt={menu.name}
-                                className="w-20 h-20 object-cover rounded-lg mr-3"
-                                onError={(e) => {
-                                  console.warn('Erreur de chargement de l\'image du menu:', menu.name, e);
-                                  e.currentTarget.style.display = 'none';
-                                  e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                                }}
-                              />
-                            ) : null}
-                            <div className={`w-20 h-20 bg-green-100 rounded-lg flex items-center justify-center mr-3 ${menu.photo_url ? 'hidden' : ''}`}>
-                              <FontAwesomeIcon icon={faUtensils} className="text-green-600 text-2xl" />
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center justify-between">
-                                <h3 className="font-semibold text-lg">{menu.name}</h3>
-                                <Badge variant="outline" className="bg-green-100 text-green-800">
-                                  {menu.price} FCFA
-                                </Badge>
-                              </div>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
-                                {menu.description}
-                              </p>
-                            </div>
+                  {getFilteredMenus().map((menu) => (
+                    <Card 
+                      key={menu.id} 
+                      className="transition-shadow border-l-4 cursor-pointer hover:shadow-lg border-l-green-500"
+                      onClick={() => handleMenuClick(menu)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center mb-3">
+                          {menu.photo_url ? (
+                            <img 
+                              src={menu.photo_url}
+                              alt={menu.name}
+                              className="w-20 h-20 object-cover rounded-lg mr-3"
+                              onError={(e) => {
+                                console.warn('Erreur de chargement de l\'image du menu:', menu.name, e);
+                                e.currentTarget.style.display = 'none';
+                                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                              }}
+                            />
+                          ) : null}
+                          <div className={`w-20 h-20 bg-green-100 rounded-lg flex items-center justify-center mr-3 ${menu.photo_url ? 'hidden' : ''}`}>
+                            <FontAwesomeIcon icon={faUtensils} className="text-green-600 text-2xl" />
                           </div>
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-500">
-                              <FontAwesomeIcon icon={faClock} className="mr-1" />
-                              {menu.preparation_time} min
-                            </span>
-                            {unavailable ? (
-                              <Badge variant="secondary" className="bg-gray-200 text-gray-700">Indisponible</Badge>
-                            ) : (
-                              <span className="text-green-600">
-                                <FontAwesomeIcon icon={faCheckCircle} className="mr-1" />
-                                Disponible
-                              </span>
-                            )}
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <h3 className="font-semibold text-lg">{menu.name}</h3>
+                              <Badge variant="outline" className="bg-green-100 text-green-800">
+                                {menu.price} FCFA
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                              {menu.description}
+                            </p>
                           </div>
-                          <Button className="w-full mt-3" size="sm" disabled={unavailable}>
-                            <FontAwesomeIcon icon={faShoppingCart} className="mr-2" />
-                            {unavailable ? 'Indisponible' : 'Commander'}
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-500">
+                            <FontAwesomeIcon icon={faClock} className="mr-1" />
+                            {menu.preparation_time} min
+                          </span>
+                          <span className="text-green-600">
+                            <FontAwesomeIcon icon={faCheckCircle} className="mr-1" />
+                            Disponible
+                          </span>
+                        </div>
+                        <Button className="w-full mt-3" size="sm">
+                          <FontAwesomeIcon icon={faShoppingCart} className="mr-2" />
+                          Commander
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
-                {filteredMenus.length === 0 && (
+                {getFilteredMenus().length === 0 && (
                   <div className="text-center py-12">
                     <FontAwesomeIcon icon={faUtensils} className="text-6xl text-gray-300 mb-4" />
                     <p className="text-gray-500 text-lg">Aucun menu disponible</p>
