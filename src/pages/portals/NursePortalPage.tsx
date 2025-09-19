@@ -329,6 +329,21 @@ const NursePortalPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
 
+  // Debug function pour vérifier les données
+  const debugData = () => {
+    console.log('=== DEBUG DONNÉES ===');
+    console.log('Orders total:', orders.length);
+    console.log('Orders aujourd\'hui:', orders.filter(o => {
+      const orderDate = new Date((o as Order & { date?: string }).date || o.created_at || '');
+      const today = new Date();
+      const isToday = isSameDay(orderDate, today);
+      console.log(`Order ${o.id}: date=${orderDate.toISOString()}, today=${today.toISOString()}, isToday=${isToday}`);
+      return isToday;
+    }).length);
+    console.log('Date actuelle:', new Date().toISOString());
+    console.log('===================');
+  };
+
   // Fonction de déconnexion
   const handleLogout = async () => {
     try {
@@ -450,6 +465,7 @@ const NursePortalPage: React.FC = () => {
           setOrders([]);
         } else {
           console.log('Commandes chargées:', ordersData);
+          console.log('Nombre de commandes:', ordersData?.length || 0);
           setOrders(ordersData as Order[]);
         }
       } catch (error) {
@@ -1530,20 +1546,17 @@ const NursePortalPage: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Statistiques par statut */}
+                    {/* Statistiques par statut - Patients seulement */}
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between"><span>Patients - En attente</span><span className="font-medium">{orders.filter(o => isSameDay(new Date((o as Order & { date?: string }).date || o.created_at || ''), new Date()) && o.status === "En attente d'approbation").length}</span></div>
                       <div className="flex justify-between"><span>Patients - En préparation</span><span className="font-medium">{orders.filter(o => isSameDay(new Date((o as Order & { date?: string }).date || o.created_at || ''), new Date()) && o.status === 'En préparation').length}</span></div>
                       <div className="flex justify-between"><span>Patients - Livrés</span><span className="font-medium">{orders.filter(o => isSameDay(new Date((o as Order & { date?: string }).date || o.created_at || ''), new Date()) && o.status === 'Livré').length}</span></div>
-                      <hr className="my-2" />
-                      <div className="flex justify-between"><span>Employés - Commandés</span><span className="font-medium">{employeeOrdersToday.filter(o => o.status === 'Commandé').length}</span></div>
-                      <div className="flex justify-between"><span>Employés - En préparation</span><span className="font-medium">{employeeOrdersToday.filter(o => o.status === 'En préparation').length}</span></div>
-                      <div className="flex justify-between"><span>Employés - Livrés</span><span className="font-medium">{employeeOrdersToday.filter(o => o.status === 'Livré').length}</span></div>
                     </div>
                   </div>
                   <div className="flex gap-2 mt-4">
                     <Button size="sm" variant="outline" onClick={exportDailyReportCSV}>Exporter CSV</Button>
                     <Button size="sm" onClick={printDailyReport}>Imprimer / PDF</Button>
+                    <Button size="sm" variant="secondary" onClick={debugData}>Debug</Button>
                   </div>
                 </CardContent>
               </Card>
