@@ -4,6 +4,7 @@ import { Patient, Order, UserRole, PatientMenu, EmployeeMenu, EmployeeOrder } fr
 import { gabonCities } from '../../data/gabon-locations';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import jsPDF from 'jspdf';
+import { createPDFHeader, createPDFFooter, createSummarySection, createTable, LOGO_COLORS } from '../../utils/pdfReportUtils';
 import { 
   faUserInjured, 
   faClipboardList, 
@@ -187,74 +188,74 @@ const NursePortalPage: React.FC = () => {
       // Charger le logo
       const logoDataUrl = await loadLogoImage();
       
-      // En-tête avec logo et informations
-      doc.setFillColor(blueColor[0], blueColor[1], blueColor[2]); // Fond bleu du logo
-      doc.rect(0, 0, 210, 50, 'F');
+      // En-tête avec fond blanc
+      doc.setFillColor(255, 255, 255); // Fond blanc
+      doc.rect(0, 0, 210, 40, 'F');
       
-      // Ajouter le vrai logo
-      doc.addImage(logoDataUrl, 'PNG', 20, 10, 40, 30);
+      // Ajouter le vrai logo (plus petit)
+      doc.addImage(logoDataUrl, 'PNG', 20, 5, 25, 20);
       
       // Logo (texte stylisé)
-      doc.setFontSize(24);
-      doc.setTextColor(255, 255, 255); // Texte blanc sur fond bleu
+      doc.setFontSize(20);
+      doc.setTextColor(blueColor[0], blueColor[1], blueColor[2]); // Texte bleu
       doc.setFont('helvetica', 'bold');
-      doc.text('CENTRE DIAGNOSTIC', 70, 25);
+      doc.text('CENTRE DIAGNOSTIC', 50, 15);
       
-      doc.setFontSize(14);
-      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(12);
+      doc.setTextColor(greenColor[0], greenColor[1], greenColor[2]); // Texte vert
       doc.setFont('helvetica', 'normal');
-      doc.text('Rapport Journalier - Portail Infirmier', 70, 35);
+      doc.text('Rapport Journalier - Portail Infirmier', 50, 25);
       
       // Date et informations
-      doc.setFontSize(11);
-      doc.setTextColor(255, 255, 255);
-      doc.text(`Date: ${todayStr}`, 150, 15);
-      doc.text(`Généré le: ${new Date().toLocaleString('fr-FR')}`, 150, 25);
+      doc.setFontSize(10);
+      doc.setTextColor(0, 0, 0); // Texte noir
+      doc.text(`Date: ${todayStr}`, 150, 10);
+      doc.text(`Généré le: ${new Date().toLocaleString('fr-FR')}`, 150, 20);
       
       // Ligne de séparation décorative
-      doc.setDrawColor(greenColor[0], greenColor[1], greenColor[2]);
-      doc.setLineWidth(2);
-      doc.line(20, 55, 190, 55);
+      doc.setDrawColor(blueColor[0], blueColor[1], blueColor[2]);
+      doc.setLineWidth(1);
+      doc.line(20, 35, 190, 35);
       
     } catch (error) {
       console.error('Erreur lors du chargement du logo:', error);
       
       // Fallback: utiliser le logo stylisé si le chargement échoue
-      doc.setFillColor(blueColor[0], blueColor[1], blueColor[2]); // Fond bleu du logo
-      doc.rect(0, 0, 210, 50, 'F');
+      doc.setFillColor(255, 255, 255); // Fond blanc
+      doc.rect(0, 0, 210, 40, 'F');
       
-      // Logo stylisé avec cercle (fallback)
+      // Logo stylisé avec cercle (fallback) - plus petit
       doc.setFillColor(greenColor[0], greenColor[1], greenColor[2]); // Cercle vert
-      doc.circle(20, 20, 12, 'F');
+      doc.circle(32, 15, 8, 'F');
       doc.setFillColor(255, 255, 255); // Cercle blanc au centre
-      doc.circle(20, 20, 8, 'F');
+      doc.circle(32, 15, 5, 'F');
       doc.setFillColor(blueColor[0], blueColor[1], blueColor[2]); // Point bleu au centre
-      doc.circle(20, 20, 4, 'F');
+      doc.circle(32, 15, 3, 'F');
       
       // Logo (texte stylisé)
-      doc.setFontSize(24);
-      doc.setTextColor(255, 255, 255); // Texte blanc sur fond bleu
+      doc.setFontSize(20);
+      doc.setTextColor(blueColor[0], blueColor[1], blueColor[2]); // Texte bleu
       doc.setFont('helvetica', 'bold');
-      doc.text('CENTRE DIAGNOSTIC', 45, 20);
+      doc.text('CENTRE DIAGNOSTIC', 50, 15);
       
-      doc.setFontSize(14);
-      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(12);
+      doc.setTextColor(greenColor[0], greenColor[1], greenColor[2]); // Texte vert
       doc.setFont('helvetica', 'normal');
-      doc.text('Rapport Journalier - Portail Infirmier', 45, 30);
+      doc.text('Rapport Journalier - Portail Infirmier', 50, 25);
       
       // Date et informations
-      doc.setFontSize(11);
-      doc.setTextColor(255, 255, 255);
-      doc.text(`Date: ${todayStr}`, 150, 15);
-      doc.text(`Généré le: ${new Date().toLocaleString('fr-FR')}`, 150, 25);
+      doc.setFontSize(10);
+      doc.setTextColor(0, 0, 0); // Texte noir
+      doc.text(`Date: ${todayStr}`, 150, 10);
+      doc.text(`Généré le: ${new Date().toLocaleString('fr-FR')}`, 150, 20);
       
       // Ligne de séparation décorative
-      doc.setDrawColor(greenColor[0], greenColor[1], greenColor[2]);
-      doc.setLineWidth(2);
-      doc.line(20, 55, 190, 55);
+      doc.setDrawColor(blueColor[0], blueColor[1], blueColor[2]);
+      doc.setLineWidth(1);
+      doc.line(20, 35, 190, 35);
     }
     
-    let yPosition = 70;
+    let yPosition = 50;
     
     // Résumé du jour
     doc.setFontSize(18);
