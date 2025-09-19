@@ -84,16 +84,16 @@ export const createPDFHeader = async (doc: jsPDF, title: string, subtitle: strin
     const titleX = (pageWidth - titleWidth) / 2; // Centrer le titre
     doc.text(title, titleX, 35); // Position descendue pour plus d'espace
     
-    // Date et informations
-    doc.setFontSize(10);
+    // Date et informations (position ajustée pour éviter les coupures)
+    doc.setFontSize(9);
     doc.setTextColor(0, 0, 0); // Texte noir
-    doc.text(`Date: ${todayStr}`, 150, 10);
-    doc.text(`Généré le: ${new Date().toLocaleString('fr-FR')}`, 150, 20);
+    doc.text(`Date: ${todayStr}`, 150, 15);
+    doc.text(`Généré le: ${new Date().toLocaleString('fr-FR')}`, 150, 25);
     
-    // Ligne de séparation décorative (plus bas)
+    // Ligne de séparation décorative (ajustée)
     doc.setDrawColor(LOGO_COLORS.blue[0], LOGO_COLORS.blue[1], LOGO_COLORS.blue[2]);
     doc.setLineWidth(1);
-    doc.line(20, 45, 190, 45);
+    doc.line(20, 40, 190, 40);
     
   } catch (error) {
     console.error('Erreur lors du chargement du logo:', error);
@@ -121,16 +121,16 @@ export const createPDFHeader = async (doc: jsPDF, title: string, subtitle: strin
     const titleX = (pageWidth - titleWidth) / 2; // Centrer le titre
     doc.text(title, titleX, 35); // Position descendue pour plus d'espace
     
-    // Date et informations
-    doc.setFontSize(10);
+    // Date et informations (position ajustée pour éviter les coupures)
+    doc.setFontSize(9);
     doc.setTextColor(0, 0, 0); // Texte noir
-    doc.text(`Date: ${todayStr}`, 150, 10);
-    doc.text(`Généré le: ${new Date().toLocaleString('fr-FR')}`, 150, 20);
+    doc.text(`Date: ${todayStr}`, 150, 15);
+    doc.text(`Généré le: ${new Date().toLocaleString('fr-FR')}`, 150, 25);
     
-    // Ligne de séparation décorative (plus bas)
+    // Ligne de séparation décorative (ajustée)
     doc.setDrawColor(LOGO_COLORS.blue[0], LOGO_COLORS.blue[1], LOGO_COLORS.blue[2]);
     doc.setLineWidth(1);
-    doc.line(20, 45, 190, 45);
+    doc.line(20, 40, 190, 40);
   }
 };
 
