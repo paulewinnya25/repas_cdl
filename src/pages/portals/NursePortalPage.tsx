@@ -59,24 +59,26 @@ const NursePortalPage: React.FC = () => {
   };
 
   const exportDailyReportCSV = () => {
-    // Seulement les commandes employés pour le rapport infirmier
-    // Calculer les statistiques de plats (employés seulement)
-    const totalOrderedDishes = employeeOrdersToday.reduce((sum, order) => sum + order.quantity, 0);
-    const totalDeliveredDishes = employeeOrdersToday.filter(o => o.status === 'Livré').reduce((sum, order) => sum + order.quantity, 0);
+    const todayOrders = orders.filter(o => isSameDay(new Date((o as Order & { date?: string }).date || o.created_at || ''), new Date()));
     
-    // Créer un résumé des plats commandés avec quantités (employés seulement)
+    // Seulement les commandes patients pour le rapport infirmier
+    // Calculer les statistiques de plats (patients seulement)
+    const totalOrderedDishes = todayOrders.length;
+    const totalDeliveredDishes = todayOrders.filter(o => o.status === 'Livré').length;
+    
+    // Créer un résumé des plats commandés avec quantités (patients seulement)
     const dishesSummary = new Map<string, { quantity: number, type: string, status: string }>();
     
-    // Ajouter seulement les plats employés avec quantités
-    employeeOrdersToday.forEach(order => {
-      const key = `Employé - ${order.employee_menus?.name || 'Menu inconnu'}`;
+    // Ajouter seulement les plats patients avec quantités
+    todayOrders.forEach(order => {
+      const key = `Patient - ${order.menu}`;
       const existing = dishesSummary.get(key);
       if (existing) {
-        existing.quantity += order.quantity;
+        existing.quantity += 1;
       } else {
         dishesSummary.set(key, { 
-          quantity: order.quantity, 
-          type: 'Employé',
+          quantity: 1, 
+          type: 'Patient',
           status: order.status
         });
       }
@@ -100,22 +102,22 @@ const NursePortalPage: React.FC = () => {
       summaryRows.push([data.type, menu.split(' - ')[1], data.quantity.toString(), data.status]);
     });
     
-    summaryRows.push([''], ['DÉTAIL DES COMMANDES EMPLOYÉS']);
+    summaryRows.push([''], ['DÉTAIL DES COMMANDES PATIENTS']);
     
-    const employeeRows = employeeOrdersToday.map(o => [
-      o.employee_name || '', 
-      o.employee_menus?.name || '', 
-      o.quantity.toString(),
+    const patientRows = todayOrders.map(o => [
+      o.patients?.name || '', 
+      o.patients?.room || '', 
+      o.meal_type, 
+      o.menu, 
       o.status, 
-      o.created_at || '',
-      (o.total_price || 0).toLocaleString('fr-FR') + ' XAF'
+      (o.created_at || (o as Order & { date?: string }).date) || ''
     ]);
-    const employeeHeader = ['Nom Employé', 'Menu', 'Quantité', 'Statut', 'Date', 'Prix Total'];
+    const patientHeader = ['Nom Patient', 'Chambre', 'Repas', 'Menu', 'Statut', 'Date'];
     
     downloadCSV(`rapport_journalier_infirmier_${new Date().toISOString().slice(0,10)}.csv`, [
       ...summaryRows, 
-      employeeHeader,
-      ...employeeRows
+      patientHeader,
+      ...patientRows
     ]);
   };
 
@@ -124,24 +126,26 @@ const NursePortalPage: React.FC = () => {
     const win = window.open('', '_blank');
     if (!win) return;
     
-    // Seulement les commandes employés pour le rapport infirmier
-    // Calculer les statistiques de plats (employés seulement)
-    const totalOrderedDishes = employeeOrdersToday.reduce((sum, order) => sum + order.quantity, 0);
-    const totalDeliveredDishes = employeeOrdersToday.filter(o => o.status === 'Livré').reduce((sum, order) => sum + order.quantity, 0);
+    const todayOrders = orders.filter(o => isSameDay(new Date((o as Order & { date?: string }).date || o.created_at || ''), new Date()));
     
-    // Créer un résumé des plats commandés avec quantités (employés seulement)
+    // Seulement les commandes patients pour le rapport infirmier
+    // Calculer les statistiques de plats (patients seulement)
+    const totalOrderedDishes = todayOrders.length;
+    const totalDeliveredDishes = todayOrders.filter(o => o.status === 'Livré').length;
+    
+    // Créer un résumé des plats commandés avec quantités (patients seulement)
     const dishesSummary = new Map<string, { quantity: number, type: string, status: string }>();
     
-    // Ajouter seulement les plats employés avec quantités
-    employeeOrdersToday.forEach(order => {
-      const key = `Employé - ${order.employee_menus?.name || 'Menu inconnu'}`;
+    // Ajouter seulement les plats patients avec quantités
+    todayOrders.forEach(order => {
+      const key = `Patient - ${order.menu}`;
       const existing = dishesSummary.get(key);
       if (existing) {
-        existing.quantity += order.quantity;
+        existing.quantity += 1;
       } else {
         dishesSummary.set(key, { 
-          quantity: order.quantity, 
-          type: 'Employé',
+          quantity: 1, 
+          type: 'Patient',
           status: order.status
         });
       }
@@ -179,9 +183,9 @@ const NursePortalPage: React.FC = () => {
         </tbody>
       </table>
       
-      <h3>👨‍💼 Commandes Employés</h3>
-      <table><thead><tr><th>Nom Employé</th><th>Menu</th><th>Quantité</th><th>Statut</th><th>Date</th><th>Prix Total</th></tr></thead><tbody>
-      ${employeeOrdersToday.map(o => `<tr><td>${o.employee_name || ''}</td><td>${o.employee_menus?.name || ''}</td><td>${o.quantity}</td><td>${o.status}</td><td>${o.created_at || ''}</td><td>${(o.total_price || 0).toLocaleString('fr-FR')} XAF</td></tr>`).join('')}
+      <h3>👥 Commandes Patients</h3>
+      <table><thead><tr><th>Nom Patient</th><th>Chambre</th><th>Repas</th><th>Menu</th><th>Statut</th><th>Date</th></tr></thead><tbody>
+      ${todayOrders.map(o => `<tr><td>${o.patients?.name || ''}</td><td>${o.patients?.room || ''}</td><td>${o.meal_type}</td><td>${o.menu}</td><td>${o.status}</td><td>${(o.created_at || (o as Order & { date?: string }).date) ?? ''}</td></tr>`).join('')}
       </tbody></table>
       </body></html>
     `);
@@ -1350,13 +1354,13 @@ const NursePortalPage: React.FC = () => {
                         <div className="flex justify-between">
                           <span>Total plats commandés</span>
                           <span className="font-bold" style={{ color: '#41b8ac' }}>
-                            {employeeOrdersToday.reduce((sum, order) => sum + order.quantity, 0)}
+                            {orders.filter(o => isSameDay(new Date((o as Order & { date?: string }).date || o.created_at || ''), new Date())).length}
                           </span>
                         </div>
                         <div className="flex justify-between">
                           <span>Total plats livrés</span>
                           <span className="font-bold" style={{ color: '#41b8ac' }}>
-                            {employeeOrdersToday.filter(o => o.status === 'Livré').reduce((sum, order) => sum + order.quantity, 0)}
+                            {orders.filter(o => isSameDay(new Date((o as Order & { date?: string }).date || o.created_at || ''), new Date()) && o.status === 'Livré').length}
                           </span>
                         </div>
                       </div>
@@ -1368,20 +1372,21 @@ const NursePortalPage: React.FC = () => {
                       <div className="space-y-2 text-sm">
                         {(() => {
                           const dishesSummary = new Map<string, { quantity: number, type: string }>();
+                          const todayOrders = orders.filter(o => isSameDay(new Date((o as Order & { date?: string }).date || o.created_at || ''), new Date()));
                           
-                          // Ajouter seulement les plats employés
-                          employeeOrdersToday.forEach(order => {
-                            const key = `Employé - ${order.employee_menus?.name || 'Menu inconnu'}`;
+                          // Ajouter seulement les plats patients
+                          todayOrders.forEach(order => {
+                            const key = `Patient - ${order.menu}`;
                             dishesSummary.set(key, { 
-                              quantity: (dishesSummary.get(key)?.quantity || 0) + order.quantity, 
-                              type: 'Employé' 
+                              quantity: (dishesSummary.get(key)?.quantity || 0) + 1, 
+                              type: 'Patient' 
                             });
                           });
                           
                           return Array.from(dishesSummary.entries()).map(([menu, data]) => (
                             <div key={menu} className="flex justify-between items-center">
                               <span className="flex items-center space-x-2">
-                                <span className="px-2 py-1 rounded text-xs bg-green-100 text-green-800">
+                                <span className="px-2 py-1 rounded text-xs bg-blue-100 text-blue-800">
                                   {data.type}
                                 </span>
                                 <span>{menu.split(' - ')[1]}</span>
