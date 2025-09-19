@@ -41,8 +41,11 @@ export const loadLogoImage = async (): Promise<string> => {
       ctx.drawImage(img, 0, 0, width, height);
       resolve(canvas.toDataURL('image/png'));
     };
-    img.onerror = () => reject(new Error('Failed to load logo'));
-    img.src = 'https://res.cloudinary.com/dd64mwkl2/image/upload/v1734533177/Centre_Diagnostic-Logo_cyekdg.svg';
+    img.onerror = () => {
+      console.warn('Logo local non trouvé, utilisation du logo Cloudinary');
+      img.src = 'https://res.cloudinary.com/dd64mwkl2/image/upload/v1734533177/Centre_Diagnostic-Logo_cyekdg.svg';
+    };
+    img.src = '/logo-centre-diagnostic-official.svg';
   });
 };
 
@@ -90,6 +93,8 @@ export const createPDFHeader = async (doc: jsPDF, title: string, subtitle: strin
     // Fallback: utiliser le logo stylisé si le chargement échoue
     doc.setFillColor(255, 255, 255); // Fond blanc
     doc.rect(0, 0, 210, 50, 'F');
+    
+    const pageWidth = 210; // Définir pageWidth pour le fallback
     
     // Logo stylisé avec cercle (fallback) - centré
     const logoX = (pageWidth - 20) / 2; // Centrer le cercle
