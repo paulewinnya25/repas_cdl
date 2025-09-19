@@ -6,6 +6,17 @@
     <title>Centre Diagnostic - RepasCDL</title>
     <link rel="icon" type="image/svg+xml" href="/logo-centre-diagnostic-official.svg" />
     <meta name="description" content="Système de gestion des repas pour le Centre Diagnostic" />
+    
+    <!-- Prévention Service Worker -->
+    <script>
+      // Bloquer immédiatement les Service Workers
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register = function() {
+          console.warn('🚫 Service Worker registration bloqué');
+          return Promise.reject(new Error('Blocked'));
+        };
+      }
+    </script>
   </head>
 
   <body>

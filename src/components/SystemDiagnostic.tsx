@@ -4,6 +4,7 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheckCircle, faExclamationTriangle, faTimes, faRefresh } from '@fortawesome/free-solid-svg-icons';
+import ServiceWorkerCleaner from './ServiceWorkerCleaner';
 
 interface DiagnosticInfo {
   serviceWorker: boolean;
@@ -191,12 +192,19 @@ const SystemDiagnostic: React.FC = () => {
         <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded">
           <p><strong>Conseils :</strong></p>
           <ul className="mt-1 space-y-1">
-            <li>• Si Service Worker = Problème : Cliquez sur "Nettoyer"</li>
+            <li>• Si Service Worker = Problème : Utilisez le nettoyeur ci-dessous</li>
             <li>• Si Connectivité = Problème : Vérifiez votre connexion internet</li>
             <li>• Si Stockage = Problème : Videz le cache du navigateur</li>
             <li>• En cas de problème persistant : Rechargez la page</li>
           </ul>
         </div>
+
+        {/* Nettoyeur Service Worker spécialisé */}
+        {diagnostic.serviceWorker && (
+          <div className="mt-4">
+            <ServiceWorkerCleaner />
+          </div>
+        )}
       </CardContent>
     </Card>
   );

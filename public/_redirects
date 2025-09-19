@@ -1,0 +1,4 @@
+# Rediriger les Service Workers vers une page vide
+/sw.js /404.html 404
+/cnm-sw.js /404.html 404
+/service-worker.js /404.html 404
