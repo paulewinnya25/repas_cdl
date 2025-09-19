@@ -19,9 +19,9 @@ export const loadLogoImage = async (): Promise<string> => {
         return;
       }
       
-      // Redimensionner le logo pour le PDF
-      const maxWidth = 25;
-      const maxHeight = 20;
+      // Redimensionner le logo pour le PDF (plus grand pour meilleure visibilité)
+      const maxWidth = 35;
+      const maxHeight = 25;
       const aspectRatio = img.width / img.height;
       
       let width = maxWidth;
@@ -35,6 +35,9 @@ export const loadLogoImage = async (): Promise<string> => {
       canvas.width = width;
       canvas.height = height;
       
+      // Améliorer la qualité du rendu
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
       ctx.drawImage(img, 0, 0, width, height);
       resolve(canvas.toDataURL('image/png'));
     };
@@ -55,19 +58,14 @@ export const createPDFHeader = async (doc: jsPDF, title: string, subtitle: strin
     doc.setFillColor(255, 255, 255); // Fond blanc
     doc.rect(0, 0, 210, 40, 'F');
     
-    // Ajouter le vrai logo (plus petit)
-    doc.addImage(logoDataUrl, 'PNG', 20, 5, 25, 20);
+    // Ajouter le vrai logo (plus grand et mieux positionné)
+    doc.addImage(logoDataUrl, 'PNG', 20, 5, 35, 25);
     
-    // Logo (texte stylisé)
-    doc.setFontSize(20);
-    doc.setTextColor(LOGO_COLORS.blue[0], LOGO_COLORS.blue[1], LOGO_COLORS.blue[2]); // Texte bleu
-    doc.setFont('helvetica', 'bold');
-    doc.text('CENTRE DIAGNOSTIC', 50, 15);
-    
-    doc.setFontSize(12);
+    // Titre du rapport seulement (sans CENTRE DIAGNOSTIC)
+    doc.setFontSize(14);
     doc.setTextColor(LOGO_COLORS.green[0], LOGO_COLORS.green[1], LOGO_COLORS.green[2]); // Texte vert
-    doc.setFont('helvetica', 'normal');
-    doc.text(title, 50, 25);
+    doc.setFont('helvetica', 'bold');
+    doc.text(title, 60, 20);
     
     // Date et informations
     doc.setFontSize(10);
@@ -87,24 +85,19 @@ export const createPDFHeader = async (doc: jsPDF, title: string, subtitle: strin
     doc.setFillColor(255, 255, 255); // Fond blanc
     doc.rect(0, 0, 210, 40, 'F');
     
-    // Logo stylisé avec cercle (fallback) - plus petit
+    // Logo stylisé avec cercle (fallback) - plus grand
     doc.setFillColor(LOGO_COLORS.green[0], LOGO_COLORS.green[1], LOGO_COLORS.green[2]); // Cercle vert
-    doc.circle(32, 15, 8, 'F');
+    doc.circle(37, 17, 10, 'F');
     doc.setFillColor(255, 255, 255); // Cercle blanc au centre
-    doc.circle(32, 15, 5, 'F');
+    doc.circle(37, 17, 6, 'F');
     doc.setFillColor(LOGO_COLORS.blue[0], LOGO_COLORS.blue[1], LOGO_COLORS.blue[2]); // Point bleu au centre
-    doc.circle(32, 15, 3, 'F');
+    doc.circle(37, 17, 4, 'F');
     
-    // Logo (texte stylisé)
-    doc.setFontSize(20);
-    doc.setTextColor(LOGO_COLORS.blue[0], LOGO_COLORS.blue[1], LOGO_COLORS.blue[2]); // Texte bleu
-    doc.setFont('helvetica', 'bold');
-    doc.text('CENTRE DIAGNOSTIC', 50, 15);
-    
-    doc.setFontSize(12);
+    // Titre du rapport seulement (sans CENTRE DIAGNOSTIC)
+    doc.setFontSize(14);
     doc.setTextColor(LOGO_COLORS.green[0], LOGO_COLORS.green[1], LOGO_COLORS.green[2]); // Texte vert
-    doc.setFont('helvetica', 'normal');
-    doc.text(title, 50, 25);
+    doc.setFont('helvetica', 'bold');
+    doc.text(title, 60, 20);
     
     // Date et informations
     doc.setFontSize(10);
@@ -231,4 +224,41 @@ export const createTable = (
   }
   
   return yPosition + 15;
+};
+
+// Fonction pour créer un rapport amélioré avec plus de détails
+export const createEnhancedReport = async (
+  doc: jsPDF,
+  title: string,
+  summaryData: Array<{label: string, value: string | number}>,
+  sections: Array<{
+    title: string;
+    headers: string[];
+    data: string[][];
+    color?: [number, number, number];
+  }>
+): Promise<void> => {
+  // Créer l'en-tête amélioré
+  await createPDFHeader(doc, title, '');
+  
+  let yPosition = 50;
+  
+  // Section résumé améliorée
+  yPosition = createSummarySection(doc, yPosition, 'RÉSUMÉ DU JOUR', summaryData);
+  
+  // Ajouter un espacement
+  yPosition += 10;
+  
+  // Créer chaque section
+  sections.forEach((section, index) => {
+    yPosition = createTable(doc, yPosition, section.title, section.headers, section.data, section.color);
+    
+    // Ajouter un espacement entre les sections
+    if (index < sections.length - 1) {
+      yPosition += 10;
+    }
+  });
+  
+  // Pied de page amélioré
+  createPDFFooter(doc);
 };

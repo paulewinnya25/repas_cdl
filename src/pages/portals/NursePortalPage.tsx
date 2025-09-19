@@ -4,7 +4,7 @@ import { Patient, Order, UserRole, PatientMenu, EmployeeMenu, EmployeeOrder } fr
 import { gabonCities } from '../../data/gabon-locations';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import jsPDF from 'jspdf';
-import { createPDFHeader, createPDFFooter, createSummarySection, createTable, LOGO_COLORS } from '../../utils/pdfReportUtils';
+import { createPDFHeader, createPDFFooter, createSummarySection, createTable, createEnhancedReport, LOGO_COLORS } from '../../utils/pdfReportUtils';
 import { 
   faUserInjured, 
   faClipboardList, 
