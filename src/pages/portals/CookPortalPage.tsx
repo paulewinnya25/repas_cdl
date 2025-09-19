@@ -16,6 +16,7 @@ import { showSuccess, showError } from '@/utils/toast';
 import type { Patient, Order, EmployeeMenu, EmployeeOrder, PatientMenu, DietaryRestriction, PatientMealType, DayOfWeek } from '@/types/repas-cdl';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { createPDFHeader, createPDFFooter, createSummarySection, createTable, LOGO_COLORS } from '../../utils/pdfReportUtils';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts';
 import { isSameDay } from 'date-fns';
 
@@ -868,25 +869,14 @@ export default function CookPortalPage() {
   };
 
   const exportDailyReportPDF = async () => {
-    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
-    const pageWidth = doc.internal.pageSize.getWidth();
-    let y = 40;
-
-    const logoUrl = '/logo-centre-diagnostic-official.svg';
-    const logoDataUrl = await fetchImageAsDataUrl(logoUrl);
-    if (logoDataUrl) { doc.addImage(logoDataUrl, 'PNG', 40, y - 20, 120, 40); }
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(16);
-    const title = 'Rapport journalier - Cuisine';
-    doc.text(title, pageWidth / 2, y, { align: 'center' });
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(11);
-    const dateStr = new Date().toLocaleDateString('fr-FR');
-    doc.text(`Date: ${dateStr}`, pageWidth - 40, y, { align: 'right' });
-    y += 20; doc.setDrawColor(220); doc.line(40, y, pageWidth - 40, y); y += 14;
-
-    // Résumé
+    const doc = new jsPDF();
+    
+    // Créer l'en-tête
+    await createPDFHeader(doc, 'Rapport Journalier - Portail Cuisinier', '');
+    
+    let yPosition = 50;
+    
+    // Résumé du jour
     const totalPending = pendingPatientOrders.length + pendingEmployeeOrders.length;
     const totalToday = todayPatientOrders.length + todayEmployeeOrders.length;
     const totalRevenue = employeeOrders
@@ -898,52 +888,43 @@ export default function CookPortalPage() {
     const totalDeliveredDishes = todayPatientOrders.filter(o => o.status === 'Livré').length + 
                                  todayEmployeeOrders.filter(o => o.status === 'Livré').reduce((sum, order) => sum + order.quantity, 0);
     
-    const summary = [
-      `En attente: ${totalPending}`,
-      `Commandes aujourd'hui: ${totalToday}`,
-      `Total plats commandés: ${totalOrderedDishes}`,
-      `Total plats livrés: ${totalDeliveredDishes}`,
-      `Total recette: ${totalRevenue.toLocaleString('fr-FR')} XAF`,
+    const summaryData = [
+      { label: 'En attente', value: totalPending },
+      { label: 'Commandes aujourd\'hui', value: totalToday },
+      { label: 'Total plats commandés', value: totalOrderedDishes },
+      { label: 'Total plats livrés', value: totalDeliveredDishes },
+      { label: 'Total recette', value: `${totalRevenue.toLocaleString('fr-FR')} XAF` }
     ];
-    summary.forEach((line, idx) => doc.text(line, 40, y + idx * 16));
-    y += summary.length * 16 + 10;
-
+    yPosition = createSummarySection(doc, yPosition, 'RÉSUMÉ DU JOUR', summaryData);
+    
     // Tableau Patients (aujourd'hui)
     const patientRows = todayPatientOrders.map(o => [
-      o.patients?.name || '', o.patients?.room || '', o.meal_type, o.menu || '', o.status,
-      (o.created_at || o.date || '').toString().replace('T', ' ').substring(0, 16),
+      o.patients?.name || 'N/A',
+      o.patients?.room || 'N/A',
+      o.meal_type || 'N/A',
+      o.menu || 'N/A',
+      o.status || 'N/A',
+      (o.created_at || o.date || '').toString().replace('T', ' ').substring(0, 16)
     ]);
-    autoTable(doc, {
-      startY: y,
-      head: [['Patients', 'Chambre', 'Repas', 'Menu', 'Statut', 'Heure']],
-      body: patientRows.length ? patientRows : [['Aucune donnée', '', '', '', '', '']],
-      styles: { fontSize: 10 }, headStyles: { fillColor: [16, 185, 129] },
-      margin: { left: 40, right: 40 },
-    });
-    y = (doc as any).lastAutoTable.finalY + 12;
-
+    yPosition = createTable(doc, yPosition, 'COMMANDES PATIENTS', 
+      ['Patient', 'Chambre', 'Repas', 'Menu', 'Statut', 'Heure'], patientRows, LOGO_COLORS.green);
+    
     // Tableau Employés (aujourd'hui)
     const employeeRows = todayEmployeeOrders.map(o => [
-      o.employee_name || '', o.employee_menus?.name || '', o.quantity.toString(), o.status,
+      o.employee_name || 'N/A',
+      o.employee_menus?.name || 'N/A',
+      o.quantity.toString(),
+      o.status || 'N/A',
       (o.created_at || '').toString().replace('T', ' ').substring(0, 16),
-      (o.total_price || 0).toLocaleString('fr-FR') + ' XAF'
+      `${(o.total_price || 0).toLocaleString('fr-FR')} XAF`
     ]);
-    autoTable(doc, {
-      startY: y,
-      head: [['Employé', 'Menu', 'Quantité', 'Statut', 'Heure', 'Total']],
-      body: employeeRows.length ? employeeRows : [['Aucune donnée', '', '', '', '', '']],
-      styles: { fontSize: 10 }, headStyles: { fillColor: [59, 130, 246] },
-      margin: { left: 40, right: 40 },
-    });
-
-    // Footer
-    const pageCount = doc.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
-      doc.setFontSize(9);
-      doc.text(`Centre Diagnostic - Généré le ${dateStr}`, pageWidth / 2, doc.internal.pageSize.getHeight() - 24, { align: 'center' });
-    }
-
+    yPosition = createTable(doc, yPosition, 'COMMANDES EMPLOYÉS', 
+      ['Employé', 'Menu', 'Quantité', 'Statut', 'Heure', 'Total'], employeeRows, LOGO_COLORS.blue);
+    
+    // Pied de page
+    createPDFFooter(doc);
+    
+    // Télécharger le PDF
     doc.save(`rapport-cuisine-${new Date().toISOString().slice(0,10)}.pdf`);
   };
 

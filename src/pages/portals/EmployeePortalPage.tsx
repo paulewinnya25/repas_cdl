@@ -12,6 +12,8 @@ interface EmployeeOrderWithProfile extends EmployeeOrder {
 }
 import { gabonCities } from '../../data/gabon-locations';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import jsPDF from 'jspdf';
+import { createPDFHeader, createPDFFooter, createSummarySection, createTable, LOGO_COLORS } from '../../utils/pdfReportUtils';
 import { 
   faUserTie, 
   faUtensils, 
