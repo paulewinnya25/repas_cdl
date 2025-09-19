@@ -36,16 +36,30 @@ import { Textarea } from '../../components/ui/textarea';
 import { Header } from '../../components/ui/Header';
 import { showSuccess, showError } from '../../utils/toast';
 import { isSameDay } from 'date-fns';
+import NotificationSystem from '../../components/NotificationSystem';
+import { useNotifications, createOrderNotification } from '../../hooks/useNotifications';
+import AdvancedAnalytics from '../../components/AdvancedAnalytics';
+import MobileNurseInterface from '../../components/MobileNurseInterface';
 
 const NursePortalPage: React.FC = () => {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [patientMenus, setPatientMenus] = useState<PatientMenu[]>([]);
+  
+  // Système de notifications
+  const {
+    notifications,
+    addNotification,
+    markAsRead,
+    markAllAsRead,
+    clearNotification
+  } = useNotifications();
   const [employeeMenus, setEmployeeMenus] = useState<EmployeeMenu[]>([]);
   const [employeeOrdersToday, setEmployeeOrdersToday] = useState<EmployeeOrder[]>([]);
   const [activeFilter, setActiveFilter] = useState<'all' | 'patients' | 'today-orders' | 'pending' | 'recent-orders'>('all');
   const [activeTab, setActiveTab] = useState('patients');
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   const downloadCSV = (filename: string, rows: string[][]) => {
     const csvContent = rows.map(r => r.map(c => `"${(c ?? '').toString().replace(/"/g, '""')}"`).join(',')).join('\n');
@@ -302,6 +316,16 @@ const NursePortalPage: React.FC = () => {
     checkUserRole();
     // Le code sera demandé à chaque accès (pas de persistance)
     setHasAccess(false);
+    
+    // Détecter si l'utilisateur est sur mobile
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   const checkUserRole = async () => {
@@ -572,6 +596,9 @@ const NursePortalPage: React.FC = () => {
       if (error) throw error;
 
       showSuccess(`Commande créée avec succès - Menu: ${newOrder.menu}`);
+
+      // Ajouter une notification pour la nouvelle commande
+      addNotification(createOrderNotification('patient', 'created'));
 
       setNewOrder({ mealType: '', menu: '', instructions: '', companionMeal: false, companionInstructions: '', companionSelectedMenu: null, companionAccompaniments: 1, companionSelectedOptions: [] });
       setIsOrderModalOpen(false);
@@ -867,14 +894,22 @@ const NursePortalPage: React.FC = () => {
                 <p className="text-sm text-gray-600">Gestion des commandes patients</p>
               </div>
             </div>
-            <Button 
-              onClick={handleLogout}
-              variant="outline"
-              className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-            >
-              <FontAwesomeIcon icon={faSignOutAlt} className="mr-2" />
-              Déconnexion
-            </Button>
+            <div className="flex items-center gap-3">
+              <NotificationSystem
+                notifications={notifications}
+                onMarkAsRead={markAsRead}
+                onMarkAllAsRead={markAllAsRead}
+                onClearNotification={clearNotification}
+              />
+              <Button 
+                onClick={handleLogout}
+                variant="outline"
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+              >
+                <FontAwesomeIcon icon={faSignOutAlt} className="mr-2" />
+                Déconnexion
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -999,11 +1034,13 @@ const NursePortalPage: React.FC = () => {
 
         {/* Navigation par onglets */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="patients">Patients</TabsTrigger>
             <TabsTrigger value="menus">Menus Patients</TabsTrigger>
             <TabsTrigger value="orders">Commandes</TabsTrigger>
             <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="mobile">Mobile</TabsTrigger>
           </TabsList>
 
           {/* Onglet Patients */}
@@ -1386,6 +1423,30 @@ const NursePortalPage: React.FC = () => {
               </Card>
 
             </div>
+          </TabsContent>
+
+          {/* Onglet Analytics Avancés */}
+          <TabsContent value="analytics">
+            <AdvancedAnalytics 
+              orders={orders} 
+              employeeOrders={employeeOrdersToday} 
+            />
+          </TabsContent>
+
+          {/* Onglet Mobile */}
+          <TabsContent value="mobile">
+            <MobileNurseInterface
+              patients={patients}
+              orders={orders}
+              onPlaceOrder={(orderData) => {
+                // Simuler la création de commande
+                console.log('Commande mobile:', orderData);
+                addNotification(createOrderNotification('patient', 'created'));
+              }}
+              onScanPatient={(patientId) => {
+                console.log('Patient scanné:', patientId);
+              }}
+            />
           </TabsContent>
         </Tabs>
       </div>
