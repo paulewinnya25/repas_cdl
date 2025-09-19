@@ -4,13 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Header } from '@/components/ui/Header';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUserTie, faUtensils, faClock, faCheckCircle, faPlus, faEdit, faTrash, faUsers, faClipboardList, faChartLine, faBell, faDownload, faSignOutAlt, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faUserTie, faUtensils, faClock, faCheckCircle, faPlus, faEdit, faTrash, faUsers, faClipboardList, faChartLine, faBell, faDownload, faSignOutAlt, faTimes, faWarehouse, faBox, faExclamationTriangle, faMinus, faArrowUp, faArrowDown } from '@fortawesome/free-solid-svg-icons';
 import { supabase } from '@/integrations/supabase/client';
 import { showSuccess, showError } from '@/utils/toast';
 import type { Patient, Order, EmployeeMenu, EmployeeOrder, PatientMenu, DietaryRestriction, PatientMealType, DayOfWeek } from '@/types/repas-cdl';
@@ -31,6 +31,23 @@ export default function CookPortalPage() {
   const [isDeleteOrderModalOpen, setIsDeleteOrderModalOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<'all' | 'patients' | 'employees' | 'pending' | 'delivered'>('all');
   const [activeTab, setActiveTab] = useState('orders');
+  
+  // États pour la gestion de stock
+  const [inventoryItems, setInventoryItems] = useState<any[]>([]);
+  const [isInventoryModalOpen, setIsInventoryModalOpen] = useState(false);
+  const [isEditInventoryModalOpen, setIsEditInventoryModalOpen] = useState(false);
+  const [editingInventoryItem, setEditingInventoryItem] = useState<any>(null);
+  const [newInventoryItem, setNewInventoryItem] = useState({
+    name: '',
+    category: '',
+    current_stock: 0,
+    min_stock: 0,
+    unit: '',
+    supplier: '',
+    cost_per_unit: 0,
+    expiry_date: '',
+    notes: ''
+  });
   const downloadCSV = (filename: string, rows: string[][]) => {
     const csvContent = rows.map(r => r.map(c => `"${(c ?? '').toString().replace(/"/g, '""')}"`).join(',')).join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -189,6 +206,9 @@ export default function CookPortalPage() {
         setPatientMenus([]);
       }
 
+      // Charger les données de stock
+      await fetchInventoryData();
+
     } catch (error) {
       console.error('Erreur lors du chargement des données:', error);
       showError('Impossible de charger les données');
@@ -233,6 +253,114 @@ export default function CookPortalPage() {
   const handleClearFilter = () => {
     setActiveFilter('all');
     // Ne pas changer d'onglet, rester sur l'onglet actuel
+  };
+
+  // Fonctions de gestion de stock
+  const fetchInventoryData = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('kitchen_inventory')
+        .select('*')
+        .order('name', { ascending: true });
+      
+      if (error) {
+        console.warn('Table kitchen_inventory non disponible:', error);
+        setInventoryItems([]);
+      } else {
+        setInventoryItems(data || []);
+      }
+    } catch (error) {
+      console.warn('Erreur lors du chargement du stock:', error);
+      setInventoryItems([]);
+    }
+  };
+
+  const handleInventorySubmit = async () => {
+    if (!newInventoryItem.name || !newInventoryItem.category) {
+      showError('Veuillez remplir le nom et la catégorie');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('kitchen_inventory')
+        .insert([newInventoryItem]);
+
+      if (error) throw error;
+
+      showSuccess('Article ajouté au stock avec succès');
+      setNewInventoryItem({
+        name: '',
+        category: '',
+        current_stock: 0,
+        min_stock: 0,
+        unit: '',
+        supplier: '',
+        cost_per_unit: 0,
+        expiry_date: '',
+        notes: ''
+      });
+      setIsInventoryModalOpen(false);
+      fetchInventoryData();
+    } catch (error) {
+      console.error('Erreur lors de l\'ajout de l\'article:', error);
+      showError('Erreur lors de l\'ajout de l\'article');
+    }
+  };
+
+  const handleInventoryUpdate = async () => {
+    if (!editingInventoryItem) return;
+
+    try {
+      const { error } = await supabase
+        .from('kitchen_inventory')
+        .update(editingInventoryItem)
+        .eq('id', editingInventoryItem.id);
+
+      if (error) throw error;
+
+      showSuccess('Article mis à jour avec succès');
+      setIsEditInventoryModalOpen(false);
+      setEditingInventoryItem(null);
+      fetchInventoryData();
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour:', error);
+      showError('Erreur lors de la mise à jour');
+    }
+  };
+
+  const handleInventoryDelete = async (itemId: string) => {
+    try {
+      const { error } = await supabase
+        .from('kitchen_inventory')
+        .delete()
+        .eq('id', itemId);
+
+      if (error) throw error;
+
+      showSuccess('Article supprimé avec succès');
+      fetchInventoryData();
+    } catch (error) {
+      console.error('Erreur lors de la suppression:', error);
+      showError('Erreur lors de la suppression');
+    }
+  };
+
+  const updateInventoryStock = async (itemId: string, newStock: number) => {
+    try {
+      const { error } = await supabase
+        .from('kitchen_inventory')
+        .update({ current_stock: newStock })
+        .eq('id', itemId);
+
+      if (error) throw error;
+
+      showSuccess('Stock mis à jour');
+      fetchInventoryData();
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour du stock:', error);
+      showError('Erreur lors de la mise à jour du stock');
+    }
   };
 
   const handleMenuSubmit = async () => {
@@ -877,10 +1005,11 @@ export default function CookPortalPage() {
 
         {/* Onglets principaux */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="orders">Commandes</TabsTrigger>
             <TabsTrigger value="menus">Menus Employés</TabsTrigger>
             <TabsTrigger value="patient-menus">Menus Patients</TabsTrigger>
+            <TabsTrigger value="inventory">Gestion Stock</TabsTrigger>
             <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
           </TabsList>
 
@@ -1507,6 +1636,134 @@ export default function CookPortalPage() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* Onglet Gestion de Stock */}
+          <TabsContent value="inventory" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center">
+                    <FontAwesomeIcon icon={faWarehouse} className="mr-2 text-purple-600" />
+                    Gestion de Stock de la Cuisine
+                  </span>
+                  <Button onClick={() => setIsInventoryModalOpen(true)}>
+                    <FontAwesomeIcon icon={faPlus} className="mr-2" />
+                    Ajouter un article
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {inventoryItems.map((item) => (
+                    <Card 
+                      key={item.id} 
+                      className={`border-l-4 ${
+                        item.current_stock <= item.min_stock 
+                          ? 'border-l-red-500 bg-red-50' 
+                          : item.current_stock <= item.min_stock * 1.5 
+                            ? 'border-l-yellow-500 bg-yellow-50' 
+                            : 'border-l-green-500 bg-green-50'
+                      }`}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="font-semibold text-lg">{item.name}</h3>
+                          <Badge 
+                            variant={
+                              item.current_stock <= item.min_stock 
+                                ? 'destructive' 
+                                : item.current_stock <= item.min_stock * 1.5 
+                                  ? 'secondary' 
+                                  : 'default'
+                            }
+                          >
+                            {item.current_stock <= item.min_stock ? 'Stock bas' : 
+                             item.current_stock <= item.min_stock * 1.5 ? 'Stock moyen' : 'Stock OK'}
+                          </Badge>
+                        </div>
+                        
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Catégorie:</span>
+                            <span className="font-medium">{item.category}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Stock actuel:</span>
+                            <span className="font-medium">{item.current_stock} {item.unit}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Stock minimum:</span>
+                            <span className="font-medium">{item.min_stock} {item.unit}</span>
+                          </div>
+                          {item.supplier && (
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Fournisseur:</span>
+                              <span className="font-medium">{item.supplier}</span>
+                            </div>
+                          )}
+                          {item.cost_per_unit > 0 && (
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Prix unitaire:</span>
+                              <span className="font-medium">{item.cost_per_unit.toLocaleString('fr-FR')} XAF</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between mt-4">
+                          <div className="flex items-center space-x-2">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => updateInventoryStock(item.id, item.current_stock - 1)}
+                              disabled={item.current_stock <= 0}
+                            >
+                              <FontAwesomeIcon icon={faMinus} className="mr-1" />
+                            </Button>
+                            <span className="font-medium">{item.current_stock}</span>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => updateInventoryStock(item.id, item.current_stock + 1)}
+                            >
+                              <FontAwesomeIcon icon={faPlus} className="mr-1" />
+                            </Button>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => {
+                                setEditingInventoryItem(item);
+                                setIsEditInventoryModalOpen(true);
+                              }}
+                            >
+                              <FontAwesomeIcon icon={faEdit} className="mr-1" />
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleInventoryDelete(item.id)}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <FontAwesomeIcon icon={faTrash} className="mr-1" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                {inventoryItems.length === 0 && (
+                  <div className="text-center py-12">
+                    <FontAwesomeIcon icon={faWarehouse} className="text-6xl text-gray-300 mb-4" />
+                    <p className="text-gray-500 text-lg">Aucun article en stock</p>
+                    <p className="text-gray-400">Commencez par ajouter des articles à votre inventaire</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
@@ -2139,6 +2396,251 @@ export default function CookPortalPage() {
             >
               <FontAwesomeIcon icon={faTrash} className="mr-2" />
               Supprimer définitivement
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal d'ajout d'article de stock */}
+      <Dialog open={isInventoryModalOpen} onOpenChange={setIsInventoryModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ajouter un article au stock</DialogTitle>
+            <DialogDescription>
+              Ajoutez un nouvel article à l'inventaire de la cuisine
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="inventory-name">Nom de l'article *</Label>
+              <Input
+                id="inventory-name"
+                placeholder="Ex: Riz basmati"
+                value={newInventoryItem.name}
+                onChange={(e) => setNewInventoryItem({...newInventoryItem, name: e.target.value})}
+              />
+            </div>
+            <div>
+              <Label htmlFor="inventory-category">Catégorie *</Label>
+              <Select 
+                value={newInventoryItem.category} 
+                onValueChange={(value) => setNewInventoryItem({...newInventoryItem, category: value})}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner une catégorie" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="viandes">Viandes</SelectItem>
+                  <SelectItem value="poissons">Poissons</SelectItem>
+                  <SelectItem value="legumes">Légumes</SelectItem>
+                  <SelectItem value="fruits">Fruits</SelectItem>
+                  <SelectItem value="cereales">Céréales</SelectItem>
+                  <SelectItem value="epices">Épices</SelectItem>
+                  <SelectItem value="produits-laitiers">Produits laitiers</SelectItem>
+                  <SelectItem value="boissons">Boissons</SelectItem>
+                  <SelectItem value="autres">Autres</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="inventory-current-stock">Stock actuel</Label>
+                <Input
+                  id="inventory-current-stock"
+                  type="number"
+                  min="0"
+                  value={newInventoryItem.current_stock}
+                  onChange={(e) => setNewInventoryItem({...newInventoryItem, current_stock: parseInt(e.target.value) || 0})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="inventory-min-stock">Stock minimum</Label>
+                <Input
+                  id="inventory-min-stock"
+                  type="number"
+                  min="0"
+                  value={newInventoryItem.min_stock}
+                  onChange={(e) => setNewInventoryItem({...newInventoryItem, min_stock: parseInt(e.target.value) || 0})}
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="inventory-unit">Unité</Label>
+              <Input
+                id="inventory-unit"
+                placeholder="Ex: kg, L, pièces"
+                value={newInventoryItem.unit}
+                onChange={(e) => setNewInventoryItem({...newInventoryItem, unit: e.target.value})}
+              />
+            </div>
+            <div>
+              <Label htmlFor="inventory-supplier">Fournisseur</Label>
+              <Input
+                id="inventory-supplier"
+                placeholder="Ex: Fournisseur ABC"
+                value={newInventoryItem.supplier}
+                onChange={(e) => setNewInventoryItem({...newInventoryItem, supplier: e.target.value})}
+              />
+            </div>
+            <div>
+              <Label htmlFor="inventory-cost">Prix unitaire (XAF)</Label>
+              <Input
+                id="inventory-cost"
+                type="number"
+                min="0"
+                placeholder="0"
+                value={newInventoryItem.cost_per_unit}
+                onChange={(e) => setNewInventoryItem({...newInventoryItem, cost_per_unit: parseFloat(e.target.value) || 0})}
+              />
+            </div>
+            <div>
+              <Label htmlFor="inventory-expiry">Date d'expiration</Label>
+              <Input
+                id="inventory-expiry"
+                type="date"
+                value={newInventoryItem.expiry_date}
+                onChange={(e) => setNewInventoryItem({...newInventoryItem, expiry_date: e.target.value})}
+              />
+            </div>
+            <div>
+              <Label htmlFor="inventory-notes">Notes</Label>
+              <Textarea
+                id="inventory-notes"
+                placeholder="Notes supplémentaires..."
+                value={newInventoryItem.notes}
+                onChange={(e) => setNewInventoryItem({...newInventoryItem, notes: e.target.value})}
+                rows={3}
+              />
+            </div>
+          </div>
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button variant="outline" onClick={() => setIsInventoryModalOpen(false)}>
+              Annuler
+            </Button>
+            <Button onClick={handleInventorySubmit}>
+              <FontAwesomeIcon icon={faPlus} className="mr-2" />
+              Ajouter l'article
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal d'édition d'article de stock */}
+      <Dialog open={isEditInventoryModalOpen} onOpenChange={setIsEditInventoryModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Modifier l'article de stock</DialogTitle>
+            <DialogDescription>
+              Modifiez les informations de cet article
+            </DialogDescription>
+          </DialogHeader>
+          {editingInventoryItem && (
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="edit-inventory-name">Nom de l'article *</Label>
+                <Input
+                  id="edit-inventory-name"
+                  value={editingInventoryItem.name}
+                  onChange={(e) => setEditingInventoryItem({...editingInventoryItem, name: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-inventory-category">Catégorie *</Label>
+                <Select 
+                  value={editingInventoryItem.category} 
+                  onValueChange={(value) => setEditingInventoryItem({...editingInventoryItem, category: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner une catégorie" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="viandes">Viandes</SelectItem>
+                    <SelectItem value="poissons">Poissons</SelectItem>
+                    <SelectItem value="legumes">Légumes</SelectItem>
+                    <SelectItem value="fruits">Fruits</SelectItem>
+                    <SelectItem value="cereales">Céréales</SelectItem>
+                    <SelectItem value="epices">Épices</SelectItem>
+                    <SelectItem value="produits-laitiers">Produits laitiers</SelectItem>
+                    <SelectItem value="boissons">Boissons</SelectItem>
+                    <SelectItem value="autres">Autres</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit-inventory-current-stock">Stock actuel</Label>
+                  <Input
+                    id="edit-inventory-current-stock"
+                    type="number"
+                    min="0"
+                    value={editingInventoryItem.current_stock}
+                    onChange={(e) => setEditingInventoryItem({...editingInventoryItem, current_stock: parseInt(e.target.value) || 0})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-inventory-min-stock">Stock minimum</Label>
+                  <Input
+                    id="edit-inventory-min-stock"
+                    type="number"
+                    min="0"
+                    value={editingInventoryItem.min_stock}
+                    onChange={(e) => setEditingInventoryItem({...editingInventoryItem, min_stock: parseInt(e.target.value) || 0})}
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="edit-inventory-unit">Unité</Label>
+                <Input
+                  id="edit-inventory-unit"
+                  value={editingInventoryItem.unit}
+                  onChange={(e) => setEditingInventoryItem({...editingInventoryItem, unit: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-inventory-supplier">Fournisseur</Label>
+                <Input
+                  id="edit-inventory-supplier"
+                  value={editingInventoryItem.supplier}
+                  onChange={(e) => setEditingInventoryItem({...editingInventoryItem, supplier: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-inventory-cost">Prix unitaire (XAF)</Label>
+                <Input
+                  id="edit-inventory-cost"
+                  type="number"
+                  min="0"
+                  value={editingInventoryItem.cost_per_unit}
+                  onChange={(e) => setEditingInventoryItem({...editingInventoryItem, cost_per_unit: parseFloat(e.target.value) || 0})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-inventory-expiry">Date d'expiration</Label>
+                <Input
+                  id="edit-inventory-expiry"
+                  type="date"
+                  value={editingInventoryItem.expiry_date}
+                  onChange={(e) => setEditingInventoryItem({...editingInventoryItem, expiry_date: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-inventory-notes">Notes</Label>
+                <Textarea
+                  id="edit-inventory-notes"
+                  value={editingInventoryItem.notes}
+                  onChange={(e) => setEditingInventoryItem({...editingInventoryItem, notes: e.target.value})}
+                  rows={3}
+                />
+              </div>
+            </div>
+          )}
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button variant="outline" onClick={() => setIsEditInventoryModalOpen(false)}>
+              Annuler
+            </Button>
+            <Button onClick={handleInventoryUpdate}>
+              <FontAwesomeIcon icon={faEdit} className="mr-2" />
+              Mettre à jour
             </Button>
           </div>
         </DialogContent>
