@@ -835,7 +835,7 @@ export default function CookPortalPage() {
     { name: 'Patients', value: todayPatientOrders.length },
     { name: 'Employés', value: todayEmployeeOrders.length },
   ];
-  const COLORS = ['#f97316', '#10b981', '#3b82f6'];
+  const COLORS = ['#5ac2ec', '#41b8ac']; // Couleurs du logo : bleu et vert
 
   // Export PDF cuisine (avec logo et tableau patients + employés)
   const fetchImageAsDataUrl = async (url: string): Promise<string | null> => {
@@ -1770,7 +1770,7 @@ export default function CookPortalPage() {
                         <YAxis allowDecimals={false} />
                         <Tooltip />
                         <Legend />
-                        <Bar dataKey="value" fill="#f97316" name="Commandes" />
+                        <Bar dataKey="value" fill="#5ac2ec" name="Commandes" />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
