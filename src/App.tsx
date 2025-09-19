@@ -10,37 +10,40 @@ import NursePortalPage from "./pages/portals/NursePortalPage";
 import EmployeePortalPage from "./pages/portals/EmployeePortalPage";
 import CookPortalPage from "./pages/portals/CookPortalPage";
 import { ServiceWorkerManager } from "./components/ServiceWorkerManager";
+import ResourceErrorHandler from "./components/ResourceErrorHandler";
 
 const queryClient = new QueryClient();
 
 const App = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <ServiceWorkerManager />
-        <BrowserRouter
-          future={{
-            v7_startTransition: true,
-            v7_relativeSplatPath: true,
-          }}
-        >
-          <Routes>
-            <Route path="/" element={<PortalAccess />} />
-            <Route path="/portails" element={<PortalAccess />} />
-            {/* Tous les portails - Accès libre */}
-            <Route path="/employee-portal" element={<EmployeePortalPage />} />
-            <Route path="/portails/employee" element={<EmployeePortalPage />} />
-            <Route path="/nurse-portal" element={<NursePortalPage />} />
-            <Route path="/cook-portal" element={<CookPortalPage />} />
-            <Route path="/portails/nurse" element={<NursePortalPage />} />
-            <Route path="/portails/cook" element={<CookPortalPage />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ResourceErrorHandler>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <ServiceWorkerManager />
+          <BrowserRouter
+            future={{
+              v7_startTransition: true,
+              v7_relativeSplatPath: true,
+            }}
+          >
+            <Routes>
+              <Route path="/" element={<PortalAccess />} />
+              <Route path="/portails" element={<PortalAccess />} />
+              {/* Tous les portails - Accès libre */}
+              <Route path="/employee-portal" element={<EmployeePortalPage />} />
+              <Route path="/portails/employee" element={<EmployeePortalPage />} />
+              <Route path="/nurse-portal" element={<NursePortalPage />} />
+              <Route path="/cook-portal" element={<CookPortalPage />} />
+              <Route path="/portails/nurse" element={<NursePortalPage />} />
+              <Route path="/portails/cook" element={<CookPortalPage />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ResourceErrorHandler>
   );
 };
 
