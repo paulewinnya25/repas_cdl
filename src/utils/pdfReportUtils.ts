@@ -201,15 +201,17 @@ export const createTable = (
   yPosition += 15;
   
   if (data.length > 0) {
-    // En-tête du tableau
+    // En-tête du tableau (largeur ajustée)
     doc.setFillColor(headerColor[0], headerColor[1], headerColor[2]);
-    doc.rect(20, yPosition - 5, 170, 10, 'F');
+    doc.rect(20, yPosition - 5, 160, 10, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
     
+    // Calculer la largeur optimale pour chaque colonne
+    const columnWidth = 160 / headers.length; // Réduire légèrement la largeur totale
     headers.forEach((header, index) => {
-      const xPosition = 25 + (index * (170 / headers.length));
+      const xPosition = 25 + (index * columnWidth);
       doc.text(header, xPosition, yPosition + 2);
     });
     yPosition += 10;
@@ -222,12 +224,15 @@ export const createTable = (
     data.forEach((row) => {
       if (rowCount % 2 === 0) {
         doc.setFillColor(248, 250, 252);
-        doc.rect(20, yPosition, 170, 10, 'F');
+        doc.rect(20, yPosition, 160, 10, 'F');
       }
       
       row.forEach((cell, index) => {
-        const xPosition = 25 + (index * (170 / headers.length));
-        doc.text(cell, xPosition, yPosition + 7);
+        const xPosition = 25 + (index * columnWidth);
+        // Tronquer le texte si trop long pour éviter les débordements
+        const maxLength = Math.floor(columnWidth / 2); // Ajuster selon la largeur de colonne
+        const truncatedCell = cell.length > maxLength ? cell.substring(0, maxLength - 3) + '...' : cell;
+        doc.text(truncatedCell, xPosition, yPosition + 7);
       });
       
       yPosition += 10;
