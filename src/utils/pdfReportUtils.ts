@@ -82,7 +82,7 @@ export const createPDFHeader = async (doc: jsPDF, title: string, subtitle: strin
     doc.setFont('helvetica', 'bold');
     const titleWidth = doc.getTextWidth(title);
     const titleX = (pageWidth - titleWidth) / 2; // Centrer le titre
-    doc.text(title, titleX, 28); // Position ajustée pour le logo encore plus petit
+    doc.text(title, titleX, 35); // Position descendue pour plus d'espace
     
     // Date et informations
     doc.setFontSize(10);
@@ -119,7 +119,7 @@ export const createPDFHeader = async (doc: jsPDF, title: string, subtitle: strin
     doc.setFont('helvetica', 'bold');
     const titleWidth = doc.getTextWidth(title);
     const titleX = (pageWidth - titleWidth) / 2; // Centrer le titre
-    doc.text(title, titleX, 28); // Position ajustée pour le logo encore plus petit
+    doc.text(title, titleX, 35); // Position descendue pour plus d'espace
     
     // Date et informations
     doc.setFontSize(10);
