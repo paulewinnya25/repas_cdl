@@ -628,34 +628,14 @@ const EmployeePortalPage: React.FC = () => {
       
       {/* Statistiques rapides */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="flex justify-between items-center">
-          <div className="flex space-x-6">
-            <div className="text-center">
-              <p className="text-sm text-gray-600 dark:text-gray-400">Mes commandes</p>
-              <p className="text-2xl font-bold" style={{ color: '#5ac2ec' }}>{orders.length}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-sm text-gray-600 dark:text-gray-400">Commandes aujourd'hui</p>
-              <p className="text-2xl font-bold" style={{ color: '#41b8ac' }}>{todayOrders.length}</p>
-            </div>
+        <div className="flex justify-end space-x-6">
+          <div className="text-center">
+            <p className="text-sm text-gray-600 dark:text-gray-400">Mes commandes</p>
+            <p className="text-2xl font-bold" style={{ color: '#5ac2ec' }}>{orders.length}</p>
           </div>
-          <div className="flex space-x-2">
-            <Button
-              onClick={exportMyDailyReportCSV}
-              variant="outline"
-              className="text-gray-600 hover:text-gray-700 hover:bg-gray-50 border-gray-200"
-            >
-              <FontAwesomeIcon icon={faChartLine} className="mr-2" />
-              Export CSV
-            </Button>
-            <Button
-              onClick={exportDailyReportPDF}
-              className="text-white"
-              style={{ backgroundColor: '#5ac2ec' }}
-            >
-              <FontAwesomeIcon icon={faFilePdf} className="mr-2" />
-              Rapport PDF
-            </Button>
+          <div className="text-center">
+            <p className="text-sm text-gray-600 dark:text-gray-400">Commandes aujourd'hui</p>
+            <p className="text-2xl font-bold" style={{ color: '#41b8ac' }}>{todayOrders.length}</p>
           </div>
         </div>
       </div>
@@ -1026,6 +1006,15 @@ const EmployeePortalPage: React.FC = () => {
                   </div>
                   <div className="flex gap-2 mt-4">
                     <Button size="sm" variant="outline" onClick={exportMyDailyReportCSV}>Exporter CSV</Button>
+                    <Button 
+                      size="sm" 
+                      onClick={exportDailyReportPDF}
+                      className="text-white"
+                      style={{ backgroundColor: '#5ac2ec' }}
+                    >
+                      <FontAwesomeIcon icon={faFilePdf} className="mr-2" />
+                      Rapport PDF
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
