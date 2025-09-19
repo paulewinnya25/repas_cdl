@@ -349,11 +349,58 @@ const EmployeePortalPage: React.FC = () => {
 
   const exportMyDailyReportCSV = () => {
     const today = new Date().toDateString();
-    const header = ['Menu', 'Statut', 'Prix (XAF)', 'Date'];
-    const rows = orders
-      .filter(o => new Date(o.created_at).toDateString() === today)
-      .map(o => [o.employee_menus?.name || '', o.status, String(o.total_price || 0), o.created_at || '']);
-    const csv = [header, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const todayOrders = orders.filter(o => new Date(o.created_at).toDateString() === today);
+    
+    // Calculer les statistiques de plats
+    const totalOrderedDishes = todayOrders.reduce((sum, order) => sum + order.quantity, 0);
+    const totalDeliveredDishes = todayOrders.filter(o => o.status === 'Livré').reduce((sum, order) => sum + order.quantity, 0);
+    const totalRevenue = todayOrders.reduce((sum, order) => sum + (order.total_price || 0), 0);
+    
+    // Créer un résumé des plats commandés avec quantités
+    const dishesSummary = new Map<string, { quantity: number, totalPrice: number }>();
+    
+    todayOrders.forEach(order => {
+      const menuName = order.employee_menus?.name || 'Menu inconnu';
+      const existing = dishesSummary.get(menuName);
+      if (existing) {
+        existing.quantity += order.quantity;
+        existing.totalPrice += order.total_price || 0;
+      } else {
+        dishesSummary.set(menuName, { 
+          quantity: order.quantity, 
+          totalPrice: order.total_price || 0 
+        });
+      }
+    });
+    
+    // Créer les lignes du rapport
+    const summaryRows = [
+      ['RÉSUMÉ DU JOUR - EMPLOYÉ'],
+      ['Total plats commandés', totalOrderedDishes.toString()],
+      ['Total plats livrés', totalDeliveredDishes.toString()],
+      ['Total dépensé', totalRevenue.toLocaleString('fr-FR') + ' XAF'],
+      [''],
+      ['DÉTAIL DES PLATS COMMANDÉS'],
+      ['Menu', 'Quantité', 'Total dépensé (XAF)']
+    ];
+    
+    // Ajouter les détails des plats
+    Array.from(dishesSummary.entries()).forEach(([menu, data]) => {
+      summaryRows.push([menu, data.quantity.toString(), data.totalPrice.toLocaleString('fr-FR')]);
+    });
+    
+    summaryRows.push([''], ['DÉTAIL DES COMMANDES']);
+    
+    const header = ['Menu', 'Quantité', 'Statut', 'Prix (XAF)', 'Date'];
+    const rows = todayOrders.map(o => [
+      o.employee_menus?.name || '', 
+      o.quantity.toString(), 
+      o.status, 
+      String(o.total_price || 0), 
+      o.created_at || ''
+    ]);
+    
+    const csv = [...summaryRows, header, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

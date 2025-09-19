@@ -59,32 +59,130 @@ const NursePortalPage: React.FC = () => {
   };
 
   const exportDailyReportCSV = () => {
-    const patientRows = orders
-      .filter(o => isSameDay(new Date((o as Order & { date?: string }).date || o.created_at || ''), new Date()))
-      .map(o => ['Patient', o.patients?.name || '', o.patients?.room || '', o.meal_type, o.menu, o.status, (o.created_at || (o as Order & { date?: string }).date) || '']);
-    const employeeRows = employeeOrdersToday
-      .map(o => ['Employé', o.employee_name || '', '', 'Employé', o.employee_menus?.name || '', o.status, o.created_at || '']);
-    const header = ['Type', 'Nom', 'Chambre', 'Repas', 'Menu', 'Statut', 'Date'];
-    downloadCSV(`rapport_journalier_${new Date().toISOString().slice(0,10)}.csv`, [header, ...patientRows, ...employeeRows]);
+    const todayOrders = orders.filter(o => isSameDay(new Date((o as Order & { date?: string }).date || o.created_at || ''), new Date()));
+    
+    // Calculer les statistiques de plats
+    const totalOrderedDishes = todayOrders.length + employeeOrdersToday.reduce((sum, order) => sum + order.quantity, 0);
+    const totalDeliveredDishes = todayOrders.filter(o => o.status === 'Livré').length + 
+                                 employeeOrdersToday.filter(o => o.status === 'Livré').reduce((sum, order) => sum + order.quantity, 0);
+    
+    // Créer un résumé des plats commandés avec quantités
+    const dishesSummary = new Map<string, { quantity: number, type: string }>();
+    
+    // Ajouter les plats patients (1 plat par commande)
+    todayOrders.forEach(order => {
+      const key = `Patient - ${order.menu}`;
+      dishesSummary.set(key, { 
+        quantity: (dishesSummary.get(key)?.quantity || 0) + 1, 
+        type: 'Patient' 
+      });
+    });
+    
+    // Ajouter les plats employés avec quantités
+    employeeOrdersToday.forEach(order => {
+      const key = `Employé - ${order.employee_menus?.name || 'Menu inconnu'}`;
+      dishesSummary.set(key, { 
+        quantity: (dishesSummary.get(key)?.quantity || 0) + order.quantity, 
+        type: 'Employé' 
+      });
+    });
+    
+    // Créer les lignes du rapport
+    const summaryRows = [
+      ['RÉSUMÉ DU JOUR'],
+      ['Total plats commandés', totalOrderedDishes.toString()],
+      ['Total plats livrés', totalDeliveredDishes.toString()],
+      [''],
+      ['DÉTAIL DES PLATS COMMANDÉS'],
+      ['Type', 'Menu', 'Quantité']
+    ];
+    
+    // Ajouter les détails des plats
+    Array.from(dishesSummary.entries()).forEach(([menu, data]) => {
+      summaryRows.push([data.type, menu.split(' - ')[1], data.quantity.toString()]);
+    });
+    
+    summaryRows.push([''], ['DÉTAIL DES COMMANDES']);
+    
+    const patientRows = todayOrders.map(o => ['Patient', o.patients?.name || '', o.patients?.room || '', o.meal_type, o.menu, o.status, (o.created_at || (o as Order & { date?: string }).date) || '']);
+    const employeeRows = employeeOrdersToday.map(o => ['Employé', o.employee_name || '', '', 'Employé', o.employee_menus?.name || '', o.status, o.created_at || '', o.quantity.toString()]);
+    const header = ['Type', 'Nom', 'Chambre', 'Repas', 'Menu', 'Statut', 'Date', 'Quantité'];
+    
+    downloadCSV(`rapport_journalier_${new Date().toISOString().slice(0,10)}.csv`, [...summaryRows, header, ...patientRows, ...employeeRows]);
   };
 
   const printDailyReport = () => {
     const todayStr = new Date().toLocaleDateString('fr-FR');
     const win = window.open('', '_blank');
     if (!win) return;
-    const patientRows = orders.filter(o => isSameDay(new Date((o as Order & { date?: string }).date || o.created_at || ''), new Date()));
+    
+    const todayOrders = orders.filter(o => isSameDay(new Date((o as Order & { date?: string }).date || o.created_at || ''), new Date()));
+    
+    // Calculer les statistiques de plats
+    const totalOrderedDishes = todayOrders.length + employeeOrdersToday.reduce((sum, order) => sum + order.quantity, 0);
+    const totalDeliveredDishes = todayOrders.filter(o => o.status === 'Livré').length + 
+                                 employeeOrdersToday.filter(o => o.status === 'Livré').reduce((sum, order) => sum + order.quantity, 0);
+    
+    // Créer un résumé des plats commandés avec quantités
+    const dishesSummary = new Map<string, { quantity: number, type: string }>();
+    
+    // Ajouter les plats patients (1 plat par commande)
+    todayOrders.forEach(order => {
+      const key = `Patient - ${order.menu}`;
+      dishesSummary.set(key, { 
+        quantity: (dishesSummary.get(key)?.quantity || 0) + 1, 
+        type: 'Patient' 
+      });
+    });
+    
+    // Ajouter les plats employés avec quantités
+    employeeOrdersToday.forEach(order => {
+      const key = `Employé - ${order.employee_menus?.name || 'Menu inconnu'}`;
+      dishesSummary.set(key, { 
+        quantity: (dishesSummary.get(key)?.quantity || 0) + order.quantity, 
+        type: 'Employé' 
+      });
+    });
+    
     win.document.write(`
       <html><head><title>Rapport journalier ${todayStr}</title>
-      <style>body{font-family:Arial;padding:16px} table{width:100%;border-collapse:collapse;margin-top:12px} th,td{border:1px solid #ddd;padding:6px;font-size:12px} h2{margin:0 0 8px}</style>
+      <style>
+        body{font-family:Arial;padding:16px;line-height:1.4}
+        table{width:100%;border-collapse:collapse;margin-top:12px}
+        th,td{border:1px solid #ddd;padding:6px;font-size:12px;text-align:left}
+        h2{margin:0 0 8px;color:#333}
+        h3{margin:16px 0 8px;color:#555}
+        .summary{background:#f5f5f5;padding:12px;border-radius:4px;margin-bottom:16px}
+        .summary-item{margin:4px 0;font-weight:bold}
+        .dishes-table{margin-top:8px}
+      </style>
       </head><body>
       <h2>Rapport journalier - ${todayStr}</h2>
-      <h3>Patients</h3>
+      
+      <div class="summary">
+        <h3>📊 Résumé du jour</h3>
+        <div class="summary-item">Total plats commandés: ${totalOrderedDishes}</div>
+        <div class="summary-item">Total plats livrés: ${totalDeliveredDishes}</div>
+      </div>
+      
+      <h3>🍽️ Détail des plats commandés</h3>
+      <table class="dishes-table">
+        <thead><tr><th>Type</th><th>Menu</th><th>Quantité</th></tr></thead>
+        <tbody>
+        ${Array.from(dishesSummary.entries()).map(([menu, data]) => 
+          `<tr><td>${data.type}</td><td>${menu.split(' - ')[1]}</td><td>${data.quantity}</td></tr>`
+        ).join('')}
+        </tbody>
+      </table>
+      
+      <h3>👥 Commandes Patients</h3>
       <table><thead><tr><th>Nom</th><th>Chambre</th><th>Repas</th><th>Menu</th><th>Statut</th><th>Date</th></tr></thead><tbody>
-      ${patientRows.map(o => `<tr><td>${o.patients?.name || ''}</td><td>${o.patients?.room || ''}</td><td>${o.meal_type}</td><td>${o.menu}</td><td>${o.status}</td><td>${(o.created_at || (o as Order & { date?: string }).date) ?? ''}</td></tr>`).join('')}
+      ${todayOrders.map(o => `<tr><td>${o.patients?.name || ''}</td><td>${o.patients?.room || ''}</td><td>${o.meal_type}</td><td>${o.menu}</td><td>${o.status}</td><td>${(o.created_at || (o as Order & { date?: string }).date) ?? ''}</td></tr>`).join('')}
       </tbody></table>
-      <h3>Employés</h3>
-      <table><thead><tr><th>Employé</th><th>Menu</th><th>Statut</th><th>Date</th><th>Total (XAF)</th></tr></thead><tbody>
-      ${employeeOrdersToday.map(o => `<tr><td>${o.employee_name || ''}</td><td>${o.employee_menus?.name || ''}</td><td>${o.status}</td><td>${o.created_at || ''}</td><td>${(o.total_price || 0).toLocaleString('fr-FR')}</td></tr>`).join('')}
+      
+      <h3>👨‍💼 Commandes Employés</h3>
+      <table><thead><tr><th>Employé</th><th>Menu</th><th>Quantité</th><th>Statut</th><th>Date</th><th>Total (XAF)</th></tr></thead><tbody>
+      ${employeeOrdersToday.map(o => `<tr><td>${o.employee_name || ''}</td><td>${o.employee_menus?.name || ''}</td><td>${o.quantity}</td><td>${o.status}</td><td>${o.created_at || ''}</td><td>${(o.total_price || 0).toLocaleString('fr-FR')}</td></tr>`).join('')}
       </tbody></table>
       </body></html>
     `);
@@ -1245,12 +1343,80 @@ const NursePortalPage: React.FC = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between"><span>Patients - En attente</span><span className="font-medium">{orders.filter(o => new Date(o.created_at || (o as Order & { date?: string }).date).toDateString() === new Date().toDateString() && o.status === "En attente d'approbation").length}</span></div>
-                    <div className="flex justify-between"><span>Patients - En préparation</span><span className="font-medium">{orders.filter(o => new Date(o.created_at || (o as Order & { date?: string }).date).toDateString() === new Date().toDateString() && o.status === 'En préparation').length}</span></div>
-                    <div className="flex justify-between"><span>Patients - Livrés</span><span className="font-medium">{orders.filter(o => new Date(o.created_at || (o as Order & { date?: string }).date).toDateString() === new Date().toDateString() && o.status === 'Livré').length}</span></div>
-                    <hr className="my-2" />
+                  <div className="space-y-4">
+                    {/* Statistiques de plats */}
+                    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                      <h4 className="font-semibold mb-3" style={{ color: '#5ac2ec' }}>📊 Statistiques de plats</h4>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div className="flex justify-between">
+                          <span>Total plats commandés</span>
+                          <span className="font-bold" style={{ color: '#41b8ac' }}>
+                            {orders.filter(o => isSameDay(new Date((o as Order & { date?: string }).date || o.created_at || ''), new Date())).length + 
+                             employeeOrdersToday.reduce((sum, order) => sum + order.quantity, 0)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Total plats livrés</span>
+                          <span className="font-bold" style={{ color: '#41b8ac' }}>
+                            {orders.filter(o => isSameDay(new Date((o as Order & { date?: string }).date || o.created_at || ''), new Date()) && o.status === 'Livré').length + 
+                             employeeOrdersToday.filter(o => o.status === 'Livré').reduce((sum, order) => sum + order.quantity, 0)}
+                          </span>
+                        </div>
+                      </div>
                     </div>
+
+                    {/* Détail des plats commandés */}
+                    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                      <h4 className="font-semibold mb-3" style={{ color: '#5ac2ec' }}>🍽️ Plats commandés aujourd'hui</h4>
+                      <div className="space-y-2 text-sm">
+                        {(() => {
+                          const dishesSummary = new Map<string, { quantity: number, type: string }>();
+                          const todayOrders = orders.filter(o => isSameDay(new Date((o as Order & { date?: string }).date || o.created_at || ''), new Date()));
+                          
+                          // Ajouter les plats patients
+                          todayOrders.forEach(order => {
+                            const key = `Patient - ${order.menu}`;
+                            dishesSummary.set(key, { 
+                              quantity: (dishesSummary.get(key)?.quantity || 0) + 1, 
+                              type: 'Patient' 
+                            });
+                          });
+                          
+                          // Ajouter les plats employés
+                          employeeOrdersToday.forEach(order => {
+                            const key = `Employé - ${order.employee_menus?.name || 'Menu inconnu'}`;
+                            dishesSummary.set(key, { 
+                              quantity: (dishesSummary.get(key)?.quantity || 0) + order.quantity, 
+                              type: 'Employé' 
+                            });
+                          });
+                          
+                          return Array.from(dishesSummary.entries()).map(([menu, data]) => (
+                            <div key={menu} className="flex justify-between items-center">
+                              <span className="flex items-center space-x-2">
+                                <span className={`px-2 py-1 rounded text-xs ${data.type === 'Patient' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
+                                  {data.type}
+                                </span>
+                                <span>{menu.split(' - ')[1]}</span>
+                              </span>
+                              <span className="font-bold" style={{ color: '#41b8ac' }}>{data.quantity}</span>
+                            </div>
+                          ));
+                        })()}
+                      </div>
+                    </div>
+
+                    {/* Statistiques par statut */}
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between"><span>Patients - En attente</span><span className="font-medium">{orders.filter(o => isSameDay(new Date((o as Order & { date?: string }).date || o.created_at || ''), new Date()) && o.status === "En attente d'approbation").length}</span></div>
+                      <div className="flex justify-between"><span>Patients - En préparation</span><span className="font-medium">{orders.filter(o => isSameDay(new Date((o as Order & { date?: string }).date || o.created_at || ''), new Date()) && o.status === 'En préparation').length}</span></div>
+                      <div className="flex justify-between"><span>Patients - Livrés</span><span className="font-medium">{orders.filter(o => isSameDay(new Date((o as Order & { date?: string }).date || o.created_at || ''), new Date()) && o.status === 'Livré').length}</span></div>
+                      <hr className="my-2" />
+                      <div className="flex justify-between"><span>Employés - Commandés</span><span className="font-medium">{employeeOrdersToday.filter(o => o.status === 'Commandé').length}</span></div>
+                      <div className="flex justify-between"><span>Employés - En préparation</span><span className="font-medium">{employeeOrdersToday.filter(o => o.status === 'En préparation').length}</span></div>
+                      <div className="flex justify-between"><span>Employés - Livrés</span><span className="font-medium">{employeeOrdersToday.filter(o => o.status === 'Livré').length}</span></div>
+                    </div>
+                  </div>
                   <div className="flex gap-2 mt-4">
                     <Button size="sm" variant="outline" onClick={exportDailyReportCSV}>Exporter CSV</Button>
                     <Button size="sm" onClick={printDailyReport}>Imprimer / PDF</Button>

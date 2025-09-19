@@ -62,14 +62,57 @@ export default function CookPortalPage() {
   };
 
   const exportDailyReportCSV = () => {
-    const header = ['Type', 'Nom', 'Chambre/Employé', 'Menu', 'Statut', 'Date', 'Total (XAF)'];
-    const patientRows = patientOrders
-      .filter(o => isSameDay(new Date((o as any).date || o.created_at || ''), new Date()))
-      .map(o => ['Patient', o.patients?.name || '', o.patients?.room || '', `${o.meal_type} - ${o.menu}`, o.status, (o.created_at || o.date) || '', '']);
-    const employeeRows = employeeOrders
-      .filter(o => isSameDay(new Date(o.created_at || ''), new Date()))
-      .map(o => ['Employé', o.employee_name || '', '', o.employee_menus?.name || '', o.status, o.created_at || '', String(o.total_price || 0)]);
-    downloadCSV(`rapport_cuisine_${new Date().toISOString().slice(0,10)}.csv`, [header, ...patientRows, ...employeeRows]);
+    const todayPatientOrders = patientOrders.filter(o => isSameDay(new Date((o as any).date || o.created_at || ''), new Date()));
+    const todayEmployeeOrders = employeeOrders.filter(o => isSameDay(new Date(o.created_at || ''), new Date()));
+    
+    // Calculer les statistiques de plats
+    const totalOrderedDishes = todayPatientOrders.length + todayEmployeeOrders.reduce((sum, order) => sum + order.quantity, 0);
+    const totalDeliveredDishes = todayPatientOrders.filter(o => o.status === 'Livré').length + 
+                                 todayEmployeeOrders.filter(o => o.status === 'Livré').reduce((sum, order) => sum + order.quantity, 0);
+    
+    // Créer un résumé des plats commandés avec quantités
+    const dishesSummary = new Map<string, { quantity: number, type: string }>();
+    
+    // Ajouter les plats patients (1 plat par commande)
+    todayPatientOrders.forEach(order => {
+      const key = `Patient - ${order.menu}`;
+      dishesSummary.set(key, { 
+        quantity: (dishesSummary.get(key)?.quantity || 0) + 1, 
+        type: 'Patient' 
+      });
+    });
+    
+    // Ajouter les plats employés avec quantités
+    todayEmployeeOrders.forEach(order => {
+      const key = `Employé - ${order.employee_menus?.name || 'Menu inconnu'}`;
+      dishesSummary.set(key, { 
+        quantity: (dishesSummary.get(key)?.quantity || 0) + order.quantity, 
+        type: 'Employé' 
+      });
+    });
+    
+    // Créer les lignes du rapport
+    const summaryRows = [
+      ['RÉSUMÉ DU JOUR - CUISINE'],
+      ['Total plats commandés', totalOrderedDishes.toString()],
+      ['Total plats livrés', totalDeliveredDishes.toString()],
+      [''],
+      ['DÉTAIL DES PLATS COMMANDÉS'],
+      ['Type', 'Menu', 'Quantité']
+    ];
+    
+    // Ajouter les détails des plats
+    Array.from(dishesSummary.entries()).forEach(([menu, data]) => {
+      summaryRows.push([data.type, menu.split(' - ')[1], data.quantity.toString()]);
+    });
+    
+    summaryRows.push([''], ['DÉTAIL DES COMMANDES']);
+    
+    const patientRows = todayPatientOrders.map(o => ['Patient', o.patients?.name || '', o.patients?.room || '', `${o.meal_type} - ${o.menu}`, o.status, (o.created_at || o.date) || '', '']);
+    const employeeRows = todayEmployeeOrders.map(o => ['Employé', o.employee_name || '', '', o.employee_menus?.name || '', o.status, o.created_at || '', String(o.total_price || 0), o.quantity.toString()]);
+    const header = ['Type', 'Nom', 'Chambre/Employé', 'Menu', 'Statut', 'Date', 'Total (XAF)', 'Quantité'];
+    
+    downloadCSV(`rapport_cuisine_${new Date().toISOString().slice(0,10)}.csv`, [...summaryRows, header, ...patientRows, ...employeeRows]);
   };
   const [editingMenu, setEditingMenu] = useState<EmployeeMenu | null>(null);
   const [editingPatientMenu, setEditingPatientMenu] = useState<PatientMenu | null>(null);
@@ -796,9 +839,17 @@ export default function CookPortalPage() {
     const totalRevenue = employeeOrders
       .filter(o => isSameDay(new Date(o.created_at || ''), new Date()))
       .reduce((s, o) => s + (o.total_price || 0), 0);
+    
+    // Calculer les statistiques de plats
+    const totalOrderedDishes = todayPatientOrders.length + todayEmployeeOrders.reduce((sum, order) => sum + order.quantity, 0);
+    const totalDeliveredDishes = todayPatientOrders.filter(o => o.status === 'Livré').length + 
+                                 todayEmployeeOrders.filter(o => o.status === 'Livré').reduce((sum, order) => sum + order.quantity, 0);
+    
     const summary = [
       `En attente: ${totalPending}`,
       `Commandes aujourd'hui: ${totalToday}`,
+      `Total plats commandés: ${totalOrderedDishes}`,
+      `Total plats livrés: ${totalDeliveredDishes}`,
       `Recettes employés aujourd'hui: ${totalRevenue.toLocaleString('fr-FR')} XAF`,
     ];
     summary.forEach((line, idx) => doc.text(line, 40, y + idx * 16));
@@ -820,14 +871,14 @@ export default function CookPortalPage() {
 
     // Tableau Employés (aujourd'hui)
     const employeeRows = todayEmployeeOrders.map(o => [
-      o.employee_name || '', o.employee_menus?.name || '', o.status,
+      o.employee_name || '', o.employee_menus?.name || '', o.quantity.toString(), o.status,
       (o.created_at || '').toString().replace('T', ' ').substring(0, 16),
       (o.total_price || 0).toLocaleString('fr-FR') + ' XAF'
     ]);
     autoTable(doc, {
       startY: y,
-      head: [['Employé', 'Menu', 'Statut', 'Heure', 'Total']],
-      body: employeeRows.length ? employeeRows : [['Aucune donnée', '', '', '', '']],
+      head: [['Employé', 'Menu', 'Quantité', 'Statut', 'Heure', 'Total']],
+      body: employeeRows.length ? employeeRows : [['Aucune donnée', '', '', '', '', '']],
       styles: { fontSize: 10 }, headStyles: { fillColor: [59, 130, 246] },
       margin: { left: 40, right: 40 },
     });
