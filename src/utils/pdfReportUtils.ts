@@ -54,18 +54,24 @@ export const createPDFHeader = async (doc: jsPDF, title: string, subtitle: strin
     // Charger le logo
     const logoDataUrl = await loadLogoImage();
     
-    // En-tête avec fond blanc
+    // En-tête avec fond blanc (plus haut pour centrer le logo)
     doc.setFillColor(255, 255, 255); // Fond blanc
-    doc.rect(0, 0, 210, 40, 'F');
+    doc.rect(0, 0, 210, 50, 'F');
     
-    // Ajouter le vrai logo (plus grand et mieux positionné)
-    doc.addImage(logoDataUrl, 'PNG', 20, 5, 35, 25);
+    // Ajouter le vrai logo centré en haut
+    const logoWidth = 35;
+    const logoHeight = 25;
+    const pageWidth = 210;
+    const logoX = (pageWidth - logoWidth) / 2; // Centrer horizontalement
+    doc.addImage(logoDataUrl, 'PNG', logoX, 5, logoWidth, logoHeight);
     
-    // Titre du rapport seulement (sans CENTRE DIAGNOSTIC)
+    // Titre du rapport centré sous le logo
     doc.setFontSize(14);
     doc.setTextColor(LOGO_COLORS.green[0], LOGO_COLORS.green[1], LOGO_COLORS.green[2]); // Texte vert
     doc.setFont('helvetica', 'bold');
-    doc.text(title, 60, 20);
+    const titleWidth = doc.getTextWidth(title);
+    const titleX = (pageWidth - titleWidth) / 2; // Centrer le titre
+    doc.text(title, titleX, 35);
     
     // Date et informations
     doc.setFontSize(10);
@@ -73,31 +79,34 @@ export const createPDFHeader = async (doc: jsPDF, title: string, subtitle: strin
     doc.text(`Date: ${todayStr}`, 150, 10);
     doc.text(`Généré le: ${new Date().toLocaleString('fr-FR')}`, 150, 20);
     
-    // Ligne de séparation décorative
+    // Ligne de séparation décorative (plus bas)
     doc.setDrawColor(LOGO_COLORS.blue[0], LOGO_COLORS.blue[1], LOGO_COLORS.blue[2]);
     doc.setLineWidth(1);
-    doc.line(20, 35, 190, 35);
+    doc.line(20, 45, 190, 45);
     
   } catch (error) {
     console.error('Erreur lors du chargement du logo:', error);
     
     // Fallback: utiliser le logo stylisé si le chargement échoue
     doc.setFillColor(255, 255, 255); // Fond blanc
-    doc.rect(0, 0, 210, 40, 'F');
+    doc.rect(0, 0, 210, 50, 'F');
     
-    // Logo stylisé avec cercle (fallback) - plus grand
+    // Logo stylisé avec cercle (fallback) - centré
+    const logoX = (pageWidth - 20) / 2; // Centrer le cercle
     doc.setFillColor(LOGO_COLORS.green[0], LOGO_COLORS.green[1], LOGO_COLORS.green[2]); // Cercle vert
-    doc.circle(37, 17, 10, 'F');
+    doc.circle(logoX, 17, 10, 'F');
     doc.setFillColor(255, 255, 255); // Cercle blanc au centre
-    doc.circle(37, 17, 6, 'F');
+    doc.circle(logoX, 17, 6, 'F');
     doc.setFillColor(LOGO_COLORS.blue[0], LOGO_COLORS.blue[1], LOGO_COLORS.blue[2]); // Point bleu au centre
-    doc.circle(37, 17, 4, 'F');
+    doc.circle(logoX, 17, 4, 'F');
     
-    // Titre du rapport seulement (sans CENTRE DIAGNOSTIC)
+    // Titre du rapport centré sous le logo
     doc.setFontSize(14);
     doc.setTextColor(LOGO_COLORS.green[0], LOGO_COLORS.green[1], LOGO_COLORS.green[2]); // Texte vert
     doc.setFont('helvetica', 'bold');
-    doc.text(title, 60, 20);
+    const titleWidth = doc.getTextWidth(title);
+    const titleX = (pageWidth - titleWidth) / 2; // Centrer le titre
+    doc.text(title, titleX, 35);
     
     // Date et informations
     doc.setFontSize(10);
@@ -105,10 +114,10 @@ export const createPDFHeader = async (doc: jsPDF, title: string, subtitle: strin
     doc.text(`Date: ${todayStr}`, 150, 10);
     doc.text(`Généré le: ${new Date().toLocaleString('fr-FR')}`, 150, 20);
     
-    // Ligne de séparation décorative
+    // Ligne de séparation décorative (plus bas)
     doc.setDrawColor(LOGO_COLORS.blue[0], LOGO_COLORS.blue[1], LOGO_COLORS.blue[2]);
     doc.setLineWidth(1);
-    doc.line(20, 35, 190, 35);
+    doc.line(20, 45, 190, 45);
   }
 };
 
@@ -241,7 +250,7 @@ export const createEnhancedReport = async (
   // Créer l'en-tête amélioré
   await createPDFHeader(doc, title, '');
   
-  let yPosition = 50;
+  let yPosition = 60; // Plus bas pour laisser de l'espace au logo centré
   
   // Section résumé améliorée
   yPosition = createSummarySection(doc, yPosition, 'RÉSUMÉ DU JOUR', summaryData);
