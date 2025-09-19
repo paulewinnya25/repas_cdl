@@ -13,7 +13,7 @@ interface EmployeeOrderWithProfile extends EmployeeOrder {
 import { gabonCities } from '../../data/gabon-locations';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import jsPDF from 'jspdf';
-import { createPDFHeader, createPDFFooter, createSummarySection, createTable, LOGO_COLORS } from '../../utils/pdfReportUtils';
+import { createPDFHeader, createPDFFooter, createSummarySection, createTable, LOGO_COLORS, createEnhancedReport } from '../../utils/pdfReportUtils';
 import { 
   faUserTie, 
   faUtensils, 
@@ -33,7 +33,8 @@ import {
   faEdit,
   faTrash,
   faTimes,
-  faArrowLeft
+  faArrowLeft,
+  faFilePdf
 } from '@fortawesome/free-solid-svg-icons';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -457,6 +458,43 @@ const EmployeePortalPage: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
+  const exportDailyReportPDF = async () => {
+    const todayStr = new Date().toLocaleDateString('fr-FR');
+    const todayOrders = orders.filter(o => isSameDay(new Date(o.created_at), new Date()));
+    const totalOrderedDishes = todayOrders.reduce((sum, order) => sum + order.quantity, 0);
+    const totalDeliveredDishes = todayOrders.filter(o => o.status === 'Livré').reduce((sum, order) => sum + order.quantity, 0);
+    const totalRevenue = todayOrders.reduce((sum, order) => sum + (order.total_price || 0), 0);
+    const pendingOrders = todayOrders.filter(o => o.status && o.status.includes('attente')).length;
+
+    const doc = new jsPDF();
+
+    const summaryData = [
+      { label: 'Total plats commandés aujourd\'hui', value: totalOrderedDishes },
+      { label: 'Total plats livrés aujourd\'hui', value: totalDeliveredDishes },
+      { label: 'Commandes en attente', value: pendingOrders },
+      { label: 'Total dépensé', value: `${totalRevenue.toLocaleString('fr-FR').replace(/\s/g, ' ')} XAF` }
+    ];
+
+    const sections = [
+      {
+        title: 'DÉTAIL DES COMMANDES EMPLOYÉS',
+        headers: ['Employé', 'Menu', 'Quantité', 'Statut', 'Heure', 'Total'],
+        data: todayOrders.map(order => [
+          order.employee_name || 'Employé inconnu',
+          order.employee_menus?.name || 'Menu inconnu',
+          order.quantity.toString(),
+          order.status || 'N/A',
+          new Date(order.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+          `${(order.total_price || 0).toLocaleString('fr-FR').replace(/\s/g, ' ')} XAF`
+        ]),
+        color: LOGO_COLORS.blue
+      }
+    ];
+
+    await createEnhancedReport(doc, 'Rapport Journalier - Portail Employé', summaryData, sections);
+    doc.save(`rapport_journalier_employe_${new Date().toISOString().slice(0,10)}.pdf`);
+  };
+
   const handleEditOrder = (order: EmployeeOrderWithProfile) => {
     setEditingOrder(order);
     setNewOrder({
@@ -590,14 +628,34 @@ const EmployeePortalPage: React.FC = () => {
       
       {/* Statistiques rapides */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="flex justify-end space-x-6">
-          <div className="text-center">
-            <p className="text-sm text-gray-600 dark:text-gray-400">Mes commandes</p>
-            <p className="text-2xl font-bold" style={{ color: '#5ac2ec' }}>{orders.length}</p>
+        <div className="flex justify-between items-center">
+          <div className="flex space-x-6">
+            <div className="text-center">
+              <p className="text-sm text-gray-600 dark:text-gray-400">Mes commandes</p>
+              <p className="text-2xl font-bold" style={{ color: '#5ac2ec' }}>{orders.length}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-gray-600 dark:text-gray-400">Commandes aujourd'hui</p>
+              <p className="text-2xl font-bold" style={{ color: '#41b8ac' }}>{todayOrders.length}</p>
+            </div>
           </div>
-          <div className="text-center">
-            <p className="text-sm text-gray-600 dark:text-gray-400">Commandes aujourd'hui</p>
-            <p className="text-2xl font-bold" style={{ color: '#41b8ac' }}>{todayOrders.length}</p>
+          <div className="flex space-x-2">
+            <Button
+              onClick={exportMyDailyReportCSV}
+              variant="outline"
+              className="text-gray-600 hover:text-gray-700 hover:bg-gray-50 border-gray-200"
+            >
+              <FontAwesomeIcon icon={faChartLine} className="mr-2" />
+              Export CSV
+            </Button>
+            <Button
+              onClick={exportDailyReportPDF}
+              className="text-white"
+              style={{ backgroundColor: '#5ac2ec' }}
+            >
+              <FontAwesomeIcon icon={faFilePdf} className="mr-2" />
+              Rapport PDF
+            </Button>
           </div>
         </div>
       </div>
