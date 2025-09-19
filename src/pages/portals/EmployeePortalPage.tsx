@@ -480,7 +480,7 @@ const EmployeePortalPage: React.FC = () => {
                 className="h-8 w-auto mr-4"
               />
               <div>
-                <h1 className="text-2xl font-bold text-green-600">Portail Employé</h1>
+                <h1 className="text-2xl font-bold" style={{ color: '#5ac2ec' }}>Portail Employé</h1>
                 <p className="text-sm text-gray-600">Commandes personnelles</p>
               </div>
             </div>
@@ -501,11 +501,11 @@ const EmployeePortalPage: React.FC = () => {
         <div className="flex justify-end space-x-6">
           <div className="text-center">
             <p className="text-sm text-gray-600 dark:text-gray-400">Mes commandes</p>
-            <p className="text-2xl font-bold text-blue-600">{orders.length}</p>
+            <p className="text-2xl font-bold" style={{ color: '#5ac2ec' }}>{orders.length}</p>
           </div>
           <div className="text-center">
             <p className="text-sm text-gray-600 dark:text-gray-400">Commandes aujourd'hui</p>
-            <p className="text-2xl font-bold text-green-600">{todayOrders.length}</p>
+            <p className="text-2xl font-bold" style={{ color: '#41b8ac' }}>{todayOrders.length}</p>
           </div>
         </div>
       </div>
@@ -613,7 +613,7 @@ const EmployeePortalPage: React.FC = () => {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
-                    <FontAwesomeIcon icon={faUtensils} className="text-green-600" />
+                    <FontAwesomeIcon icon={faUtensils} style={{ color: '#41b8ac' }} />
                     <span>Menus Disponibles</span>
                     {activeFilter !== 'all' && (
                       <Badge variant="outline" className="ml-2">
@@ -656,13 +656,13 @@ const EmployeePortalPage: React.FC = () => {
                               }}
                             />
                           ) : null}
-                          <div className={`w-20 h-20 bg-green-100 rounded-lg flex items-center justify-center mr-3 ${menu.photo_url ? 'hidden' : ''}`}>
-                            <FontAwesomeIcon icon={faUtensils} className="text-green-600 text-2xl" />
+                          <div className={`w-20 h-20 rounded-lg flex items-center justify-center mr-3 ${menu.photo_url ? 'hidden' : ''}`} style={{ backgroundColor: '#f0fdf4' }}>
+                            <FontAwesomeIcon icon={faUtensils} className="text-2xl" style={{ color: '#41b8ac' }} />
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center justify-between">
                               <h3 className="font-semibold text-lg">{menu.name}</h3>
-                              <Badge variant="outline" className="bg-green-100 text-green-800">
+                              <Badge variant="outline" style={{ backgroundColor: '#f0fdf4', color: '#41b8ac', borderColor: '#bbf7d0' }}>
                                 {menu.price} FCFA
                               </Badge>
                             </div>
@@ -709,7 +709,7 @@ const EmployeePortalPage: React.FC = () => {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
-                      <FontAwesomeIcon icon={faShoppingCart} className="text-blue-600" />
+                      <FontAwesomeIcon icon={faShoppingCart} style={{ color: '#5ac2ec' }} />
                       <span>Mes Commandes Récentes</span>
                       {activeFilter !== 'all' && (
                         <Badge variant="outline" className="ml-2">
@@ -746,7 +746,8 @@ const EmployeePortalPage: React.FC = () => {
                               size="sm"
                               variant="outline"
                               onClick={() => handleEditOrder(order)}
-                              className="text-blue-600 hover:text-blue-700"
+                              className="hover:bg-blue-50"
+                              style={{ color: '#5ac2ec' }}
                             >
                               <FontAwesomeIcon icon={faEdit} className="mr-1" />
                               Modifier
@@ -755,7 +756,8 @@ const EmployeePortalPage: React.FC = () => {
                               size="sm"
                               variant="outline"
                               onClick={() => handleCancelOrder(order)}
-                              className="text-red-600 hover:text-red-700"
+                              className="hover:bg-red-50"
+                              style={{ color: '#dc2626' }}
                             >
                               <FontAwesomeIcon icon={faTimes} className="mr-1" />
                               Annuler
@@ -778,14 +780,14 @@ const EmployeePortalPage: React.FC = () => {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
-                    <FontAwesomeIcon icon={faExclamationTriangle} className="text-orange-600" />
+                    <FontAwesomeIcon icon={faExclamationTriangle} style={{ color: '#eab308' }} />
                     <span>Commandes en Attente</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     {pendingOrders.map((order) => (
-                      <div key={order.id} className="border border-orange-200 rounded-lg p-4 bg-orange-50 dark:bg-orange-900/20">
+                      <div key={order.id} className="border rounded-lg p-4" style={{ borderColor: '#fde68a', backgroundColor: '#fefce8' }}>
                         <div className="flex items-center justify-between mb-2">
                           <h4 className="font-semibold">Commande #{orders.indexOf(order) + 1}</h4>
                           <Badge variant="destructive">En attente</Badge>
@@ -832,27 +834,27 @@ const EmployeePortalPage: React.FC = () => {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
-                    <FontAwesomeIcon icon={faChartLine} className="text-green-600" />
+                    <FontAwesomeIcon icon={faChartLine} style={{ color: '#41b8ac' }} />
                     <span>Mes Statistiques</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div className="flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <div className="flex justify-between items-center p-3 rounded-lg" style={{ backgroundColor: '#f0fdf4' }}>
                       <span>Commandes aujourd'hui</span>
-                      <span className="font-bold text-green-600">{todayOrders.length}</span>
+                      <span className="font-bold" style={{ color: '#41b8ac' }}>{todayOrders.length}</span>
                     </div>
-                    <div className="flex justify-between items-center p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                    <div className="flex justify-between items-center p-3 rounded-lg" style={{ backgroundColor: '#fefce8' }}>
                       <span>En attente</span>
-                      <span className="font-bold text-orange-600">{pendingOrders.length}</span>
+                      <span className="font-bold" style={{ color: '#eab308' }}>{pendingOrders.length}</span>
                     </div>
-                    <div className="flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <div className="flex justify-between items-center p-3 rounded-lg" style={{ backgroundColor: '#f0fdf4' }}>
                       <span>Total commandes</span>
-                      <span className="font-bold text-blue-600">{orders.length}</span>
+                      <span className="font-bold" style={{ color: '#5ac2ec' }}>{orders.length}</span>
                     </div>
-                    <div className="flex justify-between items-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                    <div className="flex justify-between items-center p-3 rounded-lg" style={{ backgroundColor: '#f0fdf4' }}>
                       <span>Menus disponibles</span>
-                      <span className="font-bold text-purple-600">{menus.length}</span>
+                      <span className="font-bold" style={{ color: '#5ac2ec' }}>{menus.length}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -897,7 +899,7 @@ const EmployeePortalPage: React.FC = () => {
           {selectedMenu && (
             <div className="space-y-4">
               {/* Informations du menu */}
-              <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+              <div className="p-4 rounded-lg" style={{ backgroundColor: '#f0fdf4' }}>
                 <h3 className="font-semibold mb-2">Informations du Menu</h3>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
@@ -970,7 +972,7 @@ const EmployeePortalPage: React.FC = () => {
                   {/* Affichage visuel du nombre de plats */}
                   <div className="mt-2 flex items-center space-x-1">
                     {Array.from({length: newOrder.quantity}, (_, i) => (
-                      <div key={i} className="w-3 h-3 bg-green-500 rounded-full"></div>
+                      <div key={i} className="w-3 h-3 rounded-full" style={{ backgroundColor: '#41b8ac' }}></div>
                     ))}
                     <span className="text-sm text-gray-600 dark:text-gray-400 ml-2">
                       {newOrder.quantity} plat{newOrder.quantity > 1 ? 's' : ''} sélectionné{newOrder.quantity > 1 ? 's' : ''}
@@ -1080,7 +1082,7 @@ const EmployeePortalPage: React.FC = () => {
                     <span className="text-sm text-gray-600 dark:text-gray-400">Plats sélectionnés:</span>
                     <div className="flex space-x-1">
                       {Array.from({length: newOrder.quantity}, (_, i) => (
-                        <div key={i} className="w-4 h-4 bg-green-500 rounded-full"></div>
+                        <div key={i} className="w-4 h-4 rounded-full" style={{ backgroundColor: '#41b8ac' }}></div>
                       ))}
                     </div>
                     <span className="text-sm font-medium text-gray-900 dark:text-white">
@@ -1111,7 +1113,7 @@ const EmployeePortalPage: React.FC = () => {
                           </div>
                           <div className="flex justify-between items-center mt-2 pt-2 border-t">
                             <span className="font-semibold">Total</span>
-                            <span className="font-bold text-lg text-green-600">{subtotal.toLocaleString('fr-FR')} XAF</span>
+                            <span className="font-bold text-lg" style={{ color: '#41b8ac' }}>{subtotal.toLocaleString('fr-FR')} XAF</span>
                           </div>
                         </>
                       );
@@ -1271,14 +1273,14 @@ const EmployeePortalPage: React.FC = () => {
                     </span>
                   </div>
                   {newOrder.accompaniments === 2 && (
-                    <div className="flex justify-between items-center text-sm text-green-600">
+                    <div className="flex justify-between items-center text-sm" style={{ color: '#41b8ac' }}>
                       <span>✓ Supplément pour 2 accompagnements</span>
                       <span>+{((2000 - (editingOrder.total_price / editingOrder.quantity)) * newOrder.quantity).toLocaleString('fr-FR')} XAF</span>
                     </div>
                   )}
                   <div className="flex justify-between items-center mt-2 pt-2 border-t">
                     <span className="font-semibold">Nouveau total</span>
-                    <span className="font-bold text-lg text-green-600">
+                    <span className="font-bold text-lg" style={{ color: '#41b8ac' }}>
                       {newOrder.accompaniments === 2 ? (2000 * newOrder.quantity).toLocaleString('fr-FR') : ((editingOrder.total_price / editingOrder.quantity) * newOrder.quantity).toLocaleString('fr-FR')} XAF
                     </span>
                   </div>
@@ -1314,7 +1316,7 @@ const EmployeePortalPage: React.FC = () => {
           
           {editingOrder && (
             <div className="space-y-4">
-              <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-200 dark:border-red-800">
+              <div className="p-4 rounded-lg border" style={{ backgroundColor: '#fef2f2', borderColor: '#fecaca' }}>
                 <h4 className="font-semibold text-red-800 dark:text-red-200 mb-2">Commande à annuler</h4>
                 <div className="text-sm text-red-700 dark:text-red-300">
                   <p><strong>Commande #:</strong> {orders.indexOf(editingOrder) + 1}</p>

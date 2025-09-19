@@ -682,7 +682,10 @@ const NursePortalPage: React.FC = () => {
             aria-label="Code d'accès infirmier"
           />
           <button
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-md py-2"
+            className="w-full text-white rounded-md py-2"
+            style={{ backgroundColor: '#5ac2ec' }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#4fb3d9'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#5ac2ec'}
             onClick={() => {
               if (accessCode === requiredCode) {
                 setHasAccess(true);
@@ -711,7 +714,7 @@ const NursePortalPage: React.FC = () => {
                 className="h-8 w-auto mr-4"
               />
               <div>
-                <h1 className="text-2xl font-bold text-blue-600">Portail Infirmier</h1>
+                <h1 className="text-2xl font-bold" style={{ color: '#5ac2ec' }}>Portail Infirmier</h1>
                 <p className="text-sm text-gray-600">Gestion des commandes patients</p>
               </div>
             </div>
@@ -732,11 +735,11 @@ const NursePortalPage: React.FC = () => {
         <div className="flex justify-end space-x-6">
           <div className="text-center">
             <p className="text-sm text-gray-600 dark:text-gray-400">Commandes en attente</p>
-            <p className="text-2xl font-bold text-red-600">{pendingOrders.length}</p>
+            <p className="text-2xl font-bold" style={{ color: '#dc2626' }}>{pendingOrders.length}</p>
           </div>
           <div className="text-center">
             <p className="text-sm text-gray-600 dark:text-gray-400">Commandes aujourd'hui</p>
-            <p className="text-2xl font-bold text-green-600">{todayOrders.length}</p>
+            <p className="text-2xl font-bold" style={{ color: '#41b8ac' }}>{todayOrders.length}</p>
           </div>
         </div>
       </div>
@@ -861,7 +864,7 @@ const NursePortalPage: React.FC = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      <FontAwesomeIcon icon={faUsers} className="text-blue-600" />
+                      <FontAwesomeIcon icon={faUsers} style={{ color: '#5ac2ec' }} />
                       <span>Liste des Patients</span>
                       {activeFilter !== 'all' && (
                         <Badge variant="outline" className="ml-2">
@@ -950,7 +953,7 @@ const NursePortalPage: React.FC = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <FontAwesomeIcon icon={faUtensils} className="text-green-600" />
+                  <FontAwesomeIcon icon={faUtensils} style={{ color: '#41b8ac' }} />
                   <span>Menus Patients</span>
                   <Badge variant="outline" className="ml-2">
                     {patientMenus.length} menu(s)
@@ -1062,7 +1065,7 @@ const NursePortalPage: React.FC = () => {
                 <Card data-section="recent-orders">
                   <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
-                      <FontAwesomeIcon icon={faClipboardList} className="text-blue-600" />
+                      <FontAwesomeIcon icon={faClipboardList} style={{ color: '#5ac2ec' }} />
                       <span>Commandes Récentes</span>
                       {activeFilter !== 'all' && (
                         <Badge variant="outline" className="ml-2">
@@ -1145,7 +1148,7 @@ const NursePortalPage: React.FC = () => {
                 <Card data-section="pending-orders">
                   <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
-                      <FontAwesomeIcon icon={faExclamationTriangle} className="text-orange-600" />
+                      <FontAwesomeIcon icon={faExclamationTriangle} style={{ color: '#eab308' }} />
                       <span>Commandes en Attente</span>
                       {activeFilter !== 'all' && (
                         <Badge variant="outline" className="ml-2">
@@ -1157,7 +1160,7 @@ const NursePortalPage: React.FC = () => {
                 <CardContent>
                   <div className="space-y-4">
                     {pendingOrders.map((order) => (
-                      <div key={order.id} className="border border-orange-200 rounded-lg p-4 bg-orange-50 dark:bg-orange-900/20">
+                      <div key={order.id} className="border rounded-lg p-4" style={{ borderColor: '#fde68a', backgroundColor: '#fefce8' }}>
                         <div className="flex items-center justify-between mb-2">
                           <h4 className="font-semibold">Commande #{orders.indexOf(order) + 1}</h4>
                           <Badge variant="destructive">En attente</Badge>
@@ -1218,15 +1221,15 @@ const NursePortalPage: React.FC = () => {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
-                    <FontAwesomeIcon icon={faChartLine} className="text-green-600" />
+                    <FontAwesomeIcon icon={faChartLine} style={{ color: '#41b8ac' }} />
                     <span>Statistiques du Jour</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div className="flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <div className="flex justify-between items-center p-3 rounded-lg" style={{ backgroundColor: '#f0fdf4' }}>
                       <span>Commandes patients aujourd'hui</span>
-                      <span className="font-bold text-green-600">{todayOrders.length}</span>
+                      <span className="font-bold" style={{ color: '#41b8ac' }}>{todayOrders.length}</span>
                     </div>
                     
                   </div>
@@ -1274,7 +1277,7 @@ const NursePortalPage: React.FC = () => {
           {selectedPatient && (
             <div className="space-y-4">
               {/* Informations patient */}
-              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+              <div className="p-4 rounded-lg" style={{ backgroundColor: '#f0fdf4' }}>
                 <h3 className="font-semibold mb-2">Informations Patient</h3>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
@@ -1320,8 +1323,8 @@ const NursePortalPage: React.FC = () => {
                             key={menu.id}
                             className={`p-3 border rounded-lg cursor-pointer transition-colors ${
                               newOrder.menu === menu.name 
-                                ? 'border-green-500 bg-green-50 dark:bg-green-900/20' 
-                                : 'border-gray-200 hover:border-green-300 hover:bg-green-50/50'
+                                ? 'border-green-500' 
+                                : 'border-gray-200 hover:border-green-300'
                             }`}
                             onClick={() => setNewOrder({...newOrder, menu: menu.name})}
                           >
@@ -1358,10 +1361,10 @@ const NursePortalPage: React.FC = () => {
                           </div>
                         ))
                       ) : (
-                        <div className="p-4 border border-orange-200 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                        <div className="p-4 border rounded-lg" style={{ borderColor: '#fde68a', backgroundColor: '#fefce8' }}>
                           <div className="flex items-center space-x-2">
-                            <FontAwesomeIcon icon={faExclamationTriangle} className="text-orange-600" />
-                            <p className="text-orange-800 dark:text-orange-200 text-sm">
+                            <FontAwesomeIcon icon={faExclamationTriangle} style={{ color: '#eab308' }} />
+                            <p className="text-sm" style={{ color: '#a16207' }}>
                               Aucun menu disponible pour le régime "{selectedPatient.diet}" en {newOrder.mealType} aujourd'hui ({getTodayName()})
                             </p>
                           </div>
@@ -1442,7 +1445,7 @@ const NursePortalPage: React.FC = () => {
                                   {m.photo_url ? (
                                     <img src={m.photo_url} alt={m.name} className="w-16 h-16 object-cover rounded-lg mr-3" />
                                   ) : (
-                                    <div className="w-16 h-16 bg-green-100 rounded-lg mr-3" />
+                                    <div className="w-16 h-16 rounded-lg mr-3" style={{ backgroundColor: '#f0fdf4' }} />
                                   )}
                                   <div className="flex-1">
                                     <div className="flex items-center justify-between">
@@ -1798,9 +1801,9 @@ const NursePortalPage: React.FC = () => {
           
           {deletingPatient && (
             <div className="space-y-4">
-              <div className="bg-red-50 p-4 rounded-lg">
-                <h4 className="font-semibold text-red-800">Patient à supprimer</h4>
-                <p className="text-red-700">
+              <div className="p-4 rounded-lg" style={{ backgroundColor: '#fef2f2' }}>
+                <h4 className="font-semibold" style={{ color: '#dc2626' }}>Patient à supprimer</h4>
+                <p style={{ color: '#dc2626' }}>
                   <strong>Nom:</strong> {deletingPatient.name}<br/>
                   <strong>Chambre:</strong> {deletingPatient.room}<br/>
                   <strong>Service:</strong> {deletingPatient.service}
