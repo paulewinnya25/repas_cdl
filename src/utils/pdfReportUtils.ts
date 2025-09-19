@@ -11,6 +11,8 @@ export const loadLogoImage = async (): Promise<string> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
+    // Forcer le chargement haute qualité
+    img.style.imageRendering = 'high-quality';
     img.onload = () => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -19,9 +21,9 @@ export const loadLogoImage = async (): Promise<string> => {
         return;
       }
       
-      // Redimensionner le logo pour le PDF (plus grand pour meilleure visibilité)
-      const maxWidth = 35;
-      const maxHeight = 25;
+      // Redimensionner le logo pour le PDF avec haute résolution
+      const maxWidth = 70; // Double la taille pour meilleure qualité
+      const maxHeight = 50;
       const aspectRatio = img.width / img.height;
       
       let width = maxWidth;
@@ -32,14 +34,17 @@ export const loadLogoImage = async (): Promise<string> => {
         width = maxHeight * aspectRatio;
       }
       
-      canvas.width = width;
-      canvas.height = height;
+      // Créer un canvas haute résolution
+      const scale = 2; // Facteur d'échelle pour anti-aliasing
+      canvas.width = width * scale;
+      canvas.height = height * scale;
       
       // Améliorer la qualité du rendu
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
+      ctx.scale(scale, scale);
       ctx.drawImage(img, 0, 0, width, height);
-      resolve(canvas.toDataURL('image/png'));
+      resolve(canvas.toDataURL('image/png', 1.0)); // Qualité maximale
     };
     img.onerror = () => {
       console.warn('Logo local non trouvé, utilisation du logo Cloudinary');
@@ -61,9 +66,9 @@ export const createPDFHeader = async (doc: jsPDF, title: string, subtitle: strin
     doc.setFillColor(255, 255, 255); // Fond blanc
     doc.rect(0, 0, 210, 50, 'F');
     
-    // Ajouter le vrai logo centré en haut
-    const logoWidth = 35;
-    const logoHeight = 25;
+    // Ajouter le vrai logo centré en haut (plus grand pour meilleure qualité)
+    const logoWidth = 50; // Plus grand pour meilleure visibilité
+    const logoHeight = 35;
     const pageWidth = 210;
     const logoX = (pageWidth - logoWidth) / 2; // Centrer horizontalement
     doc.addImage(logoDataUrl, 'PNG', logoX, 5, logoWidth, logoHeight);
