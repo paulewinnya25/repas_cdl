@@ -909,17 +909,37 @@ export default function CookPortalPage() {
     yPosition = createTable(doc, yPosition, 'COMMANDES PATIENTS', 
       ['Patient', 'Chambre', 'Repas', 'Menu', 'Statut', 'Heure'], patientRows, LOGO_COLORS.green);
     
+    // Séparer les employés des accompagnateurs
+    const regularEmployeeOrders = todayEmployeeOrders.filter(o => !o.employee_name?.includes('Accompagnateur'));
+    const companionOrders = todayEmployeeOrders.filter(o => o.employee_name?.includes('Accompagnateur'));
+    
     // Tableau Employés (aujourd'hui)
-    const employeeRows = todayEmployeeOrders.map(o => [
-      o.employee_name || 'N/A',
-      o.employee_menus?.name || 'N/A',
-      o.quantity.toString(),
-      o.status || 'N/A',
-      (o.created_at || '').toString().replace('T', ' ').substring(0, 16),
-      `${(o.total_price || 0).toLocaleString('fr-FR').replace(/\s/g, ' ')} XAF`
-    ]);
-    yPosition = createTable(doc, yPosition, 'COMMANDES EMPLOYÉS', 
-      ['Employé', 'Menu', 'Quantité', 'Statut', 'Heure', 'Total'], employeeRows, LOGO_COLORS.blue);
+    if (regularEmployeeOrders.length > 0) {
+      const employeeRows = regularEmployeeOrders.map(o => [
+        o.employee_name || 'N/A',
+        o.employee_menus?.name || 'N/A',
+        o.quantity.toString(),
+        o.status || 'N/A',
+        (o.created_at || '').toString().replace('T', ' ').substring(0, 16),
+        `${(o.total_price || 0).toLocaleString('fr-FR').replace(/\s/g, ' ')} XAF`
+      ]);
+      yPosition = createTable(doc, yPosition, 'COMMANDES EMPLOYÉS', 
+        ['Employé', 'Menu', 'Quantité', 'Statut', 'Heure', 'Total'], employeeRows, LOGO_COLORS.blue);
+    }
+    
+    // Tableau Accompagnateurs (aujourd'hui)
+    if (companionOrders.length > 0) {
+      const companionRows = companionOrders.map(o => [
+        o.employee_name || 'N/A',
+        o.employee_menus?.name || 'N/A',
+        o.quantity.toString(),
+        o.status || 'N/A',
+        (o.created_at || '').toString().replace('T', ' ').substring(0, 16),
+        `${(o.total_price || 0).toLocaleString('fr-FR').replace(/\s/g, ' ')} XAF`
+      ]);
+      yPosition = createTable(doc, yPosition, 'COMMANDES ACCOMPAGNATEURS', 
+        ['Accompagnateur', 'Menu', 'Quantité', 'Statut', 'Heure', 'Total'], companionRows, LOGO_COLORS.green);
+    }
     
     // Pied de page
     createPDFFooter(doc);
