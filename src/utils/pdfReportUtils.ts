@@ -69,9 +69,9 @@ export const createPDFHeader = async (doc: jsPDF, title: string, subtitle: strin
     doc.setFillColor(255, 255, 255); // Fond blanc
     doc.rect(0, 0, 210, 50, 'F');
     
-    // Ajouter le vrai logo centré en haut (plus grand pour meilleure qualité)
-    const logoWidth = 50; // Plus grand pour meilleure visibilité
-    const logoHeight = 35;
+    // Ajouter le vrai logo centré en haut (taille réduite)
+    const logoWidth = 35; // Taille réduite pour meilleure proportion
+    const logoHeight = 25;
     const pageWidth = 210;
     const logoX = (pageWidth - logoWidth) / 2; // Centrer horizontalement
     doc.addImage(logoDataUrl, 'PNG', logoX, 5, logoWidth, logoHeight);
@@ -82,7 +82,7 @@ export const createPDFHeader = async (doc: jsPDF, title: string, subtitle: strin
     doc.setFont('helvetica', 'bold');
     const titleWidth = doc.getTextWidth(title);
     const titleX = (pageWidth - titleWidth) / 2; // Centrer le titre
-    doc.text(title, titleX, 35);
+    doc.text(title, titleX, 32); // Position ajustée pour le logo plus petit
     
     // Date et informations
     doc.setFontSize(10);
@@ -119,7 +119,7 @@ export const createPDFHeader = async (doc: jsPDF, title: string, subtitle: strin
     doc.setFont('helvetica', 'bold');
     const titleWidth = doc.getTextWidth(title);
     const titleX = (pageWidth - titleWidth) / 2; // Centrer le titre
-    doc.text(title, titleX, 35);
+    doc.text(title, titleX, 32); // Position ajustée pour le logo plus petit
     
     // Date et informations
     doc.setFontSize(10);
