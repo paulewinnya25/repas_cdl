@@ -128,6 +128,7 @@ const NursePortalPage: React.FC = () => {
     const todayOrders = orders.filter(o => isToday((o as Order & { date?: string }).date || o.created_at));
     const totalOrderedDishes = todayOrders.length;
     const totalDeliveredDishes = todayOrders.filter(o => o.status === 'Livré').length;
+    const pendingOrders = todayOrders.filter(o => o.status === 'En attente' || o.status === 'En attente d\'approbation').length;
 
     // Créer un résumé des plats commandés
     const dishesSummary = new Map<string, { quantity: number, type: string }>();
@@ -143,126 +144,50 @@ const NursePortalPage: React.FC = () => {
 
     const doc = new jsPDF();
     
-    // Couleurs du logo (converties en RGB pour jsPDF)
-    const blueColor = [90, 194, 236]; // #5ac2ec
-    const greenColor = [65, 184, 172]; // #41b8ac
+    // Données de résumé améliorées
+    const summaryData = [
+      { label: 'Total plats commandés aujourd\'hui', value: totalOrderedDishes },
+      { label: 'Total plats livrés aujourd\'hui', value: totalDeliveredDishes },
+      { label: 'Commandes en attente', value: pendingOrders },
+      { label: 'Taux de livraison', value: totalOrderedDishes > 0 ? `${Math.round((totalDeliveredDishes / totalOrderedDishes) * 100)}%` : '0%' }
+    ];
     
-    // Fonction pour charger le logo depuis Cloudinary
-    const loadLogoImage = async (): Promise<string> => {
-      return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          if (!ctx) {
-            reject(new Error('Canvas context not available'));
-            return;
-          }
-          
-          // Redimensionner le logo pour le PDF
-          const maxWidth = 40;
-          const maxHeight = 30;
-          const aspectRatio = img.width / img.height;
-          
-          let width = maxWidth;
-          let height = maxWidth / aspectRatio;
-          
-          if (height > maxHeight) {
-            height = maxHeight;
-            width = maxHeight * aspectRatio;
-          }
-          
-          canvas.width = width;
-          canvas.height = height;
-          
-          ctx.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL('image/png'));
-        };
-        img.onerror = () => reject(new Error('Failed to load logo'));
-        img.src = 'https://res.cloudinary.com/dd64mwkl2/image/upload/v1734533177/Centre_Diagnostic-Logo_cyekdg.svg';
-      });
-    };
+    // Sections du rapport
+    const sections = [
+      {
+        title: 'DÉTAIL DES PLATS COMMANDÉS',
+        headers: ['Type', 'Menu', 'Quantité', 'Statut'],
+        data: Array.from(dishesSummary.entries()).map(([menu, data]) => [
+          data.type,
+          menu.replace('Patient - ', ''),
+          data.quantity.toString(),
+          'En attente'
+        ]),
+        color: LOGO_COLORS.blue
+      },
+      {
+        title: 'DÉTAIL DES COMMANDES PATIENTS',
+        headers: ['Patient', 'Chambre', 'Repas', 'Menu', 'Statut', 'Heure'],
+        data: todayOrders.map(order => [
+          order.patients?.name || 'Patient inconnu',
+          order.patients?.room || 'N/A',
+          order.meal_type || 'N/A',
+          order.menu || 'N/A',
+          order.status || 'N/A',
+          new Date(order.created_at || '').toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+        ]),
+        color: LOGO_COLORS.green
+      }
+    ];
+    
+    // Créer le rapport amélioré
+    await createEnhancedReport(doc, 'Rapport Journalier - Portail Infirmier', summaryData, sections);
+    
+    // Télécharger le PDF
+    doc.save(`rapport_journalier_infirmier_${new Date().toISOString().slice(0,10)}.pdf`);
+  };
 
-    try {
-      // Charger le logo
-      const logoDataUrl = await loadLogoImage();
-      
-      // En-tête avec fond blanc
-      doc.setFillColor(255, 255, 255); // Fond blanc
-      doc.rect(0, 0, 210, 40, 'F');
-      
-      // Ajouter le vrai logo (plus petit)
-      doc.addImage(logoDataUrl, 'PNG', 20, 5, 25, 20);
-      
-      // Logo (texte stylisé)
-      doc.setFontSize(20);
-      doc.setTextColor(blueColor[0], blueColor[1], blueColor[2]); // Texte bleu
-      doc.setFont('helvetica', 'bold');
-      doc.text('CENTRE DIAGNOSTIC', 50, 15);
-      
-      doc.setFontSize(12);
-      doc.setTextColor(greenColor[0], greenColor[1], greenColor[2]); // Texte vert
-      doc.setFont('helvetica', 'normal');
-      doc.text('Rapport Journalier - Portail Infirmier', 50, 25);
-      
-      // Date et informations
-      doc.setFontSize(10);
-      doc.setTextColor(0, 0, 0); // Texte noir
-      doc.text(`Date: ${todayStr}`, 150, 10);
-      doc.text(`Généré le: ${new Date().toLocaleString('fr-FR')}`, 150, 20);
-      
-      // Ligne de séparation décorative
-      doc.setDrawColor(blueColor[0], blueColor[1], blueColor[2]);
-      doc.setLineWidth(1);
-      doc.line(20, 35, 190, 35);
-      
-    } catch (error) {
-      console.error('Erreur lors du chargement du logo:', error);
-      
-      // Fallback: utiliser le logo stylisé si le chargement échoue
-      doc.setFillColor(255, 255, 255); // Fond blanc
-      doc.rect(0, 0, 210, 40, 'F');
-      
-      // Logo stylisé avec cercle (fallback) - plus petit
-      doc.setFillColor(greenColor[0], greenColor[1], greenColor[2]); // Cercle vert
-      doc.circle(32, 15, 8, 'F');
-      doc.setFillColor(255, 255, 255); // Cercle blanc au centre
-      doc.circle(32, 15, 5, 'F');
-      doc.setFillColor(blueColor[0], blueColor[1], blueColor[2]); // Point bleu au centre
-      doc.circle(32, 15, 3, 'F');
-      
-      // Logo (texte stylisé)
-      doc.setFontSize(20);
-      doc.setTextColor(blueColor[0], blueColor[1], blueColor[2]); // Texte bleu
-      doc.setFont('helvetica', 'bold');
-      doc.text('CENTRE DIAGNOSTIC', 50, 15);
-      
-      doc.setFontSize(12);
-      doc.setTextColor(greenColor[0], greenColor[1], greenColor[2]); // Texte vert
-      doc.setFont('helvetica', 'normal');
-      doc.text('Rapport Journalier - Portail Infirmier', 50, 25);
-      
-      // Date et informations
-      doc.setFontSize(10);
-      doc.setTextColor(0, 0, 0); // Texte noir
-      doc.text(`Date: ${todayStr}`, 150, 10);
-      doc.text(`Généré le: ${new Date().toLocaleString('fr-FR')}`, 150, 20);
-      
-      // Ligne de séparation décorative
-      doc.setDrawColor(blueColor[0], blueColor[1], blueColor[2]);
-      doc.setLineWidth(1);
-      doc.line(20, 35, 190, 35);
-    }
-    
-    let yPosition = 50;
-    
-    // Résumé du jour
-    doc.setFontSize(18);
-    doc.setTextColor(blueColor[0], blueColor[1], blueColor[2]);
-    doc.setFont('helvetica', 'bold');
-    doc.text('RÉSUMÉ DU JOUR', 20, yPosition);
-    yPosition += 15;
+  // Fonction de débogage (temporaire)
     
     // Boîte de résumé avec design amélioré
     doc.setFillColor(240, 253, 244); // Fond vert très clair
